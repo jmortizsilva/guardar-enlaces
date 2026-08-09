@@ -27,6 +27,7 @@ class DialogoAnadir(wx.Dialog):
         etiqueta_url = wx.StaticText(panel, label="&URL:")
         sizer.Add(etiqueta_url, 0, wx.LEFT | wx.RIGHT | wx.TOP, 12)
         self.campo_url = wx.TextCtrl(panel)
+        self.campo_url.SetName("URL del enlace a añadir")  # ver docs/ACCESIBILIDAD-WXPYTHON.md
         self.campo_url.SetHint("https://...")
         sizer.Add(self.campo_url, 0, wx.EXPAND | wx.ALL, 12)
 

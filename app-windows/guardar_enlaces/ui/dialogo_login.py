@@ -36,6 +36,9 @@ class DialogoLogin(wx.Dialog):
         etiqueta_correo = wx.StaticText(panel, label="&Correo electrónico:")
         sizer.Add(etiqueta_correo, 0, wx.LEFT | wx.RIGHT | wx.TOP, 12)
         self.campo_correo = wx.TextCtrl(panel)
+        # SetName(), no basta con el StaticText de al lado ni con SetHint (ver
+        # docs/ACCESIBILIDAD-WXPYTHON.md): sin esto NVDA anuncia "edicion" a secas.
+        self.campo_correo.SetName("Correo electrónico")
         self.campo_correo.SetHint("persona@ejemplo.com")
         sizer.Add(self.campo_correo, 0, wx.EXPAND | wx.ALL, 12)
 

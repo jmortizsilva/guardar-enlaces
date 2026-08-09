@@ -44,6 +44,7 @@ class DialogoDetalle(wx.Dialog):
             wx.StaticText(panel, label="Etiquetas:"), 0, wx.LEFT | wx.RIGHT | wx.TOP, 12
         )
         self.campo_etiquetas = wx.TextCtrl(panel, value=", ".join(elemento.etiquetas))
+        self.campo_etiquetas.SetName("Etiquetas, separadas por comas")  # ver docs/ACCESIBILIDAD-WXPYTHON.md
         self.campo_etiquetas.SetHint("separadas por comas")
         sizer.Add(self.campo_etiquetas, 0, wx.EXPAND | wx.ALL, 12)
 

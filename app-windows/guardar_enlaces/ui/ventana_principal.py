@@ -81,12 +81,15 @@ class VentanaPrincipal(wx.Frame):
 
         fila_filtros = wx.BoxSizer(wx.HORIZONTAL)
 
-        # La etiqueta visible ANTES del control (en el mismo orden de tabulacion) es lo que
-        # NVDA/JAWS/Narrador usan para anunciar el nombre de un control de Win32 sin ARIA: el
-        # texto de sugerencia (SetDescriptiveText) por si solo NO basta como nombre accesible.
+        # El wx.StaticText de al lado es solo para quien ve la pantalla: desde wxPython 4.0.4,
+        # NVDA/Narrador NO infieren el nombre accesible de un control por estar al lado de una
+        # etiqueta ni por su texto de sugerencia (SetDescriptiveText/SetHint) -- hace falta
+        # SetName() explicito (o el kwarg name= del constructor), o el control se anuncia con un
+        # rotulo generico ("edicion"). Ver docs/ACCESIBILIDAD-WXPYTHON.md.
         etiqueta_buscar = wx.StaticText(panel, label="&Buscar:")
         fila_filtros.Add(etiqueta_buscar, 0, wx.ALIGN_CENTER_VERTICAL | wx.RIGHT, 4)
         self.buscador = wx.SearchCtrl(panel)
+        self.buscador.SetName("Buscar por título, URL o etiqueta")
         self.buscador.SetDescriptiveText("Título, URL o etiqueta")
         self.buscador.ShowCancelButton(True)
         self.buscador.Bind(wx.EVT_TEXT, self._al_cambiar_filtro)
@@ -96,6 +99,7 @@ class VentanaPrincipal(wx.Frame):
         etiqueta_filtro = wx.StaticText(panel, label="&Etiqueta:")
         fila_filtros.Add(etiqueta_filtro, 0, wx.ALIGN_CENTER_VERTICAL | wx.RIGHT, 4)
         self.selector_etiqueta = wx.Choice(panel, choices=[_TODAS_LAS_ETIQUETAS])
+        self.selector_etiqueta.SetName("Filtrar por etiqueta")
         self.selector_etiqueta.SetSelection(0)
         self.selector_etiqueta.Bind(wx.EVT_CHOICE, self._al_cambiar_filtro)
         fila_filtros.Add(self.selector_etiqueta, 0, wx.ALIGN_CENTER_VERTICAL)
