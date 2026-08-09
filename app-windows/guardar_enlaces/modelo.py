@@ -159,3 +159,16 @@ def buscar(elementos: list[Elemento], consulta: str) -> list[Elemento]:
         or q in e.url.lower()
         or any(q in etiqueta.lower() for etiqueta in e.etiquetas)
     ]
+
+
+def etiquetas_disponibles(elementos: list[Elemento]) -> list[str]:
+    """Etiquetas distintas presentes, ordenadas: para rellenar el selector
+    de filtro del buscador."""
+    return sorted({etiqueta for e in elementos for etiqueta in e.etiquetas})
+
+
+def filtrar_por_etiqueta(elementos: list[Elemento], etiqueta: Optional[str]) -> list[Elemento]:
+    """Sin etiqueta (None o cadena vacia) no filtra nada."""
+    if not etiqueta:
+        return elementos
+    return [e for e in elementos if etiqueta in e.etiquetas]

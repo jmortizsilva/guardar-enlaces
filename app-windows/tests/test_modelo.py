@@ -5,6 +5,8 @@ from guardar_enlaces.modelo import (
     buscar,
     editar,
     elementos_visibles,
+    etiquetas_disponibles,
+    filtrar_por_etiqueta,
     marcar_borrado,
     nuevo_elemento_local,
 )
@@ -121,3 +123,31 @@ class TestBuscar:
         assert buscar([a, b, c], "PYTHON") == [a, b]
         assert buscar([a, b, c], "") == [a, b, c]
         assert buscar([a, b, c], "no-existe") == []
+
+
+class TestEtiquetasDisponibles:
+    def test_devuelve_las_etiquetas_distintas_ordenadas(self):
+        a = nuevo_elemento_local("https://a.com", etiquetas=("ocio", "pendiente"))
+        b = nuevo_elemento_local("https://b.com", etiquetas=("trabajo", "ocio"))
+        c = nuevo_elemento_local("https://c.com")  # sin etiquetas
+
+        assert etiquetas_disponibles([a, b, c]) == ["ocio", "pendiente", "trabajo"]
+
+    def test_sin_elementos_o_sin_etiquetas_devuelve_vacio(self):
+        assert etiquetas_disponibles([]) == []
+        assert etiquetas_disponibles([nuevo_elemento_local("https://a.com")]) == []
+
+
+class TestFiltrarPorEtiqueta:
+    def test_filtra_los_que_tienen_la_etiqueta(self):
+        a = nuevo_elemento_local("https://a.com", etiquetas=("ocio",))
+        b = nuevo_elemento_local("https://b.com", etiquetas=("trabajo",))
+
+        assert filtrar_por_etiqueta([a, b], "ocio") == [a]
+
+    def test_sin_etiqueta_seleccionada_no_filtra(self):
+        a = nuevo_elemento_local("https://a.com", etiquetas=("ocio",))
+        b = nuevo_elemento_local("https://b.com")
+
+        assert filtrar_por_etiqueta([a, b], None) == [a, b]
+        assert filtrar_por_etiqueta([a, b], "") == [a, b]
