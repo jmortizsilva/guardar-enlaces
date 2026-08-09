@@ -1,0 +1,121 @@
+import * as Clipboard from 'expo-clipboard';
+import { router } from 'expo-router';
+import { useMemo, useState } from 'react';
+import { Alert, FlatList, StyleSheet, Text, View } from 'react-native';
+
+import { anunciarImportante } from '../../src/accesibilidad/anuncios';
+import { useAcciones, useElementos } from '../../src/contexto/ProveedorApp';
+import { subtituloFila, tituloFila } from '../../src/dominio/presentacion';
+import { buscar, etiquetasDisponibles, filtrarPorEtiqueta } from '../../src/dominio/sincronizacion';
+import { Boton } from '../../src/interfaz/Boton';
+import { CampoBusqueda } from '../../src/interfaz/CampoBusqueda';
+import { ChipEtiqueta } from '../../src/interfaz/ChipEtiqueta';
+import { FilaLista } from '../../src/interfaz/FilaLista';
+import { ESPACIADO, useTema } from '../../src/interfaz/tema';
+
+export default function Lista() {
+  const tema = useTema();
+  const { elementos, sincronizando } = useElementos();
+  const { eliminar } = useAcciones();
+  const [texto, setTexto] = useState('');
+  const [etiqueta, setEtiqueta] = useState<string | null>(null);
+
+  const etiquetasTodas = useMemo(() => etiquetasDisponibles(elementos), [elementos]);
+  const visibles = useMemo(
+    () => buscar(filtrarPorEtiqueta(elementos, etiqueta), texto),
+    [elementos, etiqueta, texto],
+  );
+
+  async function copiarUrl(url: string): Promise<void> {
+    await Clipboard.setStringAsync(url);
+    anunciarImportante('URL copiada');
+  }
+
+  function confirmarEliminar(id: string, titulo: string): void {
+    Alert.alert('Confirmar eliminación', `¿Eliminar «${titulo}»?`, [
+      { text: 'Cancelar', style: 'cancel' },
+      {
+        text: 'Eliminar',
+        style: 'destructive',
+        onPress: () => {
+          eliminar(id);
+          anunciarImportante('Elemento eliminado');
+        },
+      },
+    ]);
+  }
+
+  return (
+    <View style={[estilos.contenedor, { backgroundColor: tema.fondo }]}>
+      <View style={estilos.cabecera}>
+        <Text accessibilityRole="header" style={[estilos.titulo, { color: tema.texto }]}>
+          Guardar enlaces
+        </Text>
+        <View style={estilos.accionesCabecera}>
+          <Boton etiqueta="Añadir" variante="secundario" alPulsar={() => router.push('/anadir')} />
+          <Boton
+            etiqueta="Ajustes"
+            variante="secundario"
+            alPulsar={() => router.push('/ajustes')}
+          />
+        </View>
+      </View>
+
+      <CampoBusqueda
+        alCambiarTexto={setTexto}
+        marcador="Título, URL o etiqueta"
+        etiqueta="Buscar por título, URL o etiqueta"
+      />
+      <ChipEtiqueta
+        etiquetas={etiquetasTodas}
+        seleccionada={etiqueta}
+        alSeleccionar={setEtiqueta}
+      />
+
+      {sincronizando ? <Text style={{ color: tema.textoSecundario }}>Sincronizando…</Text> : null}
+
+      <FlatList
+        data={visibles}
+        keyExtractor={(elemento) => elemento.id}
+        contentContainerStyle={estilos.lista}
+        ListEmptyComponent={
+          <Text style={{ color: tema.textoSecundario }}>No hay enlaces guardados todavía.</Text>
+        }
+        renderItem={({ item }) => (
+          <FilaLista
+            titulo={tituloFila(item)}
+            subtitulo={subtituloFila(item)}
+            accionPrincipal={{
+              nombre: 'ver',
+              etiqueta: 'Ver elemento',
+              ejecutar: () => router.push({ pathname: '/elemento/[id]', params: { id: item.id } }),
+            }}
+            accionesSecundarias={[
+              { nombre: 'copiar', etiqueta: 'Copiar URL', ejecutar: () => copiarUrl(item.url) },
+              {
+                nombre: 'editar',
+                etiqueta: 'Editar etiquetas',
+                ejecutar: () =>
+                  router.push({ pathname: '/elemento/[id]', params: { id: item.id } }),
+              },
+              {
+                nombre: 'eliminar',
+                etiqueta: 'Eliminar',
+                ejecutar: () => confirmarEliminar(item.id, tituloFila(item)),
+                destructiva: true,
+              },
+            ]}
+          />
+        )}
+      />
+    </View>
+  );
+}
+
+const estilos = StyleSheet.create({
+  contenedor: { flex: 1, padding: ESPACIADO.medio, gap: ESPACIADO.medio },
+  cabecera: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' },
+  titulo: { fontSize: 22, fontWeight: '700' },
+  accionesCabecera: { flexDirection: 'row', gap: ESPACIADO.pequeno },
+  lista: { gap: ESPACIADO.pequeno },
+});
