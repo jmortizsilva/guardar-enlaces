@@ -1,5 +1,5 @@
 {
-  "name": "servidor-guardar-enlaces",
+  "name": "guardar-enlaces-backend",
   "version": "1.0.0",
   "description": "Backend de 'Guardar enlaces' (sincronizacion iOS/Windows). Node + Fastify + SQLite, proceso y contenedor propios.",
   "license": "MIT",

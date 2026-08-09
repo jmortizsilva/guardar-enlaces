@@ -1,4 +1,4 @@
-# servidor-guardar-enlaces
+# Guardar enlaces — backend
 
 Backend de "Guardar enlaces" (apps iOS y Windows con sincronización). Node +
 Fastify + SQLite, proceso y contenedor **propios y separados** de

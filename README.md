@@ -6,7 +6,7 @@ repositorio (para tenerlo centralizado en GitHub), tres proyectos
 independientes por dentro — no comparten código, cada uno con su propio
 gestor de paquetes y su propio ciclo de vida:
 
-- `servidor/` — backend (Node + Fastify + SQLite). **Proceso y contenedor
+- `backend/` — backend (Node + Fastify + SQLite). **Proceso y contenedor
   Docker propios y separados** de los clientes y de `servidor-notificaciones`
   (otro proyecto del repo padre): eso es una decisión de despliegue, no de
   dónde vive el código. Su `docs/CONTRATO-API.md` es la fuente de la verdad

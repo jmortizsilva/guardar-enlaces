@@ -1,9 +1,8 @@
-# Contrato de API — servidor-guardar-enlaces
+# Contrato de API — backend de Guardar enlaces
 
-Fuente de la verdad del API entre el backend (`servidor-guardar-enlaces`) y los
-dos clientes (`Guardar enlaces/app-ios` y `Guardar enlaces/app-windows`), que
-no comparten código entre sí. Cualquier cambio de este contrato se hace aquí
-primero.
+Fuente de la verdad del API entre el backend (`backend/`) y los dos clientes
+(`app-ios/` y `app-windows/`), que no comparten código entre sí. Cualquier
+cambio de este contrato se hace aquí primero.
 
 Base: `${URL_PUBLICA}` (variable de entorno del servidor). Todas las rutas son
 relativas a esa base, sin prefijo de versión (los cambios deben ser aditivos).

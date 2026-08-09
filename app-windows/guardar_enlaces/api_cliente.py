@@ -1,5 +1,5 @@
-"""Cliente HTTP del backend (servidor-guardar-enlaces). Ver el contrato
-completo en docs/CONTRATO-API.md, en el repo del servidor.
+"""Cliente HTTP del backend. Ver el contrato completo en
+../backend/docs/CONTRATO-API.md.
 
 Fontaneria pura: no decide nada, solo traduce llamadas Python a peticiones
 HTTP y errores HTTP a excepciones con mensaje en castellano. Se llama siempre

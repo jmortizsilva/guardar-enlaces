@@ -20,7 +20,7 @@ La app apunta al backend por la variable de entorno `GUARDAR_ENLACES_API`
 (por defecto `http://localhost:8081`). Contra un servidor local con
 `PERMITIR_LOGIN_DEV=true`, la pantalla de inicio de sesión pide solo un
 correo ya invitado (sin pasar por Google/Apple) — ver
-`docs/CONTRATO-API.md` en `servidor-guardar-enlaces/`.
+`docs/CONTRATO-API.md` en `../backend/`.
 
 ## Estructura
 

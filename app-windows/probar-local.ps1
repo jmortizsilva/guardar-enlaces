@@ -1,5 +1,5 @@
 # Arranca la app de Windows apuntando al backend local (ver probar-local.ps1
-# en servidor-guardar-enlaces, debe estar corriendo ya en otra ventana).
+# en ../backend, debe estar corriendo ya en otra ventana).
 #
 # Uso: clic derecho -> "Ejecutar con PowerShell", o desde una terminal:
 #   .\probar-local.ps1
@@ -25,7 +25,7 @@ $env:GUARDAR_ENLACES_API = "http://localhost:8081"
 
 Write-Host ""
 Write-Host "Abriendo la app. Correo de pruebas: prueba@local.test" -ForegroundColor Green
-Write-Host "(el backend debe estar ya corriendo: probar-local.ps1 en servidor-guardar-enlaces)" -ForegroundColor Yellow
+Write-Host "(el backend debe estar ya corriendo: probar-local.ps1 en ../backend)" -ForegroundColor Yellow
 Write-Host ""
 
 & ".\venv\Scripts\python.exe" -m guardar_enlaces
