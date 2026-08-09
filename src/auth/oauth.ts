@@ -2,9 +2,12 @@ import { config } from '../config';
 import { firmarJwtEs256 } from './jwtEs256';
 
 export type Proveedor = 'google' | 'apple';
+// 'dev' solo la usa /auth/dev-login (login de desarrollo, ver rutas.ts): comparte el modelo de
+// usuario/perfil, pero nunca pasa por urlAutorizacion ni por un intercambio de codigo real.
+export type ProveedorIdentidad = Proveedor | 'dev';
 
 export interface PerfilOAuth {
-  proveedor: Proveedor;
+  proveedor: ProveedorIdentidad;
   idProveedor: string; // claim "sub": identificador estable del usuario en el proveedor
   email: string | null;
   emailVerificado: boolean;

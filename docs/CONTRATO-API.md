@@ -123,6 +123,17 @@ el token de acceso: perder el de refresco ya es suficiente para cerrar sesión).
 → `200 {"ok": true}`. Revoca todas las sesiones del usuario — usar si se
 pierde un dispositivo.
 
+### 8. `POST /auth/dev-login` — SOLO DESARROLLO, no existe salvo `PERMITIR_LOGIN_DEV=true`
+
+```json
+{ "email": "invitado@ejemplo.com" }
+```
+
+→ mismo formato de respuesta que `/auth/canjear`. Da sesión sin pasar por
+Google/Apple (sigue exigiendo que el correo esté invitado). Pensado para
+construir y probar los clientes antes de tener credenciales OAuth reales;
+nunca debe estar activo en un servidor real.
+
 ---
 
 ## Metadatos

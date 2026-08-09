@@ -230,4 +230,28 @@ export async function registrarRutasAuth(app: FastifyInstance): Promise<void> {
     revocarTodasLasSesiones(request.usuarioId!);
     return { ok: true };
   });
+
+  // SOLO DESARROLLO: la ruta ni siquiera se registra salvo que PERMITIR_LOGIN_DEV=true, para que
+  // no pueda colarse en un despliegue real por descuido. Crea/reutiliza el usuario (respetando la
+  // lista de invitados, igual que el flujo real) y devuelve tokens sin pasar por Google/Apple.
+  // Pensado para construir y probar los clientes antes de tener credenciales OAuth reales.
+  if (config.permitirLoginDev) {
+    app.post<{ Body: { email?: unknown } }>('/auth/dev-login', async (request, reply) => {
+      const email = request.body?.email;
+      if (typeof email !== 'string' || !email.includes('@')) {
+        return reply.code(400).send({ error: 'falta "email"' });
+      }
+      const usuario = obtenerOCrearUsuario({
+        proveedor: 'dev',
+        idProveedor: email.toLowerCase(),
+        email: email.toLowerCase(),
+        emailVerificado: true,
+      });
+      if (!usuario) {
+        return reply.code(403).send({ error: 'ese correo no esta invitado' });
+      }
+      const tokens = iniciarSesion(usuario.id, 'dev-login');
+      return { ...tokens, usuario };
+    });
+  }
 }

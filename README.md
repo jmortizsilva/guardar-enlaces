@@ -25,3 +25,7 @@ npm run crear-invitacion -- correo@ejemplo.com
 - `APPLE_CLIENT_ID` (Services ID), `APPLE_TEAM_ID`, `APPLE_KEY_ID`, `APPLE_PRIVATE_KEY`
 - `URL_PUBLICA` — URL HTTPS pública del servidor, para construir las URIs de
   callback de OAuth (`${URL_PUBLICA}/auth/callback/google`, etc.)
+- `PERMITIR_LOGIN_DEV` — **solo desarrollo**, nunca en un despliegue real.
+  A `true` activa `POST /auth/dev-login {email}`, que da sesión sin pasar por
+  Google/Apple (respetando igualmente la lista de invitados). Pensado para
+  construir y probar los clientes antes de tener credenciales OAuth reales.

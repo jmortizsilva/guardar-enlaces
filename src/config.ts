@@ -26,4 +26,10 @@ export const config = {
     // Clave privada ES256 descargada una vez del portal de Apple Developer, en formato PEM.
     privateKey: process.env.APPLE_PRIVATE_KEY,
   },
+
+  // SOLO PARA DESARROLLO LOCAL: activa POST /auth/dev-login, que crea sesion sin pasar por
+  // Google/Apple (util para construir y probar los clientes antes de tener credenciales OAuth
+  // reales). Debe estar SIEMPRE apagado fuera de la maquina de desarrollo: sin esta variable a
+  // 'true' explicitamente, la ruta ni se registra.
+  permitirLoginDev: process.env.PERMITIR_LOGIN_DEV === 'true',
 };
