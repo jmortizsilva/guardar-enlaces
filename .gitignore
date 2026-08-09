@@ -1,0 +1,17 @@
+# Python
+app-windows/venv/
+app-windows/__pycache__/
+app-windows/**/__pycache__/
+app-windows/*.egg-info/
+app-windows/.pytest_cache/
+*.pyc
+
+# datos locales (cache/outbox de sincronizacion)
+app-windows/datos/
+*.sqlite
+*.sqlite-*
+
+# Expo / iOS (para cuando exista app-ios/)
+app-ios/node_modules/
+app-ios/.expo/
+app-ios/dist/
