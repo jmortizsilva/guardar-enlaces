@@ -32,3 +32,10 @@ correo ya invitado (sin pasar por Google/Apple) — ver
 - `guardar_enlaces/credenciales.py` — guarda los tokens con `keyring`
   (Administrador de credenciales de Windows), nunca en fichero plano.
 - `guardar_enlaces/ui/` — ventanas wxPython.
+
+## Accesibilidad
+
+Ver `docs/ACCESIBILIDAD-WXPYTHON.md` — hallazgos probados con NVDA real
+(sin equivalente en `comun/`, que es solo para iOS/RN). Antes de añadir un
+control nuevo, échale un vistazo: ahí está, por ejemplo, por qué el texto
+de sugerencia de un campo de búsqueda no basta como su nombre accesible.
