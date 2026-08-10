@@ -1,3 +1,4 @@
+import { router } from 'expo-router';
 import { Text, View } from 'react-native';
 
 import { useSesion } from '../../src/contexto/ProveedorApp';
@@ -16,6 +17,7 @@ export default function Ajustes() {
         gap: ESPACIADO.medio,
         backgroundColor: tema.fondo,
       }}>
+      <Boton etiqueta="Volver" variante="secundario" alPulsar={() => router.back()} />
       <Text style={{ color: tema.texto, fontSize: 17 }}>
         Sesión iniciada como {sesion.usuario?.email}
       </Text>

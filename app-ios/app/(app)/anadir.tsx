@@ -1,11 +1,13 @@
 import { router } from 'expo-router';
-import { useState } from 'react';
+import { useMemo, useState } from 'react';
 import { ScrollView, StyleSheet, Text, TextInput } from 'react-native';
 
 import { anunciarImportante } from '../../src/accesibilidad/anuncios';
-import { useAcciones } from '../../src/contexto/ProveedorApp';
+import { useAcciones, useElementos } from '../../src/contexto/ProveedorApp';
 import { TipoElemento } from '../../src/dominio/elemento';
+import { etiquetasDisponibles } from '../../src/dominio/sincronizacion';
 import { Boton } from '../../src/interfaz/Boton';
+import { SelectorEtiquetas } from '../../src/interfaz/SelectorEtiquetas';
 import { Tarjeta } from '../../src/interfaz/Tarjeta';
 import { ESPACIADO, useTema } from '../../src/interfaz/tema';
 
@@ -24,10 +26,13 @@ interface VistaPrevia {
 export default function Anadir() {
   const tema = useTema();
   const { anadir, comprobarMetadatos } = useAcciones();
+  const { elementos } = useElementos();
   const [url, setUrl] = useState('');
   const [comprobando, setComprobando] = useState(false);
   const [vistaPrevia, setVistaPrevia] = useState<VistaPrevia | null>(null);
   const [error, setError] = useState('');
+  const [etiquetas, setEtiquetas] = useState<string[]>([]);
+  const etiquetasTodas = useMemo(() => etiquetasDisponibles(elementos), [elementos]);
 
   function alCambiarUrl(texto: string): void {
     setUrl(texto);
@@ -62,6 +67,7 @@ export default function Anadir() {
       titulo: vistaPrevia.titulo,
       descripcion: vistaPrevia.descripcion,
       tipo: vistaPrevia.tipo as TipoElemento,
+      etiquetas,
     });
     anunciarImportante('Enlace guardado');
     router.back();
@@ -71,6 +77,8 @@ export default function Anadir() {
     <ScrollView
       contentContainerStyle={[estilos.contenedor, { backgroundColor: tema.fondo }]}
       style={{ backgroundColor: tema.fondo }}>
+      <Boton etiqueta="Cancelar" variante="secundario" alPulsar={() => router.back()} />
+
       <Text style={[estilos.etiquetaCampo, { color: tema.texto }]}>URL</Text>
       <TextInput
         value={url}
@@ -103,6 +111,17 @@ export default function Anadir() {
               : []
           }
         />
+      ) : null}
+
+      {vistaPrevia ? (
+        <>
+          <Text style={[estilos.etiquetaCampo, { color: tema.texto }]}>Categorías</Text>
+          <SelectorEtiquetas
+            disponibles={etiquetasTodas}
+            seleccionadas={etiquetas}
+            alCambiar={setEtiquetas}
+          />
+        </>
       ) : null}
 
       <Boton etiqueta="Guardar" alPulsar={guardar} deshabilitado={!vistaPrevia} />

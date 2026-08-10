@@ -1,5 +1,6 @@
 import * as Clipboard from 'expo-clipboard';
 import { router } from 'expo-router';
+import * as WebBrowser from 'expo-web-browser';
 import { useMemo, useState } from 'react';
 import { Alert, FlatList, StyleSheet, Text, View } from 'react-native';
 
@@ -10,15 +11,17 @@ import { buscar, etiquetasDisponibles, filtrarPorEtiqueta } from '../../src/domi
 import { Boton } from '../../src/interfaz/Boton';
 import { CampoBusqueda } from '../../src/interfaz/CampoBusqueda';
 import { ChipEtiqueta } from '../../src/interfaz/ChipEtiqueta';
+import { DialogoEtiquetas } from '../../src/interfaz/DialogoEtiquetas';
 import { FilaLista } from '../../src/interfaz/FilaLista';
 import { ESPACIADO, useTema } from '../../src/interfaz/tema';
 
 export default function Lista() {
   const tema = useTema();
   const { elementos, sincronizando } = useElementos();
-  const { eliminar } = useAcciones();
+  const { eliminar, editarEtiquetas } = useAcciones();
   const [texto, setTexto] = useState('');
   const [etiqueta, setEtiqueta] = useState<string | null>(null);
+  const [editandoId, setEditandoId] = useState<string | null>(null);
 
   const etiquetasTodas = useMemo(() => etiquetasDisponibles(elementos), [elementos]);
   const visibles = useMemo(
@@ -44,6 +47,8 @@ export default function Lista() {
       },
     ]);
   }
+
+  const elementoEditando = editandoId ? elementos.find((e) => e.id === editandoId) : undefined;
 
   return (
     <View style={[estilos.contenedor, { backgroundColor: tema.fondo }]}>
@@ -86,17 +91,21 @@ export default function Lista() {
             titulo={tituloFila(item)}
             subtitulo={subtituloFila(item)}
             accionPrincipal={{
-              nombre: 'ver',
-              etiqueta: 'Ver elemento',
-              ejecutar: () => router.push({ pathname: '/elemento/[id]', params: { id: item.id } }),
+              nombre: 'abrir',
+              etiqueta: 'Abrir en modo lector',
+              ejecutar: () => WebBrowser.openBrowserAsync(item.url, { readerMode: true }),
             }}
             accionesSecundarias={[
               { nombre: 'copiar', etiqueta: 'Copiar URL', ejecutar: () => copiarUrl(item.url) },
               {
+                nombre: 'safari',
+                etiqueta: 'Abrir en Safari',
+                ejecutar: () => WebBrowser.openBrowserAsync(item.url),
+              },
+              {
                 nombre: 'editar',
                 etiqueta: 'Editar etiquetas',
-                ejecutar: () =>
-                  router.push({ pathname: '/elemento/[id]', params: { id: item.id } }),
+                ejecutar: () => setEditandoId(item.id),
               },
               {
                 nombre: 'eliminar',
@@ -108,6 +117,19 @@ export default function Lista() {
           />
         )}
       />
+
+      {elementoEditando ? (
+        <DialogoEtiquetas
+          disponibles={etiquetasTodas}
+          seleccionadas={elementoEditando.etiquetas}
+          alAceptar={(etiquetas) => {
+            editarEtiquetas(elementoEditando.id, etiquetas);
+            setEditandoId(null);
+            anunciarImportante('Etiquetas actualizadas');
+          }}
+          alCancelar={() => setEditandoId(null)}
+        />
+      ) : null}
     </View>
   );
 }
