@@ -21,7 +21,7 @@ if (-not (Test-Path "venv")) {
     }
 }
 
-$env:GUARDAR_ENLACES_API = "http://localhost:8081"
+$env:GUARDAR_ENLACES_API = "http://localhost:8090"
 
 Write-Host ""
 Write-Host "Abriendo la app. Correo de pruebas: prueba@local.test" -ForegroundColor Green

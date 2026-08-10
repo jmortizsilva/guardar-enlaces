@@ -8,7 +8,7 @@
 $ErrorActionPreference = "Stop"
 Set-Location $PSScriptRoot
 
-$env:PORT = "8081"
+$env:PORT = "8090"
 $env:DB_PATH = ".\datos\prueba.sqlite"
 $env:ENLACES_TOKEN_SECRET = "secreto-de-pruebas-local"
 $env:GOOGLE_CLIENT_ID = "x"
@@ -30,7 +30,7 @@ Write-Host "Invitando $correoPrueba (no pasa nada si ya lo estaba)..." -Foregrou
 npm.cmd run crear-invitacion -- $correoPrueba
 
 Write-Host ""
-Write-Host "Backend arrancando en http://localhost:8081" -ForegroundColor Green
+Write-Host "Backend arrancando en http://localhost:8090" -ForegroundColor Green
 Write-Host "Correo para iniciar sesion en la app: $correoPrueba" -ForegroundColor Green
 Write-Host "Deja esta ventana abierta. Ctrl+C para pararlo." -ForegroundColor Yellow
 Write-Host ""
