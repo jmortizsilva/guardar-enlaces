@@ -1,5 +1,8 @@
 # Guardar enlaces
 
+Ver [`PROYECTO.md`](PROYECTO.md) para la descripción completa del proyecto y
+cómo arrancar cada parte — este README es solo el resumen de estructura.
+
 App para guardar contenidos (enlaces, vídeos) accesible con lector de
 pantalla en iPhone y en Windows, sincronizada entre ambos. Un solo
 repositorio (para tenerlo centralizado en GitHub), tres proyectos
@@ -12,7 +15,7 @@ gestor de paquetes y su propio ciclo de vida:
   dónde vive el código. Su `docs/CONTRATO-API.md` es la fuente de la verdad
   del API para los dos clientes.
 - `app-windows/` — cliente de escritorio, Python + wxPython.
-- `app-ios/` — cliente iOS, Expo/React Native (pendiente).
+- `app-ios/` — cliente iOS, Expo/React Native.
 
 Ver `CLAUDE.md` (raíz del repo padre `desarrollo-ios-rn`) para las
 convenciones generales de desarrollo iOS/RN sin Mac.
