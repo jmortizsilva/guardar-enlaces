@@ -1,5 +1,5 @@
-import { router } from 'expo-router';
-import { useMemo, useState } from 'react';
+import { router, useLocalSearchParams } from 'expo-router';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import { ScrollView, StyleSheet, Text, TextInput } from 'react-native';
 
 import { anunciarImportante } from '../../src/accesibilidad/anuncios';
@@ -25,9 +25,10 @@ interface VistaPrevia {
  */
 export default function Anadir() {
   const tema = useTema();
+  const { urlCompartida } = useLocalSearchParams<{ urlCompartida?: string }>();
   const { anadir, comprobarMetadatos } = useAcciones();
   const { elementos } = useElementos();
-  const [url, setUrl] = useState('');
+  const [url, setUrl] = useState(urlCompartida ?? '');
   const [comprobando, setComprobando] = useState(false);
   const [vistaPrevia, setVistaPrevia] = useState<VistaPrevia | null>(null);
   const [error, setError] = useState('');
@@ -59,6 +60,15 @@ export default function Anadir() {
       setComprobando(false);
     }
   }
+
+  const yaComprobadaAlAbrir = useRef(false);
+  useEffect(() => {
+    if (urlCompartida && !yaComprobadaAlAbrir.current) {
+      yaComprobadaAlAbrir.current = true;
+      comprobar();
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- solo al abrir con una URL compartida
+  }, [urlCompartida]);
 
   function guardar(): void {
     if (!vistaPrevia) return;

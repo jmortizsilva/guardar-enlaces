@@ -31,7 +31,17 @@
       "expo-status-bar",
       "expo-sqlite",
       "expo-secure-store",
-      "expo-web-browser"
+      "expo-web-browser",
+      [
+        "expo-share-intent",
+        {
+          "iosActivationRules": {
+            "NSExtensionActivationSupportsWebURLWithMaxCount": 1,
+            "NSExtensionActivationSupportsWebPageWithMaxCount": 1
+          },
+          "iosAppGroupIdentifier": "group.com.jmortizsilva.guardarenlaces"
+        }
+      ]
     ],
     "experiments": {
       "typedRoutes": true

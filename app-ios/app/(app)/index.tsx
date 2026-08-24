@@ -1,7 +1,8 @@
 import * as Clipboard from 'expo-clipboard';
 import { router } from 'expo-router';
+import { useShareIntentContext } from 'expo-share-intent';
 import * as WebBrowser from 'expo-web-browser';
-import { useMemo, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { Alert, FlatList, StyleSheet, Text, View } from 'react-native';
 
 import { anunciarImportante } from '../../src/accesibilidad/anuncios';
@@ -19,9 +20,17 @@ export default function Lista() {
   const tema = useTema();
   const { elementos, sincronizando } = useElementos();
   const { eliminar, editarEtiquetas } = useAcciones();
+  const { hasShareIntent, shareIntent, resetShareIntent } = useShareIntentContext();
   const [texto, setTexto] = useState('');
   const [etiqueta, setEtiqueta] = useState<string | null>(null);
   const [editandoId, setEditandoId] = useState<string | null>(null);
+
+  useEffect(() => {
+    if (hasShareIntent && shareIntent.webUrl) {
+      router.push({ pathname: '/anadir', params: { urlCompartida: shareIntent.webUrl } });
+      resetShareIntent();
+    }
+  }, [hasShareIntent, shareIntent.webUrl, resetShareIntent]);
 
   const etiquetasTodas = useMemo(() => etiquetasDisponibles(elementos), [elementos]);
   const visibles = useMemo(
