@@ -17,7 +17,7 @@ const TODAS = 'Todas';
 /**
  * Desplegable de selección única para filtrar por etiqueta: un botón que
  * muestra el filtro activo y abre una lista al tocarlo, en vez de una fila
- * de chips (que dejaba de caber con muchas categorías).
+ * de chips (que dejaba de caber con muchas etiquetas).
  */
 export function SelectorDesplegable({ etiquetas, seleccionada, alSeleccionar }: Props) {
   const tema = useTema();
@@ -34,7 +34,7 @@ export function SelectorDesplegable({ etiquetas, seleccionada, alSeleccionar }: 
       <Pressable
         onPress={() => setAbierto(true)}
         accessibilityRole="button"
-        accessibilityLabel={`Filtrar por categoría: ${seleccionada ?? TODAS}`}
+        accessibilityLabel={`Filtrar por etiqueta: ${seleccionada ?? TODAS}`}
         accessibilityHint="Toca para cambiar el filtro"
         style={[estilos.campo, { borderColor: tema.borde, backgroundColor: tema.superficie }]}>
         <Text style={[estilos.textoCampo, { color: tema.texto }]}>{seleccionada ?? TODAS}</Text>
@@ -53,7 +53,7 @@ export function SelectorDesplegable({ etiquetas, seleccionada, alSeleccionar }: 
             style={[estilos.caja, { backgroundColor: tema.fondo, borderColor: tema.borde }]}
             accessibilityViewIsModal>
             <Text accessibilityRole="header" style={[estilos.titulo, { color: tema.texto }]}>
-              Filtrar por categoría
+              Filtrar por etiqueta
             </Text>
             <ScrollView style={estilos.lista}>
               {opciones.map((etiqueta) => {

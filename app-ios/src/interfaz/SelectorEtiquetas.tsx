@@ -15,7 +15,7 @@ type Props = {
  * Selector de etiquetas por chips, de selección múltiple: a diferencia de
  * SelectorDesplegable (selección única, para filtrar la lista), aquí un
  * elemento puede llevar varias etiquetas a la vez. Incluye un campo para dar
- * de alta una categoría que todavía no existe en ningún otro elemento.
+ * de alta una etiqueta que todavía no existe en ningún otro elemento.
  */
 export function SelectorEtiquetas({ disponibles, seleccionadas, alCambiar }: Props) {
   const tema = useTema();
@@ -74,13 +74,13 @@ export function SelectorEtiquetas({ disponibles, seleccionadas, alCambiar }: Pro
         <TextInput
           value={nueva}
           onChangeText={setNueva}
-          placeholder="Nueva categoría"
+          placeholder="Nueva etiqueta"
           placeholderTextColor={tema.textoSecundario}
           autoCapitalize="none"
           autoCorrect={false}
           returnKeyType="done"
           onSubmitEditing={anadirNueva}
-          accessibilityLabel="Nueva categoría"
+          accessibilityLabel="Nueva etiqueta"
           style={[estilos.campo, { borderColor: tema.borde, color: tema.texto }]}
         />
         <Boton

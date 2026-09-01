@@ -125,7 +125,7 @@ export default function Anadir() {
 
       {vistaPrevia ? (
         <>
-          <Text style={[estilos.etiquetaCampo, { color: tema.texto }]}>Categorías</Text>
+          <Text style={[estilos.etiquetaCampo, { color: tema.texto }]}>Etiquetas</Text>
           <SelectorEtiquetas
             disponibles={etiquetasTodas}
             seleccionadas={etiquetas}
