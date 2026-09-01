@@ -44,7 +44,10 @@ export interface RespuestaSincronizar {
   masDisponible: boolean;
 }
 
-const TIMEOUT_MS_POR_DEFECTO = 10_000;
+// Subido temporalmente de 10s a 30s para diagnosticar peticiones lentas
+// contra api.jmortiz.es (posible negociacion HTTP/3 lenta del fetch nativo
+// de Expo SDK 56 contra el proxy Caddy). Volver a 10s si se descarta.
+const TIMEOUT_MS_POR_DEFECTO = 30_000;
 
 export class ClienteApi {
   private readonly urlBase: string;
