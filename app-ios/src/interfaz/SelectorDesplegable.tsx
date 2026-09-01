@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { Modal, Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
 
+import { Boton } from './Boton';
 import { ALTURA_MINIMA_TOQUE, ESPACIADO, useTema } from './tema';
 
 type Props = {
@@ -47,7 +48,7 @@ export function SelectorDesplegable({ etiquetas, seleccionada, alSeleccionar }: 
         onRequestClose={() => setAbierto(false)}
         accessibilityViewIsModal
         supportedOrientations={['portrait']}>
-        <Pressable style={estilos.fondo} onPress={() => setAbierto(false)}>
+        <View style={estilos.fondo}>
           <View
             style={[estilos.caja, { backgroundColor: tema.fondo, borderColor: tema.borde }]}
             accessibilityViewIsModal>
@@ -80,8 +81,10 @@ export function SelectorDesplegable({ etiquetas, seleccionada, alSeleccionar }: 
                 );
               })}
             </ScrollView>
+
+            <Boton etiqueta="Cerrar" variante="secundario" alPulsar={() => setAbierto(false)} />
           </View>
-        </Pressable>
+        </View>
       </Modal>
     </>
   );
