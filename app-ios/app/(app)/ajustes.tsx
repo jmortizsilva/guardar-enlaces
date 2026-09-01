@@ -2,6 +2,7 @@ import { router } from 'expo-router';
 import * as Updates from 'expo-updates';
 import { Text, View } from 'react-native';
 
+import { comprobarActualizacion } from '../../src/actualizaciones/actualizaciones';
 import { useSesion } from '../../src/contexto/ProveedorApp';
 import { Boton } from '../../src/interfaz/Boton';
 import { ESPACIADO, useTema } from '../../src/interfaz/tema';
@@ -31,6 +32,11 @@ export default function Ajustes() {
         Sesión iniciada como {sesion.usuario?.email}
       </Text>
       <Boton etiqueta="Cerrar sesión" variante="peligro" alPulsar={() => sesion.cerrar()} />
+      <Boton
+        etiqueta="Buscar actualizaciones"
+        variante="secundario"
+        alPulsar={() => comprobarActualizacion({ manual: true })}
+      />
       <Text style={{ color: tema.textoSecundario, fontSize: 13 }}>
         {descripcionActualizacion()}
       </Text>

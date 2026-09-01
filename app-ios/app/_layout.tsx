@@ -1,13 +1,34 @@
 import { Stack, useRouter } from 'expo-router';
 import { ShareIntentModule, ShareIntentProvider } from 'expo-share-intent';
 import { useEffect } from 'react';
-import { Alert } from 'react-native';
+import { Alert, AppState } from 'react-native';
 
+import {
+  avisarSiHayNovedades,
+  comprobarActualizacion,
+} from '../src/actualizaciones/actualizaciones';
 import { tomarRutaCompartida } from '../src/compartir/pendiente';
 import { ProveedorApp } from '../src/contexto/ProveedorApp';
 
 export default function LayoutRaiz() {
   const router = useRouter();
+
+  // Al abrir: si esta build ya vino de una OTA distinta a la ultima vista,
+  // avisa de las novedades; despues busca si hay otra actualizacion nueva.
+  useEffect(() => {
+    avisarSiHayNovedades().then(() => comprobarActualizacion());
+  }, []);
+
+  // Al volver a primer plano (no solo al abrir en frio): patron de
+  // comun/docs/GUIA-ENTORNO-IOS.md, es el disparador fiable del dialogo.
+  useEffect(() => {
+    const subscripcion = AppState.addEventListener('change', (estado) => {
+      if (estado === 'active') {
+        comprobarActualizacion();
+      }
+    });
+    return () => subscripcion.remove();
+  }, []);
 
   // Se ejecuta despues del efecto interno de ShareIntentProvider (hijo en el
   // arbol, monta primero): sus listeners onChange/onError ya estan activos.
