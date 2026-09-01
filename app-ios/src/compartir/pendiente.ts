@@ -4,14 +4,22 @@
  * raiz (donde expo-share-intent ya esta escuchando). Modulo JS = singleton,
  * vive mientras dure el proceso.
  */
-let rutaCompartida: string | null = null;
 
-export function marcarRutaCompartida(ruta: string): void {
-  rutaCompartida = ruta;
+interface RutaCompartidaDebug {
+  /** Ruta cruda tal cual la ve expo-router, antes de reconstruir nada. */
+  pathOriginal: string;
+  /** URL reconstruida a mano para el modulo nativo, o null si no se pudo. */
+  rutaReconstruida: string | null;
 }
 
-export function tomarRutaCompartida(): string | null {
-  const ruta = rutaCompartida;
-  rutaCompartida = null;
-  return ruta;
+let pendiente: RutaCompartidaDebug | null = null;
+
+export function marcarRutaCompartida(debug: RutaCompartidaDebug): void {
+  pendiente = debug;
+}
+
+export function tomarRutaCompartida(): RutaCompartidaDebug | null {
+  const valor = pendiente;
+  pendiente = null;
+  return valor;
 }
