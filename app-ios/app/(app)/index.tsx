@@ -11,16 +11,21 @@ import { subtituloFila, tituloFila } from '../../src/dominio/presentacion';
 import { buscar, etiquetasDisponibles, filtrarPorEtiqueta } from '../../src/dominio/sincronizacion';
 import { Boton } from '../../src/interfaz/Boton';
 import { CampoBusqueda } from '../../src/interfaz/CampoBusqueda';
-import { ChipEtiqueta } from '../../src/interfaz/ChipEtiqueta';
 import { DialogoEtiquetas } from '../../src/interfaz/DialogoEtiquetas';
 import { FilaLista } from '../../src/interfaz/FilaLista';
+import { SelectorDesplegable } from '../../src/interfaz/SelectorDesplegable';
 import { ESPACIADO, useTema } from '../../src/interfaz/tema';
 
 export default function Lista() {
   const tema = useTema();
   const { elementos, sincronizando } = useElementos();
   const { eliminar, editarEtiquetas } = useAcciones();
-  const { hasShareIntent, shareIntent, resetShareIntent } = useShareIntentContext();
+  const {
+    hasShareIntent,
+    shareIntent,
+    resetShareIntent,
+    error: errorCompartir,
+  } = useShareIntentContext();
   const [texto, setTexto] = useState('');
   const [etiqueta, setEtiqueta] = useState<string | null>(null);
   const [editandoId, setEditandoId] = useState<string | null>(null);
@@ -31,6 +36,14 @@ export default function Lista() {
       resetShareIntent();
     }
   }, [hasShareIntent, shareIntent.webUrl, resetShareIntent]);
+
+  // Sin esto, un fallo al leer el enlace compartido desde la hoja de
+  // compartir de iOS no se veia en ningun sitio.
+  useEffect(() => {
+    if (errorCompartir) {
+      Alert.alert('No se pudo leer el enlace compartido', errorCompartir);
+    }
+  }, [errorCompartir]);
 
   const etiquetasTodas = useMemo(() => etiquetasDisponibles(elementos), [elementos]);
   const visibles = useMemo(
@@ -80,7 +93,7 @@ export default function Lista() {
         marcador="Título, URL o etiqueta"
         etiqueta="Buscar por título, URL o etiqueta"
       />
-      <ChipEtiqueta
+      <SelectorDesplegable
         etiquetas={etiquetasTodas}
         seleccionada={etiqueta}
         alSeleccionar={setEtiqueta}

@@ -27,5 +27,9 @@ export default function LayoutApp() {
     return <Redirect href="/login" />;
   }
 
-  return <Stack screenOptions={{ headerShown: false }} />;
+  return (
+    <Stack screenOptions={{ headerShown: false }}>
+      <Stack.Screen name="anadir" options={{ presentation: 'modal' }} />
+    </Stack>
+  );
 }
