@@ -1,10 +1,13 @@
 import { router } from 'expo-router';
 import * as Updates from 'expo-updates';
+import { useEffect, useState } from 'react';
 import { Text, View } from 'react-native';
 
+import { establecerModoSilencioso, obtenerModoSilencioso } from '../../modules/guardado-silencioso';
 import { comprobarActualizacion } from '../../src/actualizaciones/actualizaciones';
 import { useSesion } from '../../src/contexto/ProveedorApp';
 import { Boton } from '../../src/interfaz/Boton';
+import { Interruptor } from '../../src/interfaz/Interruptor';
 import { ESPACIADO, useTema } from '../../src/interfaz/tema';
 
 /** Para confirmar si una actualizacion OTA ha llegado de verdad al abrir la app. */
@@ -18,6 +21,16 @@ function descripcionActualizacion(): string {
 export default function Ajustes() {
   const tema = useTema();
   const sesion = useSesion();
+  const [modoSilencioso, setModoSilencioso] = useState(false);
+
+  useEffect(() => {
+    obtenerModoSilencioso().then(setModoSilencioso);
+  }, []);
+
+  function alCambiarModoSilencioso(valor: boolean): void {
+    setModoSilencioso(valor);
+    establecerModoSilencioso(valor);
+  }
 
   return (
     <View
@@ -32,6 +45,12 @@ export default function Ajustes() {
         Sesión iniciada como {sesion.usuario?.email}
       </Text>
       <Boton etiqueta="Cerrar sesión" variante="peligro" alPulsar={() => sesion.cerrar()} />
+      <Interruptor
+        etiqueta="Guardar sin abrir la app al compartir"
+        valor={modoSilencioso}
+        alCambiar={alCambiarModoSilencioso}
+        pista="Al compartir un enlace desde Safari, se guarda directamente y te quedas donde estabas. Sin vista previa ni etiquetas en el momento; se completan después desde la app."
+      />
       <Boton
         etiqueta="Buscar actualizaciones"
         variante="secundario"

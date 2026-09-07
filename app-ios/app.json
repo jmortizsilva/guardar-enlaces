@@ -41,7 +41,8 @@
           },
           "iosAppGroupIdentifier": "group.com.jmortizsilva.guardarenlaces"
         }
-      ]
+      ],
+      "./plugins/withGuardadoSilencioso"
     ],
     "experiments": {
       "typedRoutes": true
