@@ -1,4 +1,4 @@
-import { Stack, useRouter } from 'expo-router';
+import { Stack } from 'expo-router';
 import { ShareIntentModule, ShareIntentProvider } from 'expo-share-intent';
 import { useEffect } from 'react';
 import { Alert, AppState } from 'react-native';
@@ -11,8 +11,6 @@ import { tomarRutaCompartida } from '../src/compartir/pendiente';
 import { ProveedorApp } from '../src/contexto/ProveedorApp';
 
 export default function LayoutRaiz() {
-  const router = useRouter();
-
   // Al abrir: si esta build ya vino de una OTA distinta a la ultima vista,
   // avisa de las novedades; despues busca si hay otra actualizacion nueva.
   useEffect(() => {
@@ -55,7 +53,6 @@ export default function LayoutRaiz() {
     <ShareIntentProvider
       options={{
         resetOnBackground: true,
-        onResetShareIntent: () => router.replace('/'),
       }}>
       <ProveedorApp>
         <Stack screenOptions={{ headerShown: false }} />
