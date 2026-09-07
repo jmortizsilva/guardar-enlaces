@@ -13,6 +13,7 @@
 import MobileCoreServices
 import Security
 import UIKit
+import UniformTypeIdentifiers
 
 class ShareViewController: UIViewController {
   let hostAppGroupIdentifier: String = "<GROUPIDENTIFIER>"
