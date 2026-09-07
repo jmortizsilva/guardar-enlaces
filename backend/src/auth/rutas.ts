@@ -19,6 +19,18 @@ import { iniciarSesion, renovarSesion, revocarSesion, revocarTodasLasSesiones } 
 import { obtenerOCrearUsuario, obtenerUsuarioPorId } from './usuarios';
 
 const PROVEEDORES: Proveedor[] = ['google', 'apple'];
+
+// Apple puede estar en PROVEEDORES sin credenciales configuradas todavia (ver
+// comprobarConfiguracionMinima en index.ts): sin esto, pedir ese proveedor
+// redirigiria a Apple con un client_id vacio en vez de fallar con un error claro.
+function proveedorConfigurado(proveedor: Proveedor): boolean {
+  if (proveedor === 'google') {
+    return Boolean(config.google.clientId && config.google.clientSecret);
+  }
+  return Boolean(
+    config.apple.clientId && config.apple.teamId && config.apple.keyId && config.apple.privateKey,
+  );
+}
 const MODOS: ModoLogin[] = ['deeplink', 'polling'];
 
 function redirectUriPara(proveedor: string): string {
@@ -67,6 +79,9 @@ export async function registrarRutasAuth(app: FastifyInstance): Promise<void> {
 
       if (!proveedor || !PROVEEDORES.includes(proveedor as Proveedor)) {
         return reply.code(400).send({ error: 'proveedor no soportado' });
+      }
+      if (!proveedorConfigurado(proveedor as Proveedor)) {
+        return reply.code(503).send({ error: 'proveedor no configurado todavia' });
       }
       if (!modo || !MODOS.includes(modo)) {
         return reply.code(400).send({ error: 'modo no soportado' });
