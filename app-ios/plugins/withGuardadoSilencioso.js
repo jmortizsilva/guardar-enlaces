@@ -32,12 +32,17 @@ function withEntitlementsAppPrincipal(config) {
 /**
  * El fichero ShareExtension.entitlements y ShareViewController.swift los
  * escribe expo-share-intent dentro de un mod "xcodeproj" (ver su
- * withIosShareExtensionXcodeTarget.js). Los mods "dangerous" SIEMPRE se
- * ejecutan antes que los "xcodeproj" (precedencia fija de
- * @expo/config-plugins, no depende del orden en app.json) — por eso este
- * plugin usa tambien withXcodeProject, para quedar despues del suyo en la
- * misma categoria (ahi si manda el orden de "plugins" en app.json: este
- * plugin va listado despues de "expo-share-intent").
+ * withIosShareExtensionXcodeTarget.js) — por eso este plugin usa tambien
+ * withXcodeProject, para quedar despues del suyo en la misma categoria.
+ *
+ * OJO al orden en app.json: los mods del mismo tipo se ejecutan en orden
+ * INVERSO al de la lista "plugins" (cada withMod nuevo envuelve al
+ * anterior y llama a su propia accion ANTES de delegar en el `nextMod` —
+ * ver @expo/config-plugins/build/plugins/withMod.js, la funcion `action`
+ * de withMod). Comprobado en la practica: con este plugin DESPUES de
+ * "expo-share-intent" fallaba con ENOENT porque corria ANTES que ellos.
+ * Por eso "./plugins/withGuardadoSilencioso" va ANTES que "expo-share-intent"
+ * en la lista de app.json, aunque logicamente "dependa" de el.
  */
 function withExtensionSobrescrita(config) {
   return withXcodeProject(config, async (config) => {

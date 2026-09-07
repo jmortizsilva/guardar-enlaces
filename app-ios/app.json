@@ -32,6 +32,7 @@
       "expo-sqlite",
       "expo-secure-store",
       "expo-web-browser",
+      "./plugins/withGuardadoSilencioso",
       [
         "expo-share-intent",
         {
@@ -41,8 +42,7 @@
           },
           "iosAppGroupIdentifier": "group.com.jmortizsilva.guardarenlaces"
         }
-      ],
-      "./plugins/withGuardadoSilencioso"
+      ]
     ],
     "experiments": {
       "typedRoutes": true
