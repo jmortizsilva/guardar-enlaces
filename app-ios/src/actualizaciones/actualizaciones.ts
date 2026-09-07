@@ -12,8 +12,9 @@ const CLAVE_ULTIMO_ID_VISTO = 'ultimoUpdateIdVisto';
  * distinto al último visto.
  */
 export const NOVEDADES =
-  'Guardar un enlace desde la hoja de compartir de iOS, filtro de etiquetas ' +
-  'como desplegable y la pantalla de Añadir ahora se abre como una tarjeta.';
+  'Compartir un enlace desde Safari ya guarda de verdad y comprueba la URL ' +
+  'sola, sin botón; las etiquetas en Añadir se eligen ahora desde un ' +
+  'cuadro, no con un botón por cada una.';
 
 let comprobando = false;
 
