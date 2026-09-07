@@ -12,9 +12,9 @@ const CLAVE_ULTIMO_ID_VISTO = 'ultimoUpdateIdVisto';
  * distinto al último visto.
  */
 export const NOVEDADES =
-  'Compartir un enlace desde Safari ya guarda de verdad y comprueba la URL ' +
-  'sola, sin botón; las etiquetas en Añadir se eligen ahora desde un ' +
-  'cuadro, no con un botón por cada una.';
+  'El guardado silencioso al compartir ya rellena el título del enlace, no ' +
+  'solo la URL. Y la lista principal se puede refrescar arrastrando hacia ' +
+  'abajo (o con el gesto de refrescar de VoiceOver).';
 
 let comprobando = false;
 

@@ -19,7 +19,7 @@ import { ESPACIADO, useTema } from '../../src/interfaz/tema';
 export default function Lista() {
   const tema = useTema();
   const { elementos, sincronizando } = useElementos();
-  const { eliminar, editarEtiquetas } = useAcciones();
+  const { eliminar, editarEtiquetas, sincronizar } = useAcciones();
   const {
     hasShareIntent,
     shareIntent,
@@ -105,6 +105,8 @@ export default function Lista() {
         data={visibles}
         keyExtractor={(elemento) => elemento.id}
         contentContainerStyle={estilos.lista}
+        refreshing={sincronizando}
+        onRefresh={sincronizar}
         ListEmptyComponent={
           <Text style={{ color: tema.textoSecundario }}>No hay enlaces guardados todavía.</Text>
         }

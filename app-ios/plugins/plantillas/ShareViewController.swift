@@ -199,15 +199,23 @@ class ShareViewController: UIViewController {
     return Renovacion(tokenAcceso: nuevoAcceso, tokenRefresco: nuevoRefresco)
   }
 
+  /// Best-effort: si /metadatos falla o tarda, se guarda igual con los campos
+  /// a null (como un elemento nuevo antes de comprobar en la app) en vez de
+  /// perder el enlace por no haber podido enriquecerlo.
+  private func obtenerMetadatos(url: String, tokenAcceso: String) async -> [String: Any]? {
+    await peticionJson(ruta: "/metadatos", cuerpo: ["url": url], tokenAcceso: tokenAcceso)
+  }
+
   private func guardarElemento(url: String, tokenAcceso: String) async -> Bool {
+    let metadatos = await obtenerMetadatos(url: url, tokenAcceso: tokenAcceso)
     let ahora = Int64(Date().timeIntervalSince1970 * 1000)
     let elemento: [String: Any] = [
       "id": UUID().uuidString,
       "url": url,
-      "titulo": NSNull(),
-      "descripcion": NSNull(),
-      "imagenUrl": NSNull(),
-      "tipo": "enlace",
+      "titulo": metadatos?["titulo"] ?? NSNull(),
+      "descripcion": metadatos?["descripcion"] ?? NSNull(),
+      "imagenUrl": metadatos?["imagenUrl"] ?? NSNull(),
+      "tipo": metadatos?["tipo"] as? String ?? "enlace",
       "etiquetas": [],
       "creadoEn": ahora,
       "actualizadoEn": ahora,
