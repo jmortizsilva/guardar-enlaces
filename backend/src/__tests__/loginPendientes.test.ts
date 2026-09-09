@@ -56,7 +56,7 @@ describe('resolverLoginPendiente / consumirCodigoCanje', () => {
 describe('marcarErrorLoginPendiente', () => {
   it('deja el error visible para quien consulte el estado', () => {
     crearLoginPendiente('estado1', 'polling', null);
-    marcarErrorLoginPendiente('estado1', 'sin_invitacion');
-    expect(buscarLoginPendiente('estado1')?.error).toBe('sin_invitacion');
+    marcarErrorLoginPendiente('estado1', 'sin_email');
+    expect(buscarLoginPendiente('estado1')?.error).toBe('sin_email');
   });
 });

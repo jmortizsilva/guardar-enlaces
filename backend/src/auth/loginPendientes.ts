@@ -2,7 +2,7 @@ import { randomBytes } from 'node:crypto';
 import { obtenerBd } from '../db';
 
 // El "buzon" del login OAuth: /auth/iniciar crea la fila, /auth/callback/:proveedor la rellena
-// (codigo de canje + usuario, o un error si el correo no esta invitado), y /auth/estado (modo
+// (codigo de canje + usuario, o el motivo del fallo), y /auth/estado (modo
 // polling) o el redirect a esquema:// (modo deeplink) se la entregan al cliente. /auth/canjear la
 // consume una sola vez. Vida corta: se limpia sola por caducidad, no hace falta tarea de fondo
 // para el MVP (una purga periodica queda para la Fase 2).

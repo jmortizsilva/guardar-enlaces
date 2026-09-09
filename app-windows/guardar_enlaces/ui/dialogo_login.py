@@ -1,4 +1,4 @@
-"""Inicio de sesion DE DESARROLLO: pide un correo ya invitado y llama a
+"""Inicio de sesion DE DESARROLLO: pide un correo cualquiera y llama a
 POST /auth/dev-login (solo funciona si el servidor tiene
 PERMITIR_LOGIN_DEV=true). Sustituye temporalmente al flujo real con Google/
 Apple (ver docs/CONTRATO-API.md) mientras no haya credenciales OAuth
@@ -28,7 +28,7 @@ class DialogoLogin(wx.Dialog):
 
         aviso = wx.StaticText(
             panel,
-            label="Modo de desarrollo: escribe un correo ya invitado.\n"
+            label="Modo de desarrollo: escribe un correo cualquiera.\n"
             "No pasa por Google ni Apple todavía.",
         )
         sizer.Add(aviso, 0, wx.ALL, 12)

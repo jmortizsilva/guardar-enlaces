@@ -9,11 +9,11 @@ vi.mock('../auth/oauth', async () => {
   return {
     ...real,
     intercambiarCodigoGoogle: vi.fn(async (codigo: string) => {
-      if (codigo === 'codigo-invitado') {
-        return { proveedor: 'google' as const, idProveedor: 'sub-invitado', email: 'invitado@x.com', emailVerificado: true };
+      if (codigo === 'codigo-con-email') {
+        return { proveedor: 'google' as const, idProveedor: 'sub-1', email: 'persona@x.com', emailVerificado: true };
       }
-      if (codigo === 'codigo-no-invitado') {
-        return { proveedor: 'google' as const, idProveedor: 'sub-otro', email: 'nadie@x.com', emailVerificado: true };
+      if (codigo === 'codigo-sin-email') {
+        return { proveedor: 'google' as const, idProveedor: 'sub-2', email: null, emailVerificado: false };
       }
       throw new Error('codigo de prueba desconocido');
     }),
@@ -25,7 +25,6 @@ vi.mock('../auth/oauth', async () => {
 
 let app: FastifyInstance;
 let inicializarBd: (typeof import('../db'))['inicializarBd'];
-let invitar: (typeof import('../auth/usuarios'))['invitar'];
 
 beforeAll(async () => {
   process.env.ENLACES_TOKEN_SECRET = SECRETO;
@@ -35,7 +34,6 @@ beforeAll(async () => {
 
   const db = await import('../db');
   ({ inicializarBd } = db);
-  ({ invitar } = await import('../auth/usuarios'));
   const { registrarRutasAuth } = await import('../auth/rutas');
 
   app = Fastify();
@@ -45,7 +43,6 @@ beforeAll(async () => {
 
 beforeEach(() => {
   inicializarBd(':memory:');
-  invitar('invitado@x.com');
 });
 
 describe('GET /auth/iniciar', () => {
@@ -77,7 +74,7 @@ describe('GET /auth/iniciar', () => {
   });
 });
 
-describe('flujo completo (modo deeplink, usuario invitado)', () => {
+describe('flujo completo (modo deeplink)', () => {
   it('callback redirige al esquema con un codigo que se canjea por tokens', async () => {
     await app.inject({
       method: 'GET',
@@ -86,7 +83,7 @@ describe('flujo completo (modo deeplink, usuario invitado)', () => {
 
     const callback = await app.inject({
       method: 'GET',
-      url: '/auth/callback/google?code=codigo-invitado&state=e2',
+      url: '/auth/callback/google?code=codigo-con-email&state=e2',
     });
     expect(callback.statusCode).toBe(302);
     const destino = new URL(callback.headers.location as string);
@@ -101,13 +98,13 @@ describe('flujo completo (modo deeplink, usuario invitado)', () => {
     });
     expect(canjear.statusCode).toBe(200);
     const cuerpo = canjear.json();
-    expect(cuerpo.usuario.email).toBe('invitado@x.com');
+    expect(cuerpo.usuario.email).toBe('persona@x.com');
     expect(cuerpo.tokenAcceso).toBeTruthy();
     expect(cuerpo.tokenRefresco).toBeTruthy();
   });
 });
 
-describe('flujo completo (modo polling, usuario NO invitado)', () => {
+describe('flujo completo (modo polling, proveedor que no da correo)', () => {
   it('callback marca error y /auth/estado lo refleja', async () => {
     await app.inject({
       method: 'GET',
@@ -116,12 +113,12 @@ describe('flujo completo (modo polling, usuario NO invitado)', () => {
 
     const callback = await app.inject({
       method: 'GET',
-      url: '/auth/callback/google?code=codigo-no-invitado&state=e3',
+      url: '/auth/callback/google?code=codigo-sin-email&state=e3',
     });
     expect(callback.statusCode).toBe(200);
 
     const estado = await app.inject({ method: 'GET', url: '/auth/estado?estado=e3' });
-    expect(estado.json()).toEqual({ listo: true, error: 'sin_invitacion' });
+    expect(estado.json()).toEqual({ listo: true, error: 'sin_email' });
   });
 });
 
@@ -142,7 +139,7 @@ describe('POST /auth/renovar y logout', () => {
       method: 'GET',
       url: '/auth/iniciar?proveedor=google&modo=polling&estado=e4',
     });
-    await app.inject({ method: 'GET', url: '/auth/callback/google?code=codigo-invitado&state=e4' });
+    await app.inject({ method: 'GET', url: '/auth/callback/google?code=codigo-con-email&state=e4' });
     const { codigoCanje } = (await app.inject({ method: 'GET', url: '/auth/estado?estado=e4' })).json();
     const { tokenRefresco } = (
       await app.inject({ method: 'POST', url: '/auth/canjear', payload: { codigoCanje } })

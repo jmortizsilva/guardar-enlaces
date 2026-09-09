@@ -25,7 +25,7 @@ $env:GUARDAR_ENLACES_API = "https://api.jmortiz.es"
 
 Write-Host ""
 Write-Host "Abriendo la app contra el backend compartido (api.jmortiz.es)." -ForegroundColor Green
-Write-Host "Inicia sesion con uno de los correos invitados." -ForegroundColor Green
+Write-Host "Inicia sesion con Google o Apple; la cuenta se crea sola la primera vez." -ForegroundColor Green
 Write-Host ""
 
 & ".\venv\Scripts\python.exe" -m guardar_enlaces

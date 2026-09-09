@@ -19,8 +19,8 @@ pytest                              # tests de la logica pura (modelo.py)
 La app apunta al backend por la variable de entorno `GUARDAR_ENLACES_API`
 (por defecto `http://localhost:8081`). Contra un servidor con
 `PERMITIR_LOGIN_DEV=true`, la pantalla de inicio de sesión pide solo un
-correo ya invitado (sin pasar por Google/Apple) — ver
-`docs/CONTRATO-API.md` en `../backend/`.
+correo, sin pasar por Google/Apple — ver `docs/CONTRATO-API.md` en
+`../backend/`.
 
 - `.\usar-servidor.ps1` — apunta al backend compartido en
   `https://api.jmortiz.es`, sin necesidad de tener nada corriendo en este

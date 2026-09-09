@@ -32,30 +32,28 @@ describe('POST /auth/dev-login con PERMITIR_LOGIN_DEV=true', () => {
     process.env.ENLACES_TOKEN_SECRET = SECRETO;
     const db = await import('../db');
     db.inicializarBd(':memory:');
-    const { invitar } = await import('../auth/usuarios');
-    invitar('invitado@x.com');
     const { registrarRutasAuth } = await import('../auth/rutas');
     app = Fastify();
     await app.register(registrarRutasAuth);
   });
 
-  it('devuelve tokens para un correo invitado', async () => {
+  it('crea la cuenta y devuelve tokens para cualquier correo', async () => {
     const res = await app.inject({
       method: 'POST',
       url: '/auth/dev-login',
-      payload: { email: 'invitado@x.com' },
+      payload: { email: 'persona@x.com' },
     });
     expect(res.statusCode).toBe(200);
-    expect(res.json().usuario.email).toBe('invitado@x.com');
+    expect(res.json().usuario.email).toBe('persona@x.com');
     expect(res.json().tokenAcceso).toBeTruthy();
   });
 
-  it('rechaza un correo no invitado (403)', async () => {
+  it('rechaza algo que no sea un correo (400)', async () => {
     const res = await app.inject({
       method: 'POST',
       url: '/auth/dev-login',
-      payload: { email: 'nadie@x.com' },
+      payload: { email: 'no-es-un-correo' },
     });
-    expect(res.statusCode).toBe(403);
+    expect(res.statusCode).toBe(400);
   });
 });

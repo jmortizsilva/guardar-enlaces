@@ -50,7 +50,7 @@ cambia a 8090 a propósito, para no chocar con el puerto por defecto de Metro
 máquina.
 
 No hay secretos reales en este repositorio: en local, `PERMITIR_LOGIN_DEV`
-salta el login de Google/Apple con solo un correo invitado.
+salta el login de Google/Apple con solo un correo.
 
 ### app-ios
 
@@ -98,16 +98,20 @@ de arrancar, o usar `app-windows/probar-local.ps1`, que ya lo fija.
 Además de correr el backend en local, hay una instancia compartida en
 `https://api.jmortiz.es` (Podman rootless, contenedor `guardar-enlaces`,
 mismo `Dockerfile` de este repo) para que los tres probéis contra los mismos
-datos. Los tres correos de arriba ya están invitados ahí.
+datos. El alta es abierta: entrar con Google o Apple crea la cuenta sola.
 
-**Riesgo aceptado, pendiente de arreglar:** ese backend corre con
+**Riesgo abierto, ahora mayor que antes:** ese backend corre con
 `PERMITIR_LOGIN_DEV=true` y las credenciales de Google/Apple todavía en
-placeholder (`x`), porque no hay OAuth real configurado aún. Eso deja activa
-`POST /auth/dev-login`, que da sesión con solo el correo (sin contraseña) a
-cualquiera que conozca uno de los tres correos invitados — decisión consciente
-para poder probar ya, no un descuido. **En cuanto se configure Sign in con
-Google y/o Apple, hay que desplegar con `PERMITIR_LOGIN_DEV=false` y las
-credenciales reales**, y quitar esta nota.
+placeholder (`x`), porque no hay OAuth real configurado aún — comprobado el
+2026-09-09: `/auth/iniciar` redirige a Google con `client_id=x`, así que el
+login real **no puede funcionar todavía** contra este servidor.
+
+Eso deja activa `POST /auth/dev-login`, que da sesión con solo escribir un
+correo, sin contraseña. Antes eso lo acotaba la lista de invitados; desde que
+el alta es abierta, **cualquiera que dé con la URL puede crearse una cuenta
+con el correo que quiera** y usar el servidor. **Hay que desplegar con
+`PERMITIR_LOGIN_DEV=false` en cuanto haya credenciales reales de Google**, y
+quitar esta nota.
 
 ## Verificar antes de dar nada por hecho
 

@@ -20,8 +20,12 @@ Sin ella, o con un token caducado/inválido: `401 {"error": "..."}`.
 ## Autenticación (Google / Apple, sin contraseñas)
 
 Ni la app iOS ni la de Windows hablan directamente con Google o Apple: todo el
-intercambio OAuth lo hace el servidor. Solo se entra con una cuenta cuyo
-correo esté en la lista de invitados (`npm run crear-invitacion -- correo`).
+intercambio OAuth lo hace el servidor. **El alta es abierta**: entrar con
+Google o Apple la primera vez crea la cuenta, sin invitación previa.
+
+La identidad es el par (proveedor, `sub`), nunca el correo: el `sub` del
+proveedor es estable y el correo no. El mismo correo entrando por Google y por
+Apple son, por tanto, dos cuentas distintas con dos bibliotecas distintas.
 
 ### 1. `GET /auth/iniciar`
 
@@ -60,9 +64,9 @@ Resultado:
 - **`modo=polling`**: responde una página HTML simple; el resultado se
   consulta con el siguiente endpoint.
 
-`motivo` de error: `sin_invitacion` (el correo no está en la lista de
-invitados) o `fallo_intercambio` (el proveedor rechazó el código, o error de
-red).
+`motivo` de error: `sin_email` (el proveedor no dio ningún correo, y hace
+falta para crear la cuenta) o `fallo_intercambio` (el proveedor rechazó el
+código, o error de red).
 
 ### 3. `GET /auth/estado` (solo modo `polling`, para Windows)
 
@@ -74,7 +78,7 @@ Query: `estado=<el mismo valor usado en /auth/iniciar>`.
 // exito
 { "listo": true, "codigoCanje": "..." }
 // fallo (login rechazado)
-{ "listo": true, "error": "sin_invitacion" }
+{ "listo": true, "error": "sin_email" }
 ```
 
 `404` si el `estado` es desconocido o ya caducó (vida de ~5 minutos).
@@ -125,11 +129,11 @@ pierde un dispositivo.
 ### 8. `POST /auth/dev-login` — SOLO DESARROLLO, no existe salvo `PERMITIR_LOGIN_DEV=true`
 
 ```json
-{ "email": "invitado@ejemplo.com" }
+{ "email": "persona@ejemplo.com" }
 ```
 
 → mismo formato de respuesta que `/auth/canjear`. Da sesión sin pasar por
-Google/Apple (sigue exigiendo que el correo esté invitado). Pensado para
+Google/Apple (crea la cuenta si no existía, igual que el flujo real). Pensado para
 construir y probar los clientes antes de tener credenciales OAuth reales;
 nunca debe estar activo en un servidor real.
 

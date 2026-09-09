@@ -13,8 +13,10 @@ verdad para los dos clientes).
 npm install
 npm run dev          # servidor con recarga en caliente (tsx watch)
 npm run verificar    # tsc --noEmit && eslint . && vitest
-npm run crear-invitacion -- correo@ejemplo.com
 ```
+
+El alta es abierta: entrar con Google o Apple la primera vez crea la cuenta.
+No hay lista de invitados ni ningún paso previo que dar en el servidor.
 
 ## Variables de entorno
 
@@ -26,6 +28,6 @@ npm run crear-invitacion -- correo@ejemplo.com
 - `URL_PUBLICA` — URL HTTPS pública del servidor, para construir las URIs de
   callback de OAuth (`${URL_PUBLICA}/auth/callback/google`, etc.)
 - `PERMITIR_LOGIN_DEV` — **solo desarrollo**, nunca en un despliegue real.
-  A `true` activa `POST /auth/dev-login {email}`, que da sesión sin pasar por
-  Google/Apple (respetando igualmente la lista de invitados). Pensado para
-  construir y probar los clientes antes de tener credenciales OAuth reales.
+  A `true` activa `POST /auth/dev-login {email}`, que crea la cuenta y da
+  sesión sin pasar por Google/Apple. Pensado para construir y probar los
+  clientes sin credenciales OAuth reales.

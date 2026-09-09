@@ -104,10 +104,10 @@ describe('errores', () => {
   });
 
   it('un 403 lanza ErrorApi con el mensaje del servidor', async () => {
-    fetchMock.mockResolvedValue(respuestaFake(403, { error: 'ese correo no esta invitado' }));
+    fetchMock.mockResolvedValue(respuestaFake(403, { error: 'sesion no valida' }));
 
     await expect(cliente.devLogin('nadie@x.com')).rejects.toMatchObject({
-      message: expect.stringContaining('no esta invitado'),
+      message: expect.stringContaining('sesion no valida'),
       statusCode: 403,
     });
   });

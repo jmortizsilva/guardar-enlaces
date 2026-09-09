@@ -3,11 +3,6 @@
 // contenedor distintos): nada de esto se mezcla con las tablas de aquel servidor.
 
 export const SCHEMA_SQL = `
-CREATE TABLE IF NOT EXISTS invitados (
-  email TEXT PRIMARY KEY,
-  invitado_en INTEGER NOT NULL
-);
-
 CREATE TABLE IF NOT EXISTS usuarios (
   id INTEGER PRIMARY KEY AUTOINCREMENT,
   proveedor TEXT NOT NULL,

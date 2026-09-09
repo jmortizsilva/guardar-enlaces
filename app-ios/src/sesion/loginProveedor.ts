@@ -35,8 +35,8 @@ export async function generarEstado(
 
 /** Traduce los motivos de error del contrato a algo que se pueda leer en voz alta. */
 export function mensajeDeError(motivo: string): string {
-  if (motivo === 'sin_invitacion') {
-    return 'Esa cuenta no tiene acceso. Pide que te inviten y vuelve a intentarlo.';
+  if (motivo === 'sin_email') {
+    return 'Tu cuenta no ha dado ningún correo, y hace falta para crear la cuenta.';
   }
   if (motivo === 'fallo_intercambio') {
     return 'Google rechazó el inicio de sesión. Vuelve a intentarlo.';

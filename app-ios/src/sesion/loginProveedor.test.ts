@@ -12,11 +12,11 @@ describe('leerCallback', () => {
     });
   });
 
-  it('sin invitacion explica que hay que pedir acceso', () => {
-    const resultado = leerCallback('guardarenlaces://auth-callback?error=sin_invitacion');
+  it('el proveedor sin correo se explica con sus palabras', () => {
+    const resultado = leerCallback('guardarenlaces://auth-callback?error=sin_email');
 
     expect(resultado.estado).toBe('error');
-    expect(resultado).toEqual({ estado: 'error', mensaje: mensajeDeError('sin_invitacion') });
+    expect(resultado).toEqual({ estado: 'error', mensaje: mensajeDeError('sin_email') });
   });
 
   it('sin codigo ni error conocido cae en el mensaje generico', () => {

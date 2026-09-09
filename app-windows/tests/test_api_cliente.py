@@ -55,10 +55,10 @@ class TestPeticionesCorrectas:
 
 class TestErrores:
     def test_un_403_lanza_errorapi_con_el_mensaje_del_servidor(self, cliente):
-        with patch("requests.post", return_value=_respuesta(403, {"error": "ese correo no esta invitado"})):
+        with patch("requests.post", return_value=_respuesta(403, {"error": "sesion no valida"})):
             with pytest.raises(ErrorApi) as exc:
                 cliente.dev_login("nadie@x.com")
-        assert "no esta invitado" in str(exc.value)
+        assert "sesion no valida" in str(exc.value)
         assert exc.value.status_code == 403
 
     def test_un_fallo_de_red_lanza_errorapi(self, cliente):

@@ -8,9 +8,9 @@ import { Boton } from '../src/interfaz/Boton';
 import { ESPACIADO, useTema } from '../src/interfaz/tema';
 
 /**
- * Login con Google (ver backend/docs/CONTRATO-API.md). Solo entra quien tenga
- * el correo en la lista de invitados del servidor; a quien no, el backend le
- * devuelve "sin_invitacion" y aqui se cuenta con esas palabras.
+ * Login con Google (ver backend/docs/CONTRATO-API.md). El alta es abierta:
+ * entrar con Google la primera vez ES crear la cuenta, no hace falta que nadie
+ * invite antes.
  *
  * El consentimiento se abre en una hoja del sistema (ASWebAuthenticationSession),
  * fuera de la app: iOS pregunta antes si se permite usar google.com para iniciar

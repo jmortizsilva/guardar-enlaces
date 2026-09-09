@@ -7,28 +7,20 @@ export interface Usuario {
   proveedor: string;
 }
 
-export function estaInvitado(email: string): boolean {
-  const fila = obtenerBd()
-    .prepare('SELECT 1 FROM invitados WHERE email = ?')
-    .get(email.toLowerCase());
-  return fila !== undefined;
-}
-
-export function invitar(email: string, ahora: () => number = () => Date.now()): void {
-  obtenerBd()
-    .prepare('INSERT OR IGNORE INTO invitados (email, invitado_en) VALUES (?, ?)')
-    .run(email.toLowerCase(), ahora());
-}
-
 interface FilaUsuario {
   id: number;
   email: string;
   proveedor: string;
 }
 
-// Busca el usuario por (proveedor, idProveedor); si no existe, lo crea, PERO SOLO SI su email
-// esta en la lista de invitados. Devuelve undefined si no tiene invitacion: la puerta de entrada
-// al sistema sin tener que gestionar contrasenas (ver contexto en docs/CONTRATO-API.md).
+// Busca el usuario por (proveedor, idProveedor); si no existe, lo crea. El registro es abierto:
+// entrar con Google o Apple la primera vez ES darse de alta, no hace falta que nadie invite.
+//
+// La identidad es el par (proveedor, idProveedor), nunca el correo: el "sub" del proveedor es
+// estable y el correo no (se puede cambiar en Google, y Apple da un alias de reenvio distinto por
+// aplicacion). Por eso el mismo correo en Google y en Apple son dos cuentas distintas.
+//
+// Solo devuelve undefined si el proveedor no da correo: la columna email es NOT NULL.
 export function obtenerOCrearUsuario(
   perfil: PerfilOAuth,
   ahora: () => number = () => Date.now(),
@@ -41,7 +33,7 @@ export function obtenerOCrearUsuario(
     return existente;
   }
 
-  if (!perfil.email || !estaInvitado(perfil.email)) {
+  if (!perfil.email) {
     return undefined;
   }
 

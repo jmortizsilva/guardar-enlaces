@@ -13,9 +13,11 @@ class UrlNoPermitidaError extends Error {}
 // Nota de seguridad: esto resuelve el DNS UNA VEZ para comprobar que no es una IP privada, pero
 // `fetch()` vuelve a resolver el DNS el solo para conectar. Entre medias hay una ventana teorica
 // de "DNS rebinding" (el dominio podria cambiar de IP justo despues de la comprobacion). Cerrarlo
-// del todo exigiria un Agent/dispatcher que fije la conexion a la IP ya validada; para el tamano y
-// el modelo de amenaza de este proyecto (grupo cerrado de invitados, no un servicio publico) no
-// compensa esa complejidad ahora — mitigacion basica, documentada, no exhaustiva.
+// del todo exigiria un Agent/dispatcher que fije la conexion a la IP ya validada; para el tamano
+// de este proyecto no compensa esa complejidad ahora — mitigacion basica, documentada, no
+// exhaustiva. OJO: desde que el alta es abierta (cualquiera con cuenta de Google o Apple entra),
+// esta ruta la puede llamar cualquiera, no un grupo cerrado como cuando se escribio esto; sigue
+// exigiendo sesion y limite de peticiones, pero el atacante ya no tiene que estar invitado.
 async function comprobarNoEsIpPrivada(hostname: string): Promise<void> {
   const direcciones = await lookup(hostname, { all: true });
   if (direcciones.some((d) => esIpPrivada(d.address))) {

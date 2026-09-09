@@ -12,8 +12,7 @@
     "lint": "eslint .",
     "formatear": "eslint . --fix",
     "test": "vitest run",
-    "verificar": "npm run comprobar-tipos && npm run lint && npm test",
-    "crear-invitacion": "tsx src/scripts/crearInvitacion.ts"
+    "verificar": "npm run comprobar-tipos && npm run lint && npm test"
   },
   "dependencies": {
     "@fastify/formbody": "^8.0.2",

@@ -141,7 +141,8 @@ export async function registrarRutasAuth(app: FastifyInstance): Promise<void> {
           : await intercambiarCodigoApple(code, redirectUriPara(proveedor));
       const usuario = obtenerOCrearUsuario(perfil);
       if (!usuario) {
-        error = 'sin_invitacion';
+        // Unico motivo posible: el proveedor no dio correo (el alta es abierta).
+        error = 'sin_email';
       } else {
         codigoCanje = resolverLoginPendiente(state, usuario.id);
       }
@@ -165,8 +166,8 @@ export async function registrarRutasAuth(app: FastifyInstance): Promise<void> {
         ? paginaHtml('Sesion iniciada', 'Ya puedes volver a la aplicacion.')
         : paginaHtml(
             'No se pudo iniciar sesion',
-            error === 'sin_invitacion'
-              ? 'Tu cuenta no tiene acceso. Pide que te inviten.'
+            error === 'sin_email'
+              ? 'Tu proveedor no ha dado ningun correo, y hace falta para crear la cuenta.'
               : 'Ha fallado el inicio de sesion, vuelve a intentarlo desde la aplicacion.',
           ),
     );
@@ -247,9 +248,9 @@ export async function registrarRutasAuth(app: FastifyInstance): Promise<void> {
   });
 
   // SOLO DESARROLLO: la ruta ni siquiera se registra salvo que PERMITIR_LOGIN_DEV=true, para que
-  // no pueda colarse en un despliegue real por descuido. Crea/reutiliza el usuario (respetando la
-  // lista de invitados, igual que el flujo real) y devuelve tokens sin pasar por Google/Apple.
-  // Pensado para construir y probar los clientes antes de tener credenciales OAuth reales.
+  // no pueda colarse en un despliegue real por descuido. Crea/reutiliza el usuario igual que el
+  // flujo real y devuelve tokens sin pasar por Google/Apple. Pensado para construir y probar los
+  // clientes sin credenciales OAuth reales.
   if (config.permitirLoginDev) {
     app.post<{ Body: { email?: unknown } }>('/auth/dev-login', async (request, reply) => {
       const email = request.body?.email;
@@ -263,7 +264,7 @@ export async function registrarRutasAuth(app: FastifyInstance): Promise<void> {
         emailVerificado: true,
       });
       if (!usuario) {
-        return reply.code(403).send({ error: 'ese correo no esta invitado' });
+        return reply.code(400).send({ error: 'falta "email"' });
       }
       const tokens = iniciarSesion(usuario.id, 'dev-login');
       return { ...tokens, usuario };
