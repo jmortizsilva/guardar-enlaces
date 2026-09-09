@@ -59,11 +59,45 @@ export class AlmacenLocal {
         clave TEXT PRIMARY KEY,
         valor INTEGER NOT NULL
       );
+      CREATE TABLE IF NOT EXISTS estado_texto (
+        clave TEXT PRIMARY KEY,
+        valor TEXT NOT NULL
+      );
     `);
   }
 
   cerrar(): void {
     this.db.closeSync();
+  }
+
+  /**
+   * Borra la cache entera: elementos, outbox, cursor y dueno. Se llama al
+   * cerrar sesion y al entrar alguien distinto (ver ProveedorApp).
+   */
+  vaciar(): void {
+    this.db.execSync(`
+      DELETE FROM elementos;
+      DELETE FROM outbox;
+      DELETE FROM estado_sincronizacion;
+      DELETE FROM estado_texto;
+    `);
+  }
+
+  // --- dueno de la cache (que cuenta, y de que servidor, dejo estos datos) ---
+
+  duenoActual(): string | null {
+    const fila = this.db.getFirstSync<{ valor: string }>(
+      "SELECT valor FROM estado_texto WHERE clave = 'dueno'",
+    );
+    return fila?.valor ?? null;
+  }
+
+  fijarDueno(valor: string): void {
+    this.db.runSync(
+      `INSERT INTO estado_texto (clave, valor) VALUES ('dueno', ?)
+       ON CONFLICT(clave) DO UPDATE SET valor = excluded.valor`,
+      [valor],
+    );
   }
 
   // --- cursor de sincronizacion (ultimo "servidorEn" recibido) ---

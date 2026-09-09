@@ -30,6 +30,23 @@ describe('peticiones correctas', () => {
     cliente = new ClienteApi('http://localhost:8081');
   });
 
+  it('canjear manda el codigo de canje a /auth/canjear', async () => {
+    fetchMock.mockResolvedValue(respuestaFake(200, { tokenAcceso: 't' }));
+
+    await cliente.canjear('c1');
+
+    const [url, opciones] = fetchMock.mock.calls[0];
+    expect(url).toBe('http://localhost:8081/auth/canjear');
+    expect(JSON.parse(opciones.body)).toEqual({ codigoCanje: 'c1' });
+  });
+
+  it('urlIniciarLogin arma la URL del contrato sin pedir nada', () => {
+    expect(cliente.urlIniciarLogin('google', 'e1', 'guardarenlaces')).toBe(
+      'http://localhost:8081/auth/iniciar?proveedor=google&modo=deeplink&estado=e1&esquema=guardarenlaces',
+    );
+    expect(fetchMock).not.toHaveBeenCalled();
+  });
+
   it('devLogin llama a la ruta correcta', async () => {
     fetchMock.mockResolvedValue(respuestaFake(200, { tokenAcceso: 't' }));
 

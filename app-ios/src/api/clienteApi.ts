@@ -57,7 +57,26 @@ export class ClienteApi {
 
   // --- autenticacion ---
 
-  /** SOLO sirve si el servidor tiene PERMITIR_LOGIN_DEV=true. */
+  /**
+   * URL de arranque del login OAuth: no se pide desde aqui, se abre en el
+   * navegador (ver sesion/loginProveedor.ts). El servidor responde un 302 al
+   * consentimiento del proveedor.
+   */
+  urlIniciarLogin(proveedor: string, estado: string, esquema: string): string {
+    const parametros = new URLSearchParams({ proveedor, modo: 'deeplink', estado, esquema });
+    return `${this.urlBase}/auth/iniciar?${parametros.toString()}`;
+  }
+
+  /** Cambia el codigo de canje (un solo uso, ~60s de vida) por tokens de sesion. */
+  canjear(codigoCanje: string): Promise<RespuestaCanje> {
+    return this.post('/auth/canjear', { codigoCanje });
+  }
+
+  /**
+   * SOLO sirve si el servidor tiene PERMITIR_LOGIN_DEV=true. Ya no hay pantalla
+   * que lo use (el login es Google): queda como la unica forma de entrar contra
+   * backend/probar-local.ps1, que arranca con credenciales de Google falsas.
+   */
   devLogin(email: string): Promise<RespuestaCanje> {
     return this.post('/auth/dev-login', { email });
   }

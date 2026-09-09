@@ -1,6 +1,6 @@
 import { router } from 'expo-router';
 import { useState } from 'react';
-import { StyleSheet, Text, TextInput, View } from 'react-native';
+import { StyleSheet, Text, View } from 'react-native';
 
 import { anunciarImportante } from '../src/accesibilidad/anuncios';
 import { useSesion } from '../src/contexto/ProveedorApp';
@@ -8,63 +8,53 @@ import { Boton } from '../src/interfaz/Boton';
 import { ESPACIADO, useTema } from '../src/interfaz/tema';
 
 /**
- * Login DE DESARROLLO: pide un correo ya invitado y llama a
- * POST /auth/dev-login (solo funciona si el servidor tiene
- * PERMITIR_LOGIN_DEV=true). Sustituye temporalmente al flujo real con
- * Google/Apple (ver backend/docs/CONTRATO-API.md): useSesion().iniciarConDevLogin
- * vive detras de la misma interfaz que usara el login real, asi que
- * cambiarlo despues no toca el resto de la app.
+ * Login con Google (ver backend/docs/CONTRATO-API.md). Solo entra quien tenga
+ * el correo en la lista de invitados del servidor; a quien no, el backend le
+ * devuelve "sin_invitacion" y aqui se cuenta con esas palabras.
+ *
+ * El consentimiento se abre en una hoja del sistema (ASWebAuthenticationSession),
+ * fuera de la app: iOS pregunta antes si se permite usar google.com para iniciar
+ * sesion. Por eso el boton avisa de que se va a abrir Safari, para que el aviso
+ * del sistema no llegue de sorpresa.
  */
 export default function Login() {
   const tema = useTema();
   const sesion = useSesion();
-  const [correo, setCorreo] = useState('');
-  const [enviando, setEnviando] = useState(false);
+  const [entrando, setEntrando] = useState(false);
   const [error, setError] = useState('');
 
   const alEntrar = async () => {
-    if (!correo.includes('@')) {
-      setError('Escribe un correo válido.');
-      anunciarImportante('Escribe un correo válido.');
-      return;
-    }
-
-    setEnviando(true);
+    setEntrando(true);
     setError('');
     try {
-      await sesion.iniciarConDevLogin(correo.trim());
-      router.replace('/');
+      const resultado = await sesion.iniciarConGoogle();
+      if (resultado.estado === 'exito') {
+        router.replace('/');
+        return;
+      }
+      if (resultado.estado === 'error') {
+        setError(resultado.mensaje);
+        anunciarImportante(resultado.mensaje);
+      }
+      // 'cancelado' no se anuncia: lo ha hecho el usuario y, al cerrarse la
+      // hoja, VoiceOver ya vuelve a leer esta pantalla.
     } catch (fallo) {
       const mensaje = fallo instanceof Error ? fallo.message : 'No se pudo iniciar sesión.';
       setError(mensaje);
       anunciarImportante(mensaje);
     } finally {
-      setEnviando(false);
+      setEntrando(false);
     }
   };
 
   return (
     <View style={[estilos.contenedor, { backgroundColor: tema.fondo }]}>
-      <Text style={[estilos.aviso, { color: tema.textoSecundario }]}>
-        Modo de desarrollo: escribe un correo ya invitado. No pasa por Google ni Apple todavía.
+      <Text accessibilityRole="header" style={[estilos.titulo, { color: tema.texto }]}>
+        Guardar enlaces
       </Text>
-
-      <Text style={[estilos.etiquetaCampo, { color: tema.texto }]}>Correo electrónico</Text>
-      <TextInput
-        value={correo}
-        onChangeText={setCorreo}
-        placeholder="persona@ejemplo.com"
-        placeholderTextColor={tema.textoSecundario}
-        autoCapitalize="none"
-        autoCorrect={false}
-        keyboardType="email-address"
-        textContentType="emailAddress"
-        // El placeholder no basta como nombre accesible (mismo hallazgo que
-        // wx.TextCtrl.SetName() en app-windows): sin esto VoiceOver anuncia
-        // "campo de edicion" a secas.
-        accessibilityLabel="Correo electrónico"
-        style={[estilos.campo, { borderColor: tema.borde, color: tema.texto }]}
-      />
+      <Text style={[estilos.aviso, { color: tema.textoSecundario }]}>
+        Para usar la aplicación necesitas entrar con tu cuenta de Google.
+      </Text>
 
       {error ? (
         <Text accessibilityLiveRegion="polite" style={[estilos.error, { color: tema.peligro }]}>
@@ -72,7 +62,12 @@ export default function Login() {
         </Text>
       ) : null}
 
-      <Boton etiqueta="Entrar" alPulsar={alEntrar} ocupado={enviando} deshabilitado={!correo} />
+      <Boton
+        etiqueta="Entrar con Google"
+        alPulsar={alEntrar}
+        ocupado={entrando}
+        pista="Se abre Safari para confirmar tu cuenta y vuelves aquí al terminar"
+      />
     </View>
   );
 }
@@ -84,13 +79,7 @@ const estilos = StyleSheet.create({
     padding: ESPACIADO.grande,
     gap: ESPACIADO.medio,
   },
-  aviso: { fontSize: 15 },
-  etiquetaCampo: { fontSize: 15, fontWeight: '600' },
-  campo: {
-    borderWidth: 1,
-    borderRadius: 8,
-    padding: ESPACIADO.medio,
-    fontSize: 17,
-  },
+  titulo: { fontSize: 28, fontWeight: '700' },
+  aviso: { fontSize: 17 },
   error: { fontSize: 15 },
 });

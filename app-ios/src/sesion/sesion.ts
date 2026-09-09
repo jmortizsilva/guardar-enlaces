@@ -4,6 +4,19 @@
  */
 import { ClienteApi, ErrorApi, RespuestaCanje, UsuarioApi } from '../api/clienteApi';
 import * as credenciales from './credenciales';
+import {
+  ESQUEMA,
+  Proveedor,
+  ResultadoLogin,
+  generarEstado,
+  pedirCodigoCanje,
+} from './loginProveedor';
+
+/** Inyectables solo para las pruebas: en la app siempre son los de loginProveedor. */
+interface DependenciasLogin {
+  generarEstado: () => Promise<string>;
+  pedirCodigoCanje: (urlAutorizacion: string) => Promise<ResultadoLogin>;
+}
 
 export class Sesion {
   private readonly cliente: ClienteApi;
@@ -18,7 +31,28 @@ export class Sesion {
     return this.tokenAcceso !== null;
   }
 
-  /** SOLO sirve si el servidor tiene PERMITIR_LOGIN_DEV=true. */
+  /**
+   * Login real: abre el consentimiento del proveedor en el navegador del
+   * sistema y, si vuelve con codigo de canje, lo cambia por tokens.
+   *
+   * Devuelve el resultado en vez de lanzar cuando el usuario cancela o el
+   * proveedor rechaza: eso no es una averia, y la pantalla lo cuenta distinto.
+   * Si falla /auth/canjear si se propaga el ErrorApi.
+   */
+  async iniciarConProveedor(
+    proveedor: Proveedor,
+    dependencias: DependenciasLogin = { generarEstado, pedirCodigoCanje },
+  ): Promise<ResultadoLogin> {
+    const estado = await dependencias.generarEstado();
+    const url = this.cliente.urlIniciarLogin(proveedor, estado, ESQUEMA);
+    const resultado = await dependencias.pedirCodigoCanje(url);
+    if (resultado.estado === 'exito') {
+      await this.aplicarTokens(await this.cliente.canjear(resultado.codigoCanje));
+    }
+    return resultado;
+  }
+
+  /** SOLO sirve si el servidor tiene PERMITIR_LOGIN_DEV=true (ver ClienteApi.devLogin). */
   async iniciarConDevLogin(email: string): Promise<void> {
     await this.aplicarTokens(await this.cliente.devLogin(email));
   }

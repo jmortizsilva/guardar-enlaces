@@ -12,9 +12,9 @@ const CLAVE_ULTIMO_ID_VISTO = 'ultimoUpdateIdVisto';
  * distinto al último visto.
  */
 export const NOVEDADES =
-  'El guardado silencioso al compartir ya rellena el título del enlace, no ' +
-  'solo la URL. Y la lista principal se puede refrescar arrastrando hacia ' +
-  'abajo (o con el gesto de refrescar de VoiceOver).';
+  'Ya se entra con la cuenta de Google: el botón abre Safari para confirmar ' +
+  'la cuenta y vuelve solo a la aplicación. Desaparece el inicio de sesión ' +
+  'por correo, que era provisional.';
 
 let comprobando = false;
 

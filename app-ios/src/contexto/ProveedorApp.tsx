@@ -15,6 +15,7 @@ import {
   nuevoElementoLocal,
 } from '../dominio/elemento';
 import { elementosVisibles } from '../dominio/sincronizacion';
+import { ResultadoLogin } from '../sesion/loginProveedor';
 import { Sesion } from '../sesion/sesion';
 import { Sincronizador } from '../sincronizador/sincronizador';
 
@@ -28,12 +29,43 @@ function urlApi(): string {
   return url;
 }
 
+/**
+ * Vacia la cache local si estos datos no son de quien acaba de entrar.
+ *
+ * La cache NO esta separada por cuenta: sin esto, al cambiar de usuario (o el
+ * mismo correo contra otro servidor) se verian mezclados los enlaces del
+ * anterior, lo que quedara en el outbox se subiria a la cuenta nueva, y el
+ * cursor de sincronizacion —una marca de tiempo del OTRO servidor— haria que
+ * el primer pull se saltara todo lo anterior a esa fecha.
+ *
+ * El dueno lleva tambien la URL del servidor: el mismo correo en el servidor
+ * de pruebas y en el real son dos bibliotecas distintas.
+ *
+ * Sin correo no se compara y no se borra nada: /auth/renovar no devuelve
+ * usuario (ver CONTRATO-API.md), asi que al restaurar una sesion guardada no
+ * hay con que comparar, y ante la duda no se tira la cache.
+ */
+function asegurarDueno(almacen: AlmacenLocal, usuario: UsuarioApi | null): void {
+  if (!usuario) {
+    return;
+  }
+  const dueno = `${urlApi()}|${usuario.email}`;
+  if (almacen.duenoActual() !== dueno) {
+    almacen.vaciar();
+    almacen.fijarDueno(dueno);
+  }
+}
+
 interface EstadoApp {
   /** true mientras se intenta restaurar una sesion previa al arrancar. */
   cargando: boolean;
   autenticado: boolean;
   usuario: UsuarioApi | null;
-  iniciarConDevLogin: (email: string) => Promise<void>;
+  /**
+   * Abre el login de Google. No lanza si el usuario cancela o el proveedor
+   * rechaza: eso vuelve en el resultado, para que la pantalla lo anuncie.
+   */
+  iniciarConGoogle: () => Promise<ResultadoLogin>;
   cerrar: () => Promise<void>;
 
   /** Los no borrados, mas recientes primero (dominio/sincronizacion.elementosVisibles). */
@@ -87,6 +119,7 @@ export function ProveedorApp({ children }: { children: ReactNode }) {
     let cancelado = false;
     sesion.restaurar().then((exito) => {
       if (cancelado) return;
+      asegurarDueno(almacen, sesion.usuario);
       setAutenticado(exito);
       setUsuario(sesion.usuario);
       setCargando(false);
@@ -105,15 +138,23 @@ export function ProveedorApp({ children }: { children: ReactNode }) {
     cargando,
     autenticado,
     usuario,
-    async iniciarConDevLogin(email) {
-      await sesion.iniciarConDevLogin(email);
+    async iniciarConGoogle() {
+      const resultado = await sesion.iniciarConProveedor('google');
+      if (resultado.estado !== 'exito') {
+        return resultado;
+      }
+      asegurarDueno(almacen, sesion.usuario);
       setAutenticado(true);
       setUsuario(sesion.usuario);
       refrescarDesdeElAlmacen();
       sincronizar();
+      return resultado;
     },
     async cerrar() {
       await sesion.cerrar();
+      // Los enlaces son de quien se va: no se quedan en el telefono para que
+      // los vea el siguiente. Vuelven del servidor al entrar otra vez.
+      almacen.vaciar();
       setAutenticado(false);
       setUsuario(null);
       setElementos([]);
@@ -158,8 +199,8 @@ function useContextoApp(): EstadoApp {
 }
 
 export function useSesion() {
-  const { cargando, autenticado, usuario, iniciarConDevLogin, cerrar } = useContextoApp();
-  return { cargando, autenticado, usuario, iniciarConDevLogin, cerrar };
+  const { cargando, autenticado, usuario, iniciarConGoogle, cerrar } = useContextoApp();
+  return { cargando, autenticado, usuario, iniciarConGoogle, cerrar };
 }
 
 export function useElementos() {
