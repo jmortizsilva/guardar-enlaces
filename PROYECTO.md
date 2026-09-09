@@ -13,6 +13,13 @@ tenerla disponible en cualquiera de los dos dispositivos. Pensado desde el
 principio para funcionar bien con VoiceOver (iOS) y NVDA/JAWS/Narrador
 (Windows) — no es un añadido posterior.
 
+**La cuenta es opcional en el iPhone.** La app se abre sin pedir nada y
+funciona entera en local: los enlaces se guardan en el propio teléfono y los
+metadatos los resuelve él mismo. La cuenta (Google o Apple, sin contraseñas)
+solo hace falta para sincronizar con el PC; al entrar por primera vez se
+pregunta si se quieren subir a la cuenta los enlaces que ya hubiera en el
+teléfono. La app de Windows sí necesita cuenta: es la que sincroniza.
+
 ## Estructura
 
 Un solo repositorio por comodidad (todo centralizado en GitHub), pero

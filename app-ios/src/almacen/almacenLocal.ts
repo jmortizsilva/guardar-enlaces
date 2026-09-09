@@ -83,6 +83,29 @@ export class AlmacenLocal {
     `);
   }
 
+  /**
+   * Adopta lo que hay en el telefono para la cuenta en la que se acaba de
+   * entrar: mete todos los elementos en el outbox para que la proxima
+   * sincronizacion los suba.
+   *
+   * Las lapidas (borrado = 1) se tiran en vez de subirse: son el rastro de un
+   * borrado que la OTRA cuenta ya conoce, y en esta no significan nada.
+   */
+  marcarTodosPendientes(): void {
+    this.db.execSync(`
+      DELETE FROM elementos WHERE borrado = 1;
+      INSERT OR IGNORE INTO outbox (id) SELECT id FROM elementos;
+    `);
+  }
+
+  /** Enlaces visibles (sin lapidas): lo que cuenta para preguntar al usuario. */
+  contarElementos(): number {
+    const fila = this.db.getFirstSync<{ total: number }>(
+      'SELECT COUNT(*) AS total FROM elementos WHERE borrado = 0',
+    );
+    return fila?.total ?? 0;
+  }
+
   // --- dueno de la cache (que cuenta, y de que servidor, dejo estos datos) ---
 
   duenoActual(): string | null {

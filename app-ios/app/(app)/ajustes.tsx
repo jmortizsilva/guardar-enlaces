@@ -41,15 +41,42 @@ export default function Ajustes() {
         backgroundColor: tema.fondo,
       }}>
       <Boton etiqueta="Volver" variante="secundario" alPulsar={() => router.back()} />
-      <Text style={{ color: tema.texto, fontSize: 17 }}>
-        Sesión iniciada como {sesion.usuario?.email}
-      </Text>
-      <Boton etiqueta="Cerrar sesión" variante="peligro" alPulsar={() => sesion.cerrar()} />
+
+      {sesion.autenticado ? (
+        <>
+          <Text style={{ color: tema.texto, fontSize: 17 }}>
+            Sesión iniciada como {sesion.usuario?.email}. Tus enlaces se sincronizan con el PC.
+          </Text>
+          <Boton
+            etiqueta="Cerrar sesión"
+            variante="peligro"
+            alPulsar={() => sesion.cerrar()}
+            pista="Los enlaces se quedan en este iPhone y la aplicación sigue funcionando sin cuenta"
+          />
+        </>
+      ) : (
+        <>
+          <Text style={{ color: tema.texto, fontSize: 17 }}>
+            Sin cuenta: los enlaces se guardan solo en este iPhone.
+          </Text>
+          <Boton
+            etiqueta="Entrar con Google"
+            alPulsar={() => router.push('/login')}
+            pista="Hace falta para tener los mismos enlaces en el iPhone y en el PC"
+          />
+        </>
+      )}
+
       <Interruptor
         etiqueta="Guardar sin abrir la app al compartir"
         valor={modoSilencioso}
         alCambiar={alCambiarModoSilencioso}
-        pista="Al compartir un enlace desde Safari, se guarda directamente y te quedas donde estabas. Sin vista previa ni etiquetas en el momento; se completan después desde la app."
+        deshabilitado={!sesion.autenticado}
+        pista={
+          sesion.autenticado
+            ? 'Al compartir un enlace desde Safari, se guarda directamente y te quedas donde estabas. Sin vista previa ni etiquetas en el momento; se completan después desde la app.'
+            : 'Necesita cuenta: al compartir en silencio, el enlace lo guarda el servidor. Sin cuenta, compartir abre la aplicación para guardarlo aquí.'
+        }
       />
       <Boton
         etiqueta="Buscar actualizaciones"

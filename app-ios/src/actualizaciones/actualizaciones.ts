@@ -12,9 +12,10 @@ const CLAVE_ULTIMO_ID_VISTO = 'ultimoUpdateIdVisto';
  * distinto al último visto.
  */
 export const NOVEDADES =
-  'Ya se entra con la cuenta de Google: el botón abre Safari para confirmar ' +
-  'la cuenta y vuelve solo a la aplicación. Desaparece el inicio de sesión ' +
-  'por correo, que era provisional.';
+  'La aplicación ya no pide cuenta para empezar: se abre directa en la lista ' +
+  'y funciona entera en este iPhone. Entrar con Google, desde Ajustes, sirve ' +
+  'para tener los mismos enlaces en el PC; al entrar te pregunta si quieres ' +
+  'subir los que ya tenías aquí.';
 
 let comprobando = false;
 

@@ -7,6 +7,7 @@ import { createContext, ReactNode, useContext, useEffect, useMemo, useState } fr
 
 import { ClienteApi, RespuestaMetadatos, UsuarioApi } from '../api/clienteApi';
 import { AlmacenLocal } from '../almacen/almacenLocal';
+import { DecidirImportacion, asentarCuenta, identidadDueno } from '../almacen/asentarCuenta';
 import {
   DatosElementoNuevo,
   Elemento,
@@ -15,6 +16,7 @@ import {
   nuevoElementoLocal,
 } from '../dominio/elemento';
 import { elementosVisibles } from '../dominio/sincronizacion';
+import { resolverMetadatosEnDispositivo } from '../metadatos/resolverLocal';
 import { ResultadoLogin } from '../sesion/loginProveedor';
 import { Sesion } from '../sesion/sesion';
 import { Sincronizador } from '../sincronizador/sincronizador';
@@ -29,33 +31,6 @@ function urlApi(): string {
   return url;
 }
 
-/**
- * Vacia la cache local si estos datos no son de quien acaba de entrar.
- *
- * La cache NO esta separada por cuenta: sin esto, al cambiar de usuario (o el
- * mismo correo contra otro servidor) se verian mezclados los enlaces del
- * anterior, lo que quedara en el outbox se subiria a la cuenta nueva, y el
- * cursor de sincronizacion —una marca de tiempo del OTRO servidor— haria que
- * el primer pull se saltara todo lo anterior a esa fecha.
- *
- * El dueno lleva tambien la URL del servidor: el mismo correo en el servidor
- * de pruebas y en el real son dos bibliotecas distintas.
- *
- * Sin correo no se compara y no se borra nada: /auth/renovar no devuelve
- * usuario (ver CONTRATO-API.md), asi que al restaurar una sesion guardada no
- * hay con que comparar, y ante la duda no se tira la cache.
- */
-function asegurarDueno(almacen: AlmacenLocal, usuario: UsuarioApi | null): void {
-  if (!usuario) {
-    return;
-  }
-  const dueno = `${urlApi()}|${usuario.email}`;
-  if (almacen.duenoActual() !== dueno) {
-    almacen.vaciar();
-    almacen.fijarDueno(dueno);
-  }
-}
-
 interface EstadoApp {
   /** true mientras se intenta restaurar una sesion previa al arrancar. */
   cargando: boolean;
@@ -64,8 +39,11 @@ interface EstadoApp {
   /**
    * Abre el login de Google. No lanza si el usuario cancela o el proveedor
    * rechaza: eso vuelve en el resultado, para que la pantalla lo anuncie.
+   *
+   * `decidirImportacion` solo se llama si al entrar hay enlaces en el telefono
+   * que no son de esa cuenta (ver asentarCuenta).
    */
-  iniciarConGoogle: () => Promise<ResultadoLogin>;
+  iniciarConGoogle: (decidirImportacion: DecidirImportacion) => Promise<ResultadoLogin>;
   cerrar: () => Promise<void>;
 
   /** Los no borrados, mas recientes primero (dominio/sincronizacion.elementosVisibles). */
@@ -76,9 +54,15 @@ interface EstadoApp {
   editarEtiquetas: (id: string, etiquetas: string[]) => void;
   /** Sincroniza ya, en vez de esperar a la siguiente accion. Nunca lanza (ver comentario interno). */
   sincronizar: () => Promise<void>;
-  /** POST /metadatos, para la vista previa de "Añadir enlace". Si lanza, es un ErrorApi real (aqui si se propaga). */
+  /**
+   * Titulo, descripcion e imagen para la vista previa de "Añadir enlace": con
+   * cuenta los resuelve el servidor, sin cuenta el propio telefono. Si lanza,
+   * es un error real y aqui si se propaga (lo pinta la pantalla).
+   */
   comprobarMetadatos: (url: string) => Promise<RespuestaMetadatos>;
 }
+
+export type { EnlacesEnElTelefono } from '../almacen/asentarCuenta';
 
 const ContextoApp = createContext<EstadoApp | null>(null);
 
@@ -102,6 +86,12 @@ export function ProveedorApp({ children }: { children: ReactNode }) {
   }
 
   async function sincronizar(): Promise<void> {
+    // Modo local: sin cuenta no hay con quien sincronizar, los enlaces viven
+    // solo en este telefono. Se sale en silencio porque esto lo llaman cosas
+    // que no saben si hay sesion (anadir, borrar, el gesto de refrescar).
+    if (!sesion.autenticado) {
+      return;
+    }
     setSincronizando(true);
     try {
       await sincronizador.sincronizar();
@@ -119,12 +109,12 @@ export function ProveedorApp({ children }: { children: ReactNode }) {
     let cancelado = false;
     sesion.restaurar().then((exito) => {
       if (cancelado) return;
-      asegurarDueno(almacen, sesion.usuario);
       setAutenticado(exito);
       setUsuario(sesion.usuario);
       setCargando(false);
+      // La lista se lee siempre: en modo local es lo unico que hay.
+      refrescarDesdeElAlmacen();
       if (exito) {
-        refrescarDesdeElAlmacen();
         sincronizar();
       }
     });
@@ -138,12 +128,21 @@ export function ProveedorApp({ children }: { children: ReactNode }) {
     cargando,
     autenticado,
     usuario,
-    async iniciarConGoogle() {
+    async iniciarConGoogle(decidirImportacion) {
       const resultado = await sesion.iniciarConProveedor('google');
       if (resultado.estado !== 'exito') {
         return resultado;
       }
-      asegurarDueno(almacen, sesion.usuario);
+      // Sin correo no se toca nada: /auth/renovar no devuelve usuario (ver
+      // CONTRATO-API.md), asi que no habria con que comparar y, ante la duda,
+      // no se tira ni se importa nada.
+      if (sesion.usuario) {
+        await asentarCuenta(
+          almacen,
+          identidadDueno(urlApi(), sesion.usuario.email),
+          decidirImportacion,
+        );
+      }
       setAutenticado(true);
       setUsuario(sesion.usuario);
       refrescarDesdeElAlmacen();
@@ -152,12 +151,13 @@ export function ProveedorApp({ children }: { children: ReactNode }) {
     },
     async cerrar() {
       await sesion.cerrar();
-      // Los enlaces son de quien se va: no se quedan en el telefono para que
-      // los vea el siguiente. Vuelven del servidor al entrar otra vez.
-      almacen.vaciar();
+      // Los enlaces se quedan en el telefono y la app sigue funcionando en modo
+      // local. El dueno NO se borra a proposito: si manana entra otra cuenta,
+      // asentarCuenta sabe que esto era de alguien y pregunta antes de
+      // mezclarlo. Volver a entrar con la misma cuenta no pregunta nada.
       setAutenticado(false);
       setUsuario(null);
-      setElementos([]);
+      refrescarDesdeElAlmacen();
     },
 
     elementos,
@@ -183,7 +183,11 @@ export function ProveedorApp({ children }: { children: ReactNode }) {
     },
     sincronizar,
     comprobarMetadatos(url) {
-      return sesion.conReintento((token) => cliente.metadatos(url, token));
+      // Con cuenta los resuelve el servidor, que es quien los guarda para los
+      // dos clientes; sin cuenta, el propio telefono (ver src/metadatos/).
+      return sesion.autenticado
+        ? sesion.conReintento((token) => cliente.metadatos(url, token))
+        : resolverMetadatosEnDispositivo(url);
     },
   };
 
