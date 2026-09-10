@@ -176,7 +176,9 @@ class VentanaPrincipal(wx.Frame):
     # --- anadir / abrir / menu contextual / eliminar ---
 
     def _al_anadir(self, evento: wx.CommandEvent) -> None:
-        dialogo = DialogoAnadir(self, self._cliente, self._sesion)
+        # Los ya guardados van al dialogo para poder avisar de repetidos.
+        guardados = elementos_visibles(self._almacen.cargar_todos())
+        dialogo = DialogoAnadir(self, self._cliente, self._sesion, guardados)
         if dialogo.ShowModal() == wx.ID_OK and dialogo.elemento_creado:
             elemento = dialogo.elemento_creado
             self._almacen.marcar_pendiente(elemento)

@@ -4,6 +4,7 @@ import { ScrollView, StyleSheet, Text, TextInput } from 'react-native';
 
 import { anunciarImportante } from '../../src/accesibilidad/anuncios';
 import { useAcciones, useElementos } from '../../src/contexto/ProveedorApp';
+import { buscarDuplicado } from '../../src/dominio/duplicados';
 import { TipoElemento } from '../../src/dominio/elemento';
 import { etiquetasDisponibles } from '../../src/dominio/sincronizacion';
 import { Boton } from '../../src/interfaz/Boton';
@@ -39,6 +40,14 @@ export default function Anadir() {
   const [etiquetasAbierto, setEtiquetasAbierto] = useState(false);
   const etiquetasTodas = useMemo(() => etiquetasDisponibles(elementos), [elementos]);
 
+  // Repetido dentro de TU biblioteca: que otra persona tenga el mismo enlace no
+  // pinta nada. Se avisa, no se prohibe: puede que quieras guardarlo otra vez
+  // con otras etiquetas, y decidirlo es cosa tuya.
+  const duplicado = useMemo(
+    () => (vistaPrevia ? buscarDuplicado(elementos, vistaPrevia.url) : undefined),
+    [elementos, vistaPrevia],
+  );
+
   function alCambiarUrl(texto: string): void {
     setUrl(texto);
     // cambiar la URL invalida la vista previa ya comprobada: hay que volver a comprobar
@@ -52,6 +61,14 @@ export default function Anadir() {
     try {
       const metadatos = await comprobarMetadatos(urlAComprobar);
       setVistaPrevia({ ...metadatos, url: urlAComprobar });
+      // Se anuncia aqui y no al pulsar Guardar: enterarte cuando ya lo has
+      // guardado no sirve de nada.
+      const yaGuardado = buscarDuplicado(elementos, urlAComprobar);
+      if (yaGuardado) {
+        anunciarImportante(
+          `Ya tienes este enlace guardado: ${yaGuardado.titulo || yaGuardado.url}`,
+        );
+      }
     } catch (fallo) {
       setError(fallo instanceof Error ? fallo.message : 'No se pudo comprobar la URL.');
     } finally {
@@ -105,6 +122,15 @@ export default function Anadir() {
 
       {error ? <Text style={{ color: tema.peligro }}>{error}</Text> : null}
 
+      {duplicado ? (
+        <Text
+          accessibilityLiveRegion="polite"
+          style={[estilos.aviso, { color: tema.textoSecundario }]}>
+          Ya tienes este enlace guardado: {duplicado.titulo || duplicado.url}. Puedes guardarlo otra
+          vez si quieres.
+        </Text>
+      ) : null}
+
       {vistaPrevia ? (
         <Tarjeta
           etiquetaAccesible={`Vista previa: ${vistaPrevia.titulo || vistaPrevia.url}`}
@@ -137,7 +163,11 @@ export default function Anadir() {
         />
       ) : null}
 
-      <Boton etiqueta="Guardar" alPulsar={guardar} deshabilitado={!vistaPrevia} />
+      <Boton
+        etiqueta={duplicado ? 'Guardar de todas formas' : 'Guardar'}
+        alPulsar={guardar}
+        deshabilitado={!vistaPrevia}
+      />
     </ScrollView>
   );
 }
@@ -145,6 +175,7 @@ export default function Anadir() {
 const estilos = StyleSheet.create({
   contenedor: { flexGrow: 1, padding: ESPACIADO.grande, gap: ESPACIADO.medio },
   etiquetaCampo: { fontSize: 15, fontWeight: '600' },
+  aviso: { fontSize: 15 },
   campo: {
     borderWidth: 1,
     borderRadius: 8,

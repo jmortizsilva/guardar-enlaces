@@ -12,10 +12,9 @@ const CLAVE_ULTIMO_ID_VISTO = 'ultimoUpdateIdVisto';
  * distinto al último visto.
  */
 export const NOVEDADES =
-  'La aplicación ya no pide cuenta para empezar: se abre directa en la lista ' +
-  'y funciona entera en este iPhone. Entrar con Google, desde Ajustes, sirve ' +
-  'para tener los mismos enlaces en el PC; al entrar te pregunta si quieres ' +
-  'subir los que ya tenías aquí.';
+  'Al añadir un enlace que ya tienes guardado, ahora te avisa antes de ' +
+  'guardarlo (y puedes guardarlo igual). Y se arregla que algunos enlaces se ' +
+  'quedaran sin subir al servidor sin decir nada.';
 
 let comprobando = false;
 

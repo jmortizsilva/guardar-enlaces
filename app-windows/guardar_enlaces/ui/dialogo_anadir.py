@@ -1,6 +1,11 @@
 """Anadir un enlace: pegar URL -> "Comprobar" (llama a /metadatos y muestra
 una vista previa) -> "Guardar" (crea el elemento local, guardado explicito,
-nunca automatico)."""
+nunca automatico).
+
+Si la URL ya esta guardada se avisa, pero no se prohibe: puede que quieras
+guardarla otra vez con otras etiquetas. El aviso va en el texto de la vista
+previa Y en la etiqueta del boton, porque el boton es lo que recibe el foco al
+terminar la comprobacion y es lo unico que el lector de pantalla lee solo."""
 
 from __future__ import annotations
 
@@ -9,15 +14,23 @@ import threading
 import wx
 
 from ..api_cliente import ClienteApi, ErrorApi
+from ..duplicados import buscar_duplicado
 from ..modelo import Elemento, nuevo_elemento_local
 from ..sesion import Sesion
 
 
 class DialogoAnadir(wx.Dialog):
-    def __init__(self, padre: wx.Window, cliente: ClienteApi, sesion: Sesion):
+    def __init__(
+        self,
+        padre: wx.Window,
+        cliente: ClienteApi,
+        sesion: Sesion,
+        guardados: list[Elemento] | None = None,
+    ):
         super().__init__(padre, title="Añadir enlace")
         self._cliente = cliente
         self._sesion = sesion
+        self._guardados = guardados or []
         self._metadatos: dict | None = None
         self.elemento_creado: Elemento | None = None
 
@@ -91,7 +104,18 @@ class DialogoAnadir(wx.Dialog):
         self.boton_comprobar.Enable()
         self._metadatos = {**metadatos, "url": url}
         titulo = metadatos.get("titulo") or url
-        self.etiqueta_vista_previa.SetLabel(titulo)
+
+        duplicado = buscar_duplicado(self._guardados, url)
+        if duplicado:
+            self.etiqueta_vista_previa.SetLabel(
+                f"{titulo}\n\nYa tienes este enlace guardado: "
+                f"{duplicado.titulo or duplicado.url}"
+            )
+            self.boton_guardar.SetLabel("Guardar de todas &formas")
+        else:
+            self.etiqueta_vista_previa.SetLabel(titulo)
+            self.boton_guardar.SetLabel("&Guardar")
+
         self.etiqueta_vista_previa.GetParent().Layout()
         self.boton_guardar.Enable()
         self.boton_guardar.SetFocus()
