@@ -81,6 +81,10 @@ def esperar_codigo_canje(
     """
     inicio = reloj()
     fallos_seguidos = 0
+    # El buzon no existe hasta que el navegador llega a /auth/iniciar, y abrirlo
+    # tarda sus segundos: hasta entonces /auth/estado responde 404 y hay que
+    # seguir esperando, no abandonar. Despues, un 404 si es definitivo.
+    buzon_visto = False
 
     while reloj() - inicio < limite_s:
         if cancelado():
@@ -90,11 +94,15 @@ def esperar_codigo_canje(
             respuesta = cliente.estado_login(estado)
         except ErrorApi as error:
             if error.status_code == 404:
-                # El buzon ya no existe: caducado, o ya se consumio el codigo.
-                return ResultadoLogin(
-                    "error",
-                    mensaje="El inicio de sesión caducó. Vuelve a intentarlo.",
-                )
+                if buzon_visto:
+                    # Existio y ya no: caducado, o el codigo ya se consumio.
+                    return ResultadoLogin(
+                        "error",
+                        mensaje="El inicio de sesión caducó. Vuelve a intentarlo.",
+                    )
+                # Todavia no ha abierto el navegador: no es un fallo.
+                dormir(intervalo_s)
+                continue
             fallos_seguidos += 1
             if fallos_seguidos >= MAXIMO_FALLOS_SEGUIDOS:
                 return ResultadoLogin(
@@ -102,6 +110,7 @@ def esperar_codigo_canje(
                 )
         else:
             fallos_seguidos = 0
+            buzon_visto = True
             if respuesta.get("listo"):
                 codigo_canje = respuesta.get("codigoCanje")
                 if codigo_canje:
