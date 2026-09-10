@@ -1,11 +1,15 @@
-"""Inicio de sesion DE DESARROLLO: pide un correo cualquiera y llama a
-POST /auth/dev-login (solo funciona si el servidor tiene
-PERMITIR_LOGIN_DEV=true). Sustituye temporalmente al flujo real con Google/
-Apple (ver docs/CONTRATO-API.md) mientras no haya credenciales OAuth
-registradas; se sustituira por login_oauth.py (navegador del sistema +
-sondeo de /auth/estado) en una fase posterior, sin tocar el resto de la app:
-Sesion.iniciar_con_dev_login ya vive detras de la misma interfaz que usara
-el login real.
+"""Inicio de sesion con Google: abre el navegador del sistema y espera a que
+termines, sondeando el servidor (ver login_oauth.py y docs/CONTRATO-API.md).
+
+Aqui la cuenta SI es obligatoria, al reves que en el iPhone: esta app existe
+para sincronizar, y sin cuenta no hay con quien.
+
+Sobre el foco, que es lo que manda en esta pantalla: al abrirse el navegador el
+foco se va de la aplicacion entera, asi que durante la espera no hay a quien
+anunciarle nada. Lo que importa es lo que te encuentras AL VOLVER: si sale
+bien, el dialogo ya se ha cerrado solo y esta la ventana principal; si sale
+mal, el foco esta puesto en el cuadro de estado, que NVDA lee al recibirlo por
+ser un control de texto (un StaticText no puede tener el foco).
 """
 
 from __future__ import annotations
@@ -14,40 +18,45 @@ import threading
 
 import wx
 
-from ..api_cliente import ErrorApi
+from .. import login_oauth
+from ..api_cliente import ClienteApi, ErrorApi
 from ..sesion import Sesion
 
 
 class DialogoLogin(wx.Dialog):
-    def __init__(self, padre: wx.Window, sesion: Sesion):
-        super().__init__(padre, title="Iniciar sesión (modo desarrollo)")
+    def __init__(self, padre: wx.Window, sesion: Sesion, cliente: ClienteApi):
+        super().__init__(padre, title="Iniciar sesión")
         self._sesion = sesion
+        self._cliente = cliente
+        self._cancelar = threading.Event()
+        self._cerrado = False
 
         panel = wx.Panel(self)
         sizer = wx.BoxSizer(wx.VERTICAL)
 
         aviso = wx.StaticText(
             panel,
-            label="Modo de desarrollo: escribe un correo cualquiera.\n"
-            "No pasa por Google ni Apple todavía.",
+            label="Para sincronizar tus enlaces con el iPhone necesitas entrar\n"
+            "con tu cuenta de Google.\n\n"
+            "Al pulsar Entrar se abre el navegador. Termina ahí y vuelve a esta\n"
+            "ventana: se cerrará sola cuando hayas entrado.",
         )
         sizer.Add(aviso, 0, wx.ALL, 12)
 
-        etiqueta_correo = wx.StaticText(panel, label="&Correo electrónico:")
-        sizer.Add(etiqueta_correo, 0, wx.LEFT | wx.RIGHT | wx.TOP, 12)
-        self.campo_correo = wx.TextCtrl(panel)
-        # SetName(), no basta con el StaticText de al lado ni con SetHint (ver
-        # docs/ACCESIBILIDAD-WXPYTHON.md): sin esto NVDA anuncia "edicion" a secas.
-        self.campo_correo.SetName("Correo electrónico")
-        self.campo_correo.SetHint("persona@ejemplo.com")
-        sizer.Add(self.campo_correo, 0, wx.EXPAND | wx.ALL, 12)
-
-        self.etiqueta_error = wx.StaticText(panel, label="")
-        self.etiqueta_error.SetForegroundColour(wx.Colour(178, 34, 34))
-        sizer.Add(self.etiqueta_error, 0, wx.LEFT | wx.RIGHT, 12)
+        # Cuadro de texto y no StaticText a proposito: puede recibir el foco, y
+        # asi NVDA lee el mensaje al volver a la aplicacion desde el navegador.
+        # PENDIENTE de confirmar con NVDA real antes de llevarlo a la guia.
+        self.estado = wx.TextCtrl(
+            panel,
+            value="",
+            style=wx.TE_READONLY | wx.TE_MULTILINE | wx.TE_NO_VSCROLL,
+            size=(420, 60),
+        )
+        self.estado.SetName("Estado del inicio de sesión")
+        sizer.Add(self.estado, 0, wx.EXPAND | wx.ALL, 12)
 
         botones = wx.StdDialogButtonSizer()
-        self.boton_entrar = wx.Button(panel, wx.ID_OK, "&Entrar")
+        self.boton_entrar = wx.Button(panel, wx.ID_OK, "&Entrar con Google")
         boton_cancelar = wx.Button(panel, wx.ID_CANCEL, "Cancelar")
         self.boton_entrar.SetDefault()
         botones.AddButton(self.boton_entrar)
@@ -61,32 +70,68 @@ class DialogoLogin(wx.Dialog):
         self.SetSizerAndFit(marco)
 
         self.boton_entrar.Bind(wx.EVT_BUTTON, self._al_entrar)
-        self.campo_correo.SetFocus()
+        boton_cancelar.Bind(wx.EVT_BUTTON, self._al_cancelar)
+        self.Bind(wx.EVT_CLOSE, self._al_cancelar)
+        self.boton_entrar.SetFocus()
+
+    # --- hilo de la interfaz ---
 
     def _al_entrar(self, evento: wx.CommandEvent) -> None:
-        correo = self.campo_correo.GetValue().strip()
-        if "@" not in correo:
-            self._mostrar_error("Escribe un correo válido.")
+        estado = login_oauth.generar_estado()
+        url = self._cliente.url_iniciar_login("google", estado)
+
+        if not login_oauth.abrir_navegador(url):
+            self._decir(
+                "No se pudo abrir el navegador. Abre esta dirección a mano y "
+                f"vuelve aquí:\n{url}"
+            )
             return
 
         self.boton_entrar.Disable()
-        self.etiqueta_error.SetLabel("")
+        self._decir(
+            "Esperando a que termines en el navegador. Puedes volver aquí "
+            "cuando hayas entrado."
+        )
+        threading.Thread(target=self._sondear, args=(estado,), daemon=True).start()
 
-        def trabajo() -> None:
+    def _al_cancelar(self, evento: wx.Event) -> None:
+        self._cancelar.set()
+        self._cerrado = True
+        self.EndModal(wx.ID_CANCEL)
+
+    # --- hilo de fondo ---
+
+    def _sondear(self, estado: str) -> None:
+        """Corre FUERA del hilo de la interfaz: todo lo que toque wx vuelve por
+        wx.CallAfter."""
+        resultado = login_oauth.esperar_codigo_canje(
+            self._cliente, estado, self._cancelar.is_set
+        )
+        if resultado.estado == "exito":
             try:
-                self._sesion.iniciar_con_dev_login(correo)
+                self._sesion.iniciar_con_codigo_canje(resultado.codigo_canje)
             except ErrorApi as error:
-                wx.CallAfter(self._mostrar_error, str(error))
+                wx.CallAfter(self._al_fallo, str(error))
                 return
             wx.CallAfter(self._al_exito)
+        elif resultado.estado == "error":
+            wx.CallAfter(self._al_fallo, resultado.mensaje)
+        # "cancelado": el dialogo ya esta cerrado, no hay a quien contarselo
 
-        threading.Thread(target=trabajo, daemon=True).start()
+    # --- vuelta al hilo de la interfaz ---
 
     def _al_exito(self) -> None:
+        if self._cerrado:
+            return
+        self._cerrado = True
         self.EndModal(wx.ID_OK)
 
-    def _mostrar_error(self, mensaje: str) -> None:
+    def _al_fallo(self, mensaje: str) -> None:
+        if self._cerrado:
+            return
         self.boton_entrar.Enable()
-        self.etiqueta_error.SetLabel(mensaje)
-        self.etiqueta_error.GetParent().Layout()
-        self.campo_correo.SetFocus()
+        self._decir(mensaje)
+
+    def _decir(self, mensaje: str) -> None:
+        self.estado.SetValue(mensaje)
+        self.estado.SetFocus()

@@ -57,7 +57,9 @@ cambia a 8090 a propósito, para no chocar con el puerto por defecto de Metro
 máquina.
 
 No hay secretos reales en este repositorio: en local, `PERMITIR_LOGIN_DEV`
-salta el login de Google/Apple con solo un correo.
+salta el login de Google/Apple con solo un correo. Ninguno de los dos clientes
+lo usa ya en su interfaz —los dos entran con Google—, así que solo sirve para
+probar contra un servidor sin credenciales OAuth reales.
 
 ### app-ios
 

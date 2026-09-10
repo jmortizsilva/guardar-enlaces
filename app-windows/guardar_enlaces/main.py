@@ -31,7 +31,7 @@ class AplicacionGuardarEnlaces(wx.App):
         almacen = AlmacenLocal(_ruta_datos())
 
         if not sesion.restaurar():
-            dialogo = DialogoLogin(None, sesion)
+            dialogo = DialogoLogin(None, sesion, cliente)
             resultado = dialogo.ShowModal()
             dialogo.Destroy()
             if resultado != wx.ID_OK:

@@ -46,10 +46,13 @@ def test_ventana_principal_buscador_y_selector_de_etiqueta_tienen_nombre(app, al
         ventana.Destroy()
 
 
-def test_dialogo_login_campo_correo_tiene_nombre(app):
-    dialogo = DialogoLogin(None, MagicMock())
+def test_dialogo_login_cuadro_estado_tiene_nombre(app):
+    # El cuadro de estado es lo unico que NVDA puede leer al volver del
+    # navegador (ver el comentario de dialogo_login.py), asi que su nombre
+    # accesible importa mas que el de un campo normal.
+    dialogo = DialogoLogin(None, MagicMock(), MagicMock())
     try:
-        assert dialogo.campo_correo.GetName() == "Correo electrónico"
+        assert dialogo.estado.GetName() == "Estado del inicio de sesión"
     finally:
         dialogo.Destroy()
 

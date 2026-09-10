@@ -22,8 +22,14 @@ class Sesion:
     def autenticado(self) -> bool:
         return self.token_acceso is not None
 
+    def iniciar_con_codigo_canje(self, codigo_canje: str) -> None:
+        """Ultimo paso del login con Google: cambia por tokens el codigo que
+        trajo login_oauth.esperar_codigo_canje()."""
+        self._aplicar_tokens(self._cliente.canjear(codigo_canje))
+
     def iniciar_con_dev_login(self, email: str) -> None:
-        """SOLO sirve si el servidor tiene PERMITIR_LOGIN_DEV=true."""
+        """SOLO sirve si el servidor tiene PERMITIR_LOGIN_DEV=true
+        (ver ClienteApi.dev_login)."""
         self._aplicar_tokens(self._cliente.dev_login(email))
 
     def restaurar(self) -> bool:

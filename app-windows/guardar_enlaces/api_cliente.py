@@ -8,6 +8,8 @@ desde el hilo de fondo (nunca desde el hilo de la interfaz de wx).
 
 from __future__ import annotations
 
+from urllib.parse import urlencode
+
 import requests
 
 
@@ -24,8 +26,28 @@ class ClienteApi:
 
     # --- autenticacion ---
 
+    def url_iniciar_login(self, proveedor: str, estado: str) -> str:
+        """URL de arranque del login OAuth. No se pide desde aqui: se abre en
+        el navegador del sistema (ver login_oauth.py). El servidor responde un
+        302 al consentimiento del proveedor."""
+        parametros = urlencode(
+            {"proveedor": proveedor, "modo": "polling", "estado": estado}
+        )
+        return f"{self.url_base}/auth/iniciar?{parametros}"
+
+    def estado_login(self, estado: str) -> dict:
+        """Sondeo del buzon del login: {"listo": false} mientras el usuario
+        sigue en el navegador."""
+        return self._get("/auth/estado", parametros={"estado": estado})
+
+    def canjear(self, codigo_canje: str) -> dict:
+        """Cambia el codigo de canje (un solo uso, ~60s de vida) por tokens."""
+        return self._post("/auth/canjear", cuerpo={"codigoCanje": codigo_canje})
+
     def dev_login(self, email: str) -> dict:
-        """SOLO sirve si el servidor tiene PERMITIR_LOGIN_DEV=true."""
+        """SOLO sirve si el servidor tiene PERMITIR_LOGIN_DEV=true. Ya no hay
+        pantalla que lo use (el login es Google): queda como unica forma de
+        entrar contra un servidor de pruebas sin credenciales OAuth reales."""
         return self._post("/auth/dev-login", cuerpo={"email": email})
 
     def renovar(self, token_refresco: str) -> dict:

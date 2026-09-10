@@ -17,10 +17,12 @@ pytest                              # tests de la logica pura (modelo.py)
 ## Configuración
 
 La app apunta al backend por la variable de entorno `GUARDAR_ENLACES_API`
-(por defecto `http://localhost:8081`). Contra un servidor con
-`PERMITIR_LOGIN_DEV=true`, la pantalla de inicio de sesión pide solo un
-correo, sin pasar por Google/Apple — ver `docs/CONTRATO-API.md` en
-`../backend/`.
+(por defecto `http://localhost:8081`). El inicio de sesión abre el navegador
+del sistema para entrar con Google y, mientras tanto, la app sondea
+`/auth/estado` hasta que terminas (modo `polling` del contrato — ver
+`docs/CONTRATO-API.md` en `../backend/`). La cuenta es obligatoria aquí: esta
+app existe para sincronizar. El alta es abierta, así que entrar la primera vez
+crea la cuenta.
 
 - `.\usar-servidor.ps1` — apunta al backend compartido en
   `https://api.jmortiz.es`, sin necesidad de tener nada corriendo en este
