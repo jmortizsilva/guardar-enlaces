@@ -14,6 +14,7 @@ usar el raton.
 from __future__ import annotations
 
 import threading
+import time
 import webbrowser
 
 import wx
@@ -30,7 +31,7 @@ from ..modelo import (
 )
 from ..presentacion import texto_fila
 from ..sesion import Sesion
-from ..sincronizador import Sincronizador
+from ..sincronizador import Sincronizador, toca_sincronizar
 from .bandeja import IconoBandeja
 from .dialogo_anadir import DialogoAnadir
 from .dialogo_detalle import DialogoDetalle
@@ -45,6 +46,7 @@ class VentanaPrincipal(wx.Frame):
         self._cliente = cliente
         self._sesion = sesion
         self._sincronizador = Sincronizador(almacen, cliente, sesion)
+        self._ultima_sincronizacion = 0.0
         self._elementos_mostrados: list[Elemento] = []
 
         self._construir_menu()
@@ -52,6 +54,7 @@ class VentanaPrincipal(wx.Frame):
         self._icono_bandeja = IconoBandeja(self)
 
         self.Bind(wx.EVT_CLOSE, self._al_cerrar)
+        self.Bind(wx.EVT_ACTIVATE, self._al_activar)
 
         self._cargar_desde_cache()
         self.sincronizar_en_segundo_plano()
@@ -260,7 +263,19 @@ class VentanaPrincipal(wx.Frame):
 
     # --- sincronizacion ---
 
+    def _al_activar(self, evento: wx.ActivateEvent) -> None:
+        """Volver a la ventana trae lo que se haya guardado en el movil mientras
+        tanto. Sin esto solo se enteraba con F5, y "lo guarde en el otro sitio y
+        aqui no esta" es de las cosas que mas desconfianza dan."""
+        evento.Skip()
+        if evento.GetActive() and toca_sincronizar(
+            self._ultima_sincronizacion, time.monotonic()
+        ):
+            self.sincronizar_en_segundo_plano()
+
     def sincronizar_en_segundo_plano(self) -> None:
+        self._ultima_sincronizacion = time.monotonic()
+
         def trabajo() -> None:
             try:
                 rechazados = self._sincronizador.sincronizar()

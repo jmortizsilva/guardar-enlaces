@@ -1,10 +1,11 @@
+import time
 from unittest.mock import MagicMock
 
 import pytest
 
 from guardar_enlaces.almacen_local import AlmacenLocal
 from guardar_enlaces.modelo import nuevo_elemento_local
-from guardar_enlaces.sincronizador import Sincronizador
+from guardar_enlaces.sincronizador import Sincronizador, toca_sincronizar
 
 
 @pytest.fixture
@@ -102,3 +103,16 @@ def test_lo_rechazado_tambien_sale_del_outbox(almacen, cliente, sesion):
     assert almacen.cargar_pendientes() == {}
     # El enlace no se pierde de la cache local, solo deja de reintentarse.
     assert almacen.cargar_todos()[local.id] is not None
+
+
+class TestTocaSincronizar:
+    def test_sin_ninguna_sincronizacion_previa_toca(self):
+        # El cero no es "hace un instante": con un reloj de verdad cualquier
+        # momento actual esta muy por encima del intervalo.
+        assert toca_sincronizar(0.0, time.monotonic())
+
+    def test_volver_dos_veces_seguidas_no_lanza_dos(self):
+        assert not toca_sincronizar(1000.0, 1001.0, 30.0)
+
+    def test_pasado_el_intervalo_vuelve_a_tocar(self):
+        assert toca_sincronizar(1000.0, 1031.0, 30.0)

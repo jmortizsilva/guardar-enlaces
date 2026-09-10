@@ -3,7 +3,8 @@
  * las pantallas via tres hooks (useSesion, useElementos, useAcciones).
  * Equivalente TS de AplicacionGuardarEnlaces.OnInit en app-windows/.
  */
-import { createContext, ReactNode, useContext, useEffect, useMemo, useState } from 'react';
+import { createContext, ReactNode, useContext, useEffect, useMemo, useRef, useState } from 'react';
+import { AppState } from 'react-native';
 
 import { ClienteApi, RespuestaMetadatos, UsuarioApi } from '../api/clienteApi';
 import { AlmacenLocal } from '../almacen/almacenLocal';
@@ -15,7 +16,7 @@ import {
   marcarBorrado,
   nuevoElementoLocal,
 } from '../dominio/elemento';
-import { elementosVisibles } from '../dominio/sincronizacion';
+import { elementosVisibles, tocaSincronizar } from '../dominio/sincronizacion';
 import { resolverMetadatosEnDispositivo } from '../metadatos/resolverLocal';
 import { ResultadoLogin } from '../sesion/loginProveedor';
 import { Sesion } from '../sesion/sesion';
@@ -75,6 +76,8 @@ export function ProveedorApp({ children }: { children: ReactNode }) {
     [almacen, cliente, sesion],
   );
 
+  // Para no sincronizar dos veces seguidas al alternar entre aplicaciones.
+  const ultimaSincronizacion = useRef(0);
   const [cargando, setCargando] = useState(true);
   const [autenticado, setAutenticado] = useState(false);
   const [usuario, setUsuario] = useState<UsuarioApi | null>(null);
@@ -92,6 +95,7 @@ export function ProveedorApp({ children }: { children: ReactNode }) {
     if (!sesion.autenticado) {
       return;
     }
+    ultimaSincronizacion.current = Date.now();
     setSincronizando(true);
     try {
       await sincronizador.sincronizar();
@@ -123,6 +127,19 @@ export function ProveedorApp({ children }: { children: ReactNode }) {
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps -- solo al montar
   }, [sesion]);
+
+  // Volver a la app trae lo que se haya guardado en el PC mientras tanto. Sin
+  // esto solo se enteraba al arrastrar la lista, y "lo guarde en el otro sitio
+  // y aqui no esta" es de las cosas que mas desconfianza dan.
+  useEffect(() => {
+    const suscripcion = AppState.addEventListener('change', (estado) => {
+      if (estado === 'active' && tocaSincronizar(ultimaSincronizacion.current, Date.now())) {
+        sincronizar();
+      }
+    });
+    return () => suscripcion.remove();
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- solo al montar; sincronizar cierra sobre valores estables
+  }, []);
 
   const valor: EstadoApp = {
     cargando,

@@ -12,9 +12,9 @@ const CLAVE_ULTIMO_ID_VISTO = 'ultimoUpdateIdVisto';
  * distinto al último visto.
  */
 export const NOVEDADES =
-  'Al añadir un enlace que ya tienes guardado, ahora te avisa antes de ' +
-  'guardarlo (y puedes guardarlo igual). Y se arregla que algunos enlaces se ' +
-  'quedaran sin subir al servidor sin decir nada.';
+  'Al volver a la aplicación se sincroniza sola, así que ya no hace falta ' +
+  'arrastrar la lista para ver lo que hayas guardado en el PC. Y avisa si ' +
+  'añades un enlace que ya tenías guardado.';
 
 let comprobando = false;
 

@@ -10,6 +10,21 @@ from .modelo import Elemento, aplicar_pull, aplicar_respuesta_push
 from .sesion import Sesion
 
 
+# Cuanto se espera como minimo entre dos sincronizaciones automaticas. Volver a
+# la ventana dispara una, y sin este freno alternar entre dos aplicaciones seria
+# una peticion por cada vuelta.
+INTERVALO_MINIMO_SINCRONIZACION_S = 30.0
+
+
+def toca_sincronizar(
+    ultima_s: float,
+    ahora_s: float,
+    intervalo_s: float = INTERVALO_MINIMO_SINCRONIZACION_S,
+) -> bool:
+    """Si toca sincronizar otra vez, o es demasiado pronto."""
+    return ahora_s - ultima_s >= intervalo_s
+
+
 class Sincronizador:
     def __init__(self, almacen: AlmacenLocal, cliente: ClienteApi, sesion: Sesion):
         self._almacen = almacen

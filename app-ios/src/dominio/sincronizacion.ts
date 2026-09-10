@@ -52,6 +52,22 @@ export function elementosVisibles(cache: Cache): Elemento[] {
     .sort((a, b) => b.actualizadoEn - a.actualizadoEn);
 }
 
+/**
+ * Cuanto se espera como minimo entre dos sincronizaciones automaticas. Volver a
+ * la app dispara una, y sin este freno alternar entre dos aplicaciones seria
+ * una peticion por cada vuelta.
+ */
+export const INTERVALO_MINIMO_SINCRONIZACION_MS = 30_000;
+
+/** Si toca sincronizar otra vez, o es demasiado pronto. */
+export function tocaSincronizar(
+  ultimaMs: number,
+  ahoraMs: number,
+  intervaloMs: number = INTERVALO_MINIMO_SINCRONIZACION_MS,
+): boolean {
+  return ahoraMs - ultimaMs >= intervaloMs;
+}
+
 /** Filtro local sobre titulo, url y etiquetas (sin distinguir mayusculas). */
 export function buscar(elementos: readonly Elemento[], consulta: string): Elemento[] {
   const q = consulta.trim().toLowerCase();

@@ -7,6 +7,7 @@ import {
   elementosVisibles,
   etiquetasDisponibles,
   filtrarPorEtiqueta,
+  tocaSincronizar,
 } from './sincronizacion';
 
 // jest-expo automockea expo-crypto: Crypto.randomUUID() devuelve undefined
@@ -125,5 +126,21 @@ describe('filtrarPorEtiqueta', () => {
 
     expect(filtrarPorEtiqueta([a, b], null)).toEqual([a, b]);
     expect(filtrarPorEtiqueta([a, b], '')).toEqual([a, b]);
+  });
+});
+
+describe('tocaSincronizar', () => {
+  it('sin ninguna sincronizacion previa toca', () => {
+    // El cero no es "hace un instante": es 1970. Con un reloj de verdad,
+    // cualquier momento actual esta muy por encima del intervalo.
+    expect(tocaSincronizar(0, Date.now())).toBe(true);
+  });
+
+  it('volver a la app dos veces seguidas no lanza dos sincronizaciones', () => {
+    expect(tocaSincronizar(1000, 2000, 30_000)).toBe(false);
+  });
+
+  it('pasado el intervalo vuelve a tocar', () => {
+    expect(tocaSincronizar(1000, 31_000, 30_000)).toBe(true);
   });
 });
