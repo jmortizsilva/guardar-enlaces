@@ -11,7 +11,7 @@ beforeEach(() => {
 
 describe('push', () => {
   it('crea un elemento nuevo', () => {
-    const [def] = push(1, [{ id: 'e1', url: 'https://a.com', titulo: 'A', actualizadoEn: 100 }]);
+    const [def] = push(1, [{ id: 'e1', url: 'https://a.com', titulo: 'A', actualizadoEn: 100 }]).elementos;
     expect(def.url).toBe('https://a.com');
     expect(def.titulo).toBe('A');
     expect(def.creadoEn).toBe(100);
@@ -20,7 +20,7 @@ describe('push', () => {
 
   it('una edicion mas reciente gana', () => {
     push(1, [{ id: 'e1', url: 'https://a.com', titulo: 'A', actualizadoEn: 100 }]);
-    const [def] = push(1, [{ id: 'e1', titulo: 'A editado', actualizadoEn: 200 }]);
+    const [def] = push(1, [{ id: 'e1', titulo: 'A editado', actualizadoEn: 200 }]).elementos;
     expect(def.titulo).toBe('A editado');
     expect(def.actualizadoEn).toBe(200);
     // creadoEn no cambia en una edicion
@@ -29,14 +29,14 @@ describe('push', () => {
 
   it('una edicion con timestamp mas antiguo se ignora y devuelve la version del servidor', () => {
     push(1, [{ id: 'e1', url: 'https://a.com', titulo: 'A', actualizadoEn: 200 }]);
-    const [def] = push(1, [{ id: 'e1', titulo: 'A viejo', actualizadoEn: 100 }]);
+    const [def] = push(1, [{ id: 'e1', titulo: 'A viejo', actualizadoEn: 100 }]).elementos;
     expect(def.titulo).toBe('A');
     expect(def.actualizadoEn).toBe(200);
   });
 
   it('marcar borrado deja un tombstone, no borra la fila', () => {
     push(1, [{ id: 'e1', url: 'https://a.com', actualizadoEn: 100 }]);
-    const [def] = push(1, [{ id: 'e1', actualizadoEn: 200, borrado: true }]);
+    const [def] = push(1, [{ id: 'e1', actualizadoEn: 200, borrado: true }]).elementos;
     expect(def.borrado).toBe(true);
 
     const fila = obtenerBd().prepare('SELECT * FROM elementos WHERE id = ?').get('e1');
@@ -45,10 +45,13 @@ describe('push', () => {
 
   it('no permite pisar un elemento de otro usuario con el mismo id', () => {
     push(1, [{ id: 'compartido', url: 'https://a.com', titulo: 'De usuario 1', actualizadoEn: 100 }]);
-    const definitivos = push(2, [
+    const resultado = push(2, [
       { id: 'compartido', titulo: 'Intento de usuario 2', actualizadoEn: 999 },
     ]);
-    expect(definitivos).toHaveLength(0);
+    expect(resultado.elementos).toHaveLength(0);
+    // Y se dice que no se ha aplicado, sin revelar de quien es el id: sin esto,
+    // el cliente lo reintentaba en cada sincronizacion para siempre.
+    expect(resultado.rechazados).toEqual([{ id: 'compartido', motivo: 'no_aplicable' }]);
 
     const fila = obtenerBd().prepare('SELECT * FROM elementos WHERE id = ?').get('compartido') as {
       titulo: string;
@@ -64,13 +67,28 @@ describe('push', () => {
       1,
       [{ id: 'e1', url: 'https://a.com', actualizadoEn: 1_000_000 + 999_999_999 }],
       ahora,
-    );
+    ).elementos;
     expect(def.actualizadoEn).toBeLessThanOrEqual(1_000_000 + 5 * 60 * 1000);
   });
 
-  it('un alta sin url se ignora', () => {
-    const definitivos = push(1, [{ id: 'e1', actualizadoEn: 100 }]);
-    expect(definitivos).toHaveLength(0);
+  it('un alta sin url se rechaza, y se dice', () => {
+    const resultado = push(1, [{ id: 'e1', actualizadoEn: 100 }]);
+
+    expect(resultado.elementos).toHaveLength(0);
+    expect(resultado.rechazados).toEqual([{ id: 'e1', motivo: 'sin_url' }]);
+  });
+
+  it('un lote mixto aplica lo que puede y rechaza el resto', () => {
+    push(1, [{ id: 'ajeno', url: 'https://a.com', actualizadoEn: 100 }]);
+
+    const resultado = push(2, [
+      { id: 'bueno', url: 'https://b.com', actualizadoEn: 100 },
+      { id: 'ajeno', titulo: 'no deberia', actualizadoEn: 999 },
+      { id: 'sin-url', actualizadoEn: 100 },
+    ]);
+
+    expect(resultado.elementos.map((e) => e.id)).toEqual(['bueno']);
+    expect(resultado.rechazados.map((r) => r.id)).toEqual(['ajeno', 'sin-url']);
   });
 });
 

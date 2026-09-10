@@ -30,16 +30,18 @@ export class Sincronizador {
     private readonly sesion: Sesion,
   ) {}
 
-  async sincronizar(): Promise<void> {
-    await this.subirPendientes();
+  /** Devuelve cuantos cambios locales rechazo el servidor (normalmente 0). */
+  async sincronizar(): Promise<number> {
+    const rechazados = await this.subirPendientes();
     await this.bajarCambios();
+    return rechazados;
   }
 
-  private async subirPendientes(): Promise<void> {
+  private async subirPendientes(): Promise<number> {
     const pendientes = this.almacen.cargarPendientes();
     const lote = Object.values(pendientes);
     if (lote.length === 0) {
-      return;
+      return 0;
     }
     const cuerpo = lote.map(elementoAJson);
     const respuesta = await this.sesion.conReintento((token) => this.cliente.push(cuerpo, token));
@@ -47,7 +49,17 @@ export class Sincronizador {
 
     const cache = aplicarRespuestaPush(this.almacen.cargarTodos(), definitivos);
     this.almacen.guardar(cache);
-    this.almacen.limpiarPendientes(definitivos.map((e) => e.id));
+
+    // Lo rechazado sale del outbox igual que lo aceptado. El servidor no lo va a
+    // admitir por mucho que se insista, y dejarlo dentro reenvia el lote entero
+    // en cada sincronizacion, para siempre y sin que se note (asi se quedaron
+    // atascados los enlaces al importarlos a una cuenta nueva).
+    const rechazados = respuesta.rechazados ?? [];
+    this.almacen.limpiarPendientes([
+      ...definitivos.map((e) => e.id),
+      ...rechazados.map((r) => r.id),
+    ]);
+    return rechazados.length;
   }
 
   private async bajarCambios(): Promise<void> {

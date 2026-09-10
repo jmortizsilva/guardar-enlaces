@@ -261,11 +261,20 @@ class VentanaPrincipal(wx.Frame):
     def sincronizar_en_segundo_plano(self) -> None:
         def trabajo() -> None:
             try:
-                self._sincronizador.sincronizar()
+                rechazados = self._sincronizador.sincronizar()
             except ErrorApi as error:
                 wx.CallAfter(self.SetStatusText, f"No se pudo sincronizar: {error}")
                 return
             wx.CallAfter(self._cargar_desde_cache)
+            if rechazados:
+                # _cargar_desde_cache deja el numero de elementos en la barra, asi
+                # que esto va despues para que no lo pise. La barra de estado de
+                # Win32 se anuncia sola al cambiar (docs/ACCESIBILIDAD-WXPYTHON.md).
+                wx.CallAfter(
+                    self.SetStatusText,
+                    f"{rechazados} cambio{'s' if rechazados != 1 else ''} no se "
+                    "pudo subir al servidor",
+                )
 
         threading.Thread(target=trabajo, daemon=True).start()
 

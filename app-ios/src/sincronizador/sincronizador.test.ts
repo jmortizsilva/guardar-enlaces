@@ -99,11 +99,7 @@ describe('sincronizar', () => {
     almacen.marcarPendiente(local);
 
     const definitivo = { ...elementoAJson(local), actualizadoEn: 50 };
-    cliente.push.mockResolvedValue({
-      elementos: [definitivo],
-      servidorEn: 50,
-      masDisponible: false,
-    });
+    cliente.push.mockResolvedValue({ elementos: [definitivo], rechazados: [] });
     cliente.pull.mockResolvedValue({ elementos: [], servidorEn: 500, masDisponible: false });
 
     await new Sincronizador(almacen, cliente, sesionFalsa()).sincronizar();
@@ -111,5 +107,31 @@ describe('sincronizar', () => {
     expect(cliente.push).toHaveBeenCalledTimes(1);
     expect(almacen.cargarPendientes()).toEqual({});
     expect(almacen.cargarTodos()[local.id].titulo).toBe('Mio');
+  });
+
+  it('lo que el servidor rechaza tambien sale del outbox, o se reenvia para siempre', async () => {
+    const almacen = new AlmacenEnMemoria();
+    const cliente = clienteFalso();
+    const local = nuevoElementoLocal(
+      { url: 'https://mio.com', titulo: 'Mio' },
+      () => 50,
+      generarIdDePrueba,
+    );
+    almacen.marcarPendiente(local);
+
+    // El servidor no lo aplica y no lo devuelve en "elementos": si solo se
+    // limpiara con esos, el elemento se quedaria pendiente eternamente.
+    cliente.push.mockResolvedValue({
+      elementos: [],
+      rechazados: [{ id: local.id, motivo: 'no_aplicable' }],
+    });
+    cliente.pull.mockResolvedValue({ elementos: [], servidorEn: 500, masDisponible: false });
+
+    const rechazados = await new Sincronizador(almacen, cliente, sesionFalsa()).sincronizar();
+
+    expect(rechazados).toBe(1);
+    expect(almacen.cargarPendientes()).toEqual({});
+    // El enlace no se pierde de la cache local, solo deja de reintentarse.
+    expect(almacen.cargarTodos()[local.id]).toBeDefined();
   });
 });

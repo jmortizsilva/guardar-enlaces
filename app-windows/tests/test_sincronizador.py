@@ -82,3 +82,23 @@ def test_sube_lo_pendiente_antes_de_bajar_y_limpia_el_outbox(almacen, cliente, s
     cliente.push.assert_called_once()
     assert almacen.cargar_pendientes() == {}
     assert almacen.cargar_todos()[local.id].titulo == "Mio"
+
+
+def test_lo_rechazado_tambien_sale_del_outbox(almacen, cliente, sesion):
+    # El servidor no lo aplica y no lo devuelve en "elementos". Si solo se limpiara
+    # con esos, el elemento se reenviaria en cada sincronizacion para siempre.
+    local = nuevo_elemento_local("https://mio.com", titulo="Mio", ahora=lambda: 50)
+    almacen.marcar_pendiente(local)
+
+    cliente.push.return_value = {
+        "elementos": [],
+        "rechazados": [{"id": local.id, "motivo": "no_aplicable"}],
+    }
+    cliente.pull.return_value = {"elementos": [], "servidorEn": 500, "masDisponible": False}
+
+    rechazados = Sincronizador(almacen, cliente, sesion).sincronizar()
+
+    assert rechazados == 1
+    assert almacen.cargar_pendientes() == {}
+    # El enlace no se pierde de la cache local, solo deja de reintentarse.
+    assert almacen.cargar_todos()[local.id] is not None

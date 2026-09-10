@@ -9,7 +9,7 @@ export interface AlmacenAsentable {
   duenoActual(): string | null;
   fijarDueno(valor: string): void;
   contarElementos(): number;
-  marcarTodosPendientes(): void;
+  adoptarConIdsNuevos(): void;
   vaciar(): void;
   fijarCursor(valor: number): void;
 }
@@ -57,7 +57,7 @@ export async function asentarCuenta(
     cuantos > 0 && (await decidirImportacion({ cuantos, deOtraCuenta: duenoAnterior !== null }));
 
   if (importar) {
-    almacen.marcarTodosPendientes();
+    almacen.adoptarConIdsNuevos();
   } else {
     almacen.vaciar();
   }

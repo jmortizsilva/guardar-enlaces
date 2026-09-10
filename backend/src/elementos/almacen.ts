@@ -72,6 +72,29 @@ function filaPorId(id: string): FilaElemento | undefined {
     | undefined;
 }
 
+export interface EntradaRechazada {
+  id: string;
+  /**
+   * 'sin_url': era un alta y no traia url, no hay nada que crear.
+   * 'no_aplicable': el servidor no puede aplicar ese cambio. NO se detalla mas
+   * a proposito: el unico caso real es que el id pertenezca a otro usuario, y
+   * decirlo confirmaria que existe.
+   */
+  motivo: 'sin_url' | 'no_aplicable';
+}
+
+export interface ResultadoPush {
+  /** Version definitiva de lo aplicado, para que el cliente corrija su cache. */
+  elementos: Elemento[];
+  /**
+   * Lo que el servidor NO ha aplicado. Va aparte a proposito: antes se
+   * descartaba en silencio devolviendo 200, y el cliente --que vacia su buzon
+   * de salida con los ids que le vuelven-- reintentaba esas entradas en cada
+   * sincronizacion, para siempre y sin que nadie se enterara.
+   */
+  rechazados: EntradaRechazada[];
+}
+
 export interface ResultadoPull {
   elementos: Elemento[];
   servidorEn: number;
@@ -114,17 +137,21 @@ export function push(
   usuarioId: number,
   entradas: ElementoEntrada[],
   ahora: () => number = () => Date.now(),
-): Elemento[] {
+): ResultadoPush {
   const bd = obtenerBd();
   const definitivos: Elemento[] = [];
+  const rechazados: EntradaRechazada[] = [];
 
   const transaccion = bd.transaction((lote: ElementoEntrada[]) => {
     for (const entrada of lote) {
       const existente = filaPorId(entrada.id);
 
       if (existente && existente.usuario_id !== usuarioId) {
-        // El id choca con un elemento de OTRO usuario (colision de UUID, en la practica
-        // inexistente): se ignora sin dar pistas de que existe.
+        // El id ya es de OTRO usuario. Deja de ser un caso imposible desde que un cliente
+        // puede importar a una cuenta nueva los enlaces que tenia guardados con otra: si
+        // conserva los ids, todos chocan. El cliente los renumera antes de importarlos,
+        // pero si aun asi llega uno, se rechaza y se dice, sin revelar de quien es.
+        rechazados.push({ id: entrada.id, motivo: 'no_aplicable' });
         continue;
       }
 
@@ -165,7 +192,8 @@ export function push(
         });
       } else {
         if (!entrada.url) {
-          // Alta sin url: entrada invalida, se ignora (no hay nada que crear).
+          // Alta sin url: no hay nada que crear.
+          rechazados.push({ id: entrada.id, motivo: 'sin_url' });
           continue;
         }
         bd.prepare(
@@ -197,5 +225,5 @@ export function push(
   });
 
   transaccion(entradas);
-  return definitivos;
+  return { elementos: definitivos, rechazados };
 }

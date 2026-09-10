@@ -214,6 +214,28 @@ lo que ya se supiera del elemento). Conflictos: **gana el timestamp más
 reciente**; si el servidor ya tiene algo igual o más nuevo, el cambio del
 cliente se ignora y se devuelve la versión del servidor.
 
-→ `200 { "elementos": [ /* version definitiva de cada entrada del lote */ ] }`.
-El cliente debe sustituir su caché local por estas versiones (puede diferir
-de lo que mandó, si perdió un conflicto).
+→ `200`:
+```json
+{
+  "elementos": [ /* version definitiva de cada entrada aplicada */ ],
+  "rechazados": [ { "id": "...", "motivo": "sin_url" } ]
+}
+```
+
+El cliente debe sustituir su caché local por las versiones de `elementos`
+(pueden diferir de lo que mandó, si perdió un conflicto).
+
+`rechazados` son las entradas que el servidor **no** ha aplicado, y no
+aparecen en `elementos`. **El cliente tiene que sacarlas de su cola de
+pendientes igualmente**: no se van a aceptar por mucho que insista, y dejarlas
+dentro reenvía el lote entero en cada sincronización, para siempre. Motivos:
+
+- `sin_url` — era un alta y no traía `url`, no hay nada que crear.
+- `no_aplicable` — el servidor no puede aplicar ese cambio. No se detalla más
+  a propósito: el único caso real es que el `id` pertenezca a otro usuario, y
+  decirlo confirmaría que existe. Un cliente que importe a una cuenta nueva
+  enlaces guardados con otra **debe darles identificadores nuevos**, o chocarán
+  todos contra los del dueño anterior.
+
+Un lote puede aplicarse a medias: `200` no significa "se ha aceptado todo",
+significa "esto es lo que ha pasado con cada entrada".

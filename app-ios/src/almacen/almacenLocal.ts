@@ -12,6 +12,7 @@
  * como en Python, y evita convertir cada pantalla en async solo por leer la
  * cache local.
  */
+import * as Crypto from 'expo-crypto';
 import * as SQLite from 'expo-sqlite';
 
 import { Elemento, TipoElemento } from '../dominio/elemento';
@@ -85,17 +86,28 @@ export class AlmacenLocal {
 
   /**
    * Adopta lo que hay en el telefono para la cuenta en la que se acaba de
-   * entrar: mete todos los elementos en el outbox para que la proxima
-   * sincronizacion los suba.
+   * entrar: les da IDENTIFICADORES NUEVOS y los mete en el outbox para que la
+   * proxima sincronizacion los suba.
+   *
+   * Los ids nuevos no son un capricho. Si estos enlaces venian de otra cuenta,
+   * el servidor ya tiene esos mismos ids a nombre de su dueno anterior, y
+   * rechaza el cambio (no puede dejar que una cuenta pise elementos de otra).
+   * Antes eso ademas se hacia en silencio: los enlaces se quedaban en el
+   * outbox reintentandose para siempre sin subir jamas. Con id nuevo son lo
+   * que de verdad son: enlaces de esta cuenta, copiados de lo que habia aqui.
    *
    * Las lapidas (borrado = 1) se tiran en vez de subirse: son el rastro de un
    * borrado que la OTRA cuenta ya conoce, y en esta no significan nada.
    */
-  marcarTodosPendientes(): void {
-    this.db.execSync(`
-      DELETE FROM elementos WHERE borrado = 1;
-      INSERT OR IGNORE INTO outbox (id) SELECT id FROM elementos;
-    `);
+  adoptarConIdsNuevos(generarId: () => string = Crypto.randomUUID): void {
+    this.db.execSync('DELETE FROM elementos WHERE borrado = 1');
+    // El outbox referencia los ids viejos: se vacia antes de renumerar.
+    this.db.execSync('DELETE FROM outbox');
+    const filas = this.db.getAllSync<{ id: string }>('SELECT id FROM elementos');
+    for (const fila of filas) {
+      this.db.runSync('UPDATE elementos SET id = ? WHERE id = ?', [generarId(), fila.id]);
+    }
+    this.db.execSync('INSERT INTO outbox (id) SELECT id FROM elementos');
   }
 
   /** Enlaces visibles (sin lapidas): lo que cuenta para preguntar al usuario. */

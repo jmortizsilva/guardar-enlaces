@@ -66,8 +66,7 @@ export async function registrarRutasElementos(app: FastifyInstance): Promise<voi
       if (!entradas.every(entradaValida)) {
         return reply.code(400).send({ error: 'entrada de elemento invalida' });
       }
-      const definitivos = push(request.usuarioId!, entradas as ElementoEntrada[]);
-      return { elementos: definitivos };
+      return push(request.usuarioId!, entradas as ElementoEntrada[]);
     },
   );
 }

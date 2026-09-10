@@ -16,21 +16,31 @@ class Sincronizador:
         self._cliente = cliente
         self._sesion = sesion
 
-    def sincronizar(self) -> None:
-        self._subir_pendientes()
+    def sincronizar(self) -> int:
+        """Devuelve cuantos cambios locales rechazo el servidor (normalmente 0)."""
+        rechazados = self._subir_pendientes()
         self._bajar_cambios()
+        return rechazados
 
-    def _subir_pendientes(self) -> None:
+    def _subir_pendientes(self) -> int:
         pendientes = self._almacen.cargar_pendientes()
         if not pendientes:
-            return
+            return 0
         lote = [e.to_json_dict() for e in pendientes.values()]
         respuesta = self._sesion.con_reintento(lambda token: self._cliente.push(lote, token))
         definitivos = [Elemento.from_json_dict(d) for d in respuesta["elementos"]]
 
         cache = aplicar_respuesta_push(self._almacen.cargar_todos(), definitivos)
         self._almacen.guardar(cache)
-        self._almacen.limpiar_pendientes([e.id for e in definitivos])
+
+        # Lo rechazado sale del outbox igual que lo aceptado: el servidor no lo va a
+        # admitir por mucho que se insista, y dejarlo dentro reenvia el lote entero en
+        # cada sincronizacion, para siempre y sin que se note.
+        rechazados = respuesta.get("rechazados") or []
+        self._almacen.limpiar_pendientes(
+            [e.id for e in definitivos] + [r["id"] for r in rechazados]
+        )
+        return len(rechazados)
 
     def _bajar_cambios(self) -> None:
         # Repite el pull mientras el servidor diga que hay mas paginas (biblioteca grande o

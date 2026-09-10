@@ -38,6 +38,21 @@ export interface RespuestaMetadatos {
   tipo: string;
 }
 
+export interface EntradaRechazada {
+  id: string;
+  /** 'sin_url' o 'no_aplicable' (ver CONTRATO-API.md). */
+  motivo: string;
+}
+
+/**
+ * Respuesta del push. `rechazados` es lo que el servidor NO ha aplicado: hay
+ * que sacarlo del outbox igualmente, o se reenvia en cada sincronizacion.
+ */
+export interface RespuestaPush {
+  elementos: Record<string, unknown>[];
+  rechazados: EntradaRechazada[];
+}
+
 export interface RespuestaSincronizar {
   elementos: Record<string, unknown>[];
   servidorEn: number;
@@ -102,10 +117,7 @@ export class ClienteApi {
     return this.get(`/sincronizar?${parametros.toString()}`, tokenAcceso);
   }
 
-  push(
-    elementos: readonly Record<string, unknown>[],
-    tokenAcceso: string,
-  ): Promise<RespuestaSincronizar> {
+  push(elementos: readonly Record<string, unknown>[], tokenAcceso: string): Promise<RespuestaPush> {
     return this.post('/sincronizar', { elementos }, tokenAcceso);
   }
 
