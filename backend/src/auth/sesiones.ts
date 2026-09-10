@@ -58,6 +58,12 @@ export interface ParDeTokens {
   tokenAcceso: string;
   expiraEn: number; // caducidad del token de ACCESO (el de refresco no se expone al cliente)
   tokenRefresco: string;
+  /**
+   * De quien es la sesion. Uso interno de las rutas, que lo cambian por el
+   * usuario completo antes de responder: al renovar no hay otra forma de saber
+   * a quien pertenece el token de refresco que se acaba de presentar.
+   */
+  usuarioId: number;
 }
 
 function emitirParDeTokens(
@@ -68,7 +74,7 @@ function emitirParDeTokens(
   const tokenRefresco = crearSesion(usuarioId, dispositivo, ahora);
   const expiraEn = ahora() + DURACION_ACCESO_MS;
   const tokenAcceso = emitirTokenAcceso(usuarioId, expiraEn, config.tokenSecreto ?? '');
-  return { tokenAcceso, expiraEn, tokenRefresco };
+  return { tokenAcceso, expiraEn, tokenRefresco, usuarioId };
 }
 
 // Primer login: crea la sesion (refresco) y el primer token de acceso para un usuario ya

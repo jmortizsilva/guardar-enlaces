@@ -18,6 +18,9 @@ npm run verificar    # tsc --noEmit && eslint . && vitest
 El alta es abierta: entrar con Google o Apple la primera vez crea la cuenta.
 No hay lista de invitados ni ningún paso previo que dar en el servidor.
 
+Para desplegar en el VPS (`api.jmortiz.es`), ver
+[`docs/DESPLIEGUE.md`](docs/DESPLIEGUE.md).
+
 ## Variables de entorno
 
 - `PORT` (por defecto 8081)

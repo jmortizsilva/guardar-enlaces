@@ -9,6 +9,7 @@ import wx
 
 from .almacen_local import AlmacenLocal
 from .api_cliente import ClienteApi
+from .asentar_cuenta import EnlacesEnElEquipo, asentar_cuenta, identidad_dueno
 from .sesion import Sesion
 from .ui.dialogo_login import DialogoLogin
 from .ui.ventana_principal import VentanaPrincipal
@@ -24,18 +25,53 @@ def _url_base() -> str:
     return os.getenv("GUARDAR_ENLACES_API", "http://localhost:8081")
 
 
+def _preguntar_importacion(enlaces: EnlacesEnElEquipo) -> bool:
+    """Las dos salidas van nombradas por lo que hacen, no "Si" y "No": borrar no
+    se puede deshacer y hay que oirlo antes de elegir."""
+    cuenta = "1 enlace guardado" if enlaces.cuantos == 1 else f"{enlaces.cuantos} enlaces guardados"
+    origen = "con otra cuenta" if enlaces.de_otra_cuenta else "sin cuenta"
+    dialogo = wx.MessageDialog(
+        None,
+        f"Hay {cuenta} en este equipo {origen}. ¿Quieres añadirlos a esta "
+        "cuenta? Si eliges borrarlos, se quitan de este equipo y no se pueden "
+        "recuperar.",
+        "Enlaces en este equipo",
+        wx.YES_NO | wx.ICON_QUESTION,
+    )
+    dialogo.SetYesNoLabels("&Añadirlos", "&Borrarlos")
+    respuesta = dialogo.ShowModal()
+    dialogo.Destroy()
+    return respuesta == wx.ID_YES
+
+
 class AplicacionGuardarEnlaces(wx.App):
     def OnInit(self) -> bool:
         cliente = ClienteApi(_url_base())
         sesion = Sesion(cliente)
         almacen = AlmacenLocal(_ruta_datos())
 
-        if not sesion.restaurar():
+        restaurada = sesion.restaurar()
+        if not restaurada:
             dialogo = DialogoLogin(None, sesion, cliente)
             resultado = dialogo.ShowModal()
             dialogo.Destroy()
             if resultado != wx.ID_OK:
                 return False
+
+        correo = (sesion.usuario or {}).get("email")
+        if correo:
+            dueno = identidad_dueno(_url_base(), correo)
+            if restaurada:
+                # Sesion que ya venia de antes: lo que hay en la cache es de esta
+                # misma cuenta, se sincronizo bajo ella. Se marca sin preguntar
+                # --las instalaciones anteriores a esto no tienen dueno
+                # guardado--; preguntar aqui haria que la primera vez tras
+                # actualizar se ofreciera importar enlaces que YA estan en el
+                # servidor, y aceptar habria creado duplicados con ids nuevos.
+                if almacen.dueno_actual() is None:
+                    almacen.fijar_dueno(dueno)
+            else:
+                asentar_cuenta(almacen, dueno, _preguntar_importacion)
 
         ventana = VentanaPrincipal(almacen, cliente, sesion)
         ventana.Show()

@@ -122,6 +122,33 @@ describe('flujo completo (modo polling, proveedor que no da correo)', () => {
   });
 });
 
+describe('POST /auth/renovar', () => {
+  it('devuelve tambien el usuario, para que el cliente sepa con que cuenta esta', async () => {
+    await app.inject({
+      method: 'GET',
+      url: '/auth/iniciar?proveedor=google&modo=polling&estado=e9',
+    });
+    await app.inject({ method: 'GET', url: '/auth/callback/google?code=codigo-con-email&state=e9' });
+    const estado = await app.inject({ method: 'GET', url: '/auth/estado?estado=e9' });
+    const canje = await app.inject({
+      method: 'POST',
+      url: '/auth/canjear',
+      payload: { codigoCanje: estado.json().codigoCanje },
+    });
+
+    const renovado = await app.inject({
+      method: 'POST',
+      url: '/auth/renovar',
+      payload: { tokenRefresco: canje.json().tokenRefresco },
+    });
+
+    expect(renovado.statusCode).toBe(200);
+    expect(renovado.json().usuario.email).toBe('persona@x.com');
+    // Y no se cuela el identificador interno que usan las rutas por dentro.
+    expect(renovado.json().usuarioId).toBeUndefined();
+  });
+});
+
 describe('POST /auth/canjear', () => {
   it('codigo invalido -> 400', async () => {
     const res = await app.inject({

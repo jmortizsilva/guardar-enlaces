@@ -14,6 +14,7 @@ from __future__ import annotations
 
 import json
 import sqlite3
+import uuid
 from pathlib import Path
 from typing import Iterable
 
@@ -51,12 +52,77 @@ class AlmacenLocal:
                 clave TEXT PRIMARY KEY,
                 valor INTEGER NOT NULL
             );
+            CREATE TABLE IF NOT EXISTS estado_texto (
+                clave TEXT PRIMARY KEY,
+                valor TEXT NOT NULL
+            );
             """
         )
         self._conexion.commit()
 
     def cerrar(self) -> None:
         self._conexion.close()
+
+    # --- cursor de sincronizacion (ultimo "servidorEn" recibido) ---
+
+    # --- dueno de la cache (que cuenta, y de que servidor, dejo estos datos) ---
+
+    def vaciar(self) -> None:
+        """Borra la cache entera: elementos, outbox, cursor y dueno."""
+        self._conexion.executescript(
+            """
+            DELETE FROM elementos;
+            DELETE FROM outbox;
+            DELETE FROM estado_sincronizacion;
+            DELETE FROM estado_texto;
+            """
+        )
+        self._conexion.commit()
+
+    def dueno_actual(self) -> str | None:
+        fila = self._conexion.execute(
+            "SELECT valor FROM estado_texto WHERE clave = 'dueno'"
+        ).fetchone()
+        return fila["valor"] if fila else None
+
+    def fijar_dueno(self, valor: str) -> None:
+        self._conexion.execute(
+            "INSERT INTO estado_texto (clave, valor) VALUES ('dueno', ?) "
+            "ON CONFLICT(clave) DO UPDATE SET valor = excluded.valor",
+            (valor,),
+        )
+        self._conexion.commit()
+
+    def contar_elementos(self) -> int:
+        """Enlaces visibles (sin lapidas): lo que cuenta para preguntar."""
+        fila = self._conexion.execute(
+            "SELECT COUNT(*) AS n FROM elementos WHERE borrado = 0"
+        ).fetchone()
+        return fila["n"] if fila else 0
+
+    def adoptar_con_ids_nuevos(self) -> None:
+        """Adopta lo que hay aqui para la cuenta en la que se acaba de entrar:
+        les da IDENTIFICADORES NUEVOS y los mete en el outbox para subirlos.
+
+        Los ids nuevos no son un capricho. Si estos enlaces venian de otra
+        cuenta, el servidor ya tiene esos mismos ids a nombre de su dueno
+        anterior y rechaza el cambio; antes ademas lo hacia en silencio, y se
+        quedaban reintentandose para siempre sin subir jamas. Con id nuevo son
+        lo que de verdad son: enlaces de esta cuenta, copiados de lo que habia.
+
+        Las lapidas se tiran: son el rastro de un borrado que la OTRA cuenta ya
+        conoce, y en esta no significan nada.
+        """
+        self._conexion.execute("DELETE FROM elementos WHERE borrado = 1")
+        # El outbox referencia los ids viejos: se vacia antes de renumerar.
+        self._conexion.execute("DELETE FROM outbox")
+        ids = [f["id"] for f in self._conexion.execute("SELECT id FROM elementos")]
+        for id_viejo in ids:
+            self._conexion.execute(
+                "UPDATE elementos SET id = ? WHERE id = ?", (str(uuid.uuid4()), id_viejo)
+            )
+        self._conexion.execute("INSERT INTO outbox (id) SELECT id FROM elementos")
+        self._conexion.commit()
 
     # --- cursor de sincronizacion (ultimo "servidorEn" recibido) ---
 

@@ -103,6 +103,10 @@ Query: `estado=<el mismo valor usado en /auth/iniciar>`.
 
 ### 5. `POST /auth/renovar`
 
+Devuelve el mismo formato que `/auth/canjear`, **`usuario` incluido**: un
+cliente que arranca con una sesión guardada necesita saber con qué cuenta está,
+para mostrarlo y para detectar que su caché local pertenece a otra.
+
 ```json
 { "tokenRefresco": "..." }
 ```

@@ -150,9 +150,8 @@ export function ProveedorApp({ children }: { children: ReactNode }) {
       if (resultado.estado !== 'exito') {
         return resultado;
       }
-      // Sin correo no se toca nada: /auth/renovar no devuelve usuario (ver
-      // CONTRATO-API.md), asi que no habria con que comparar y, ante la duda,
-      // no se tira ni se importa nada.
+      // Sin correo no se toca nada: no habria con que comparar y, ante la
+      // duda, no se tira ni se importa nada.
       if (sesion.usuario) {
         await asentarCuenta(
           almacen,

@@ -15,7 +15,13 @@ import {
   Proveedor,
   urlAutorizacion,
 } from './oauth';
-import { iniciarSesion, renovarSesion, revocarSesion, revocarTodasLasSesiones } from './sesiones';
+import {
+  ParDeTokens,
+  iniciarSesion,
+  renovarSesion,
+  revocarSesion,
+  revocarTodasLasSesiones,
+} from './sesiones';
 import { obtenerOCrearUsuario, obtenerUsuarioPorId } from './usuarios';
 
 const PROVEEDORES: Proveedor[] = ['google', 'apple'];
@@ -35,6 +41,22 @@ const MODOS: ModoLogin[] = ['deeplink', 'polling'];
 
 function redirectUriPara(proveedor: string): string {
   return `${config.urlPublica}/auth/callback/${proveedor}`;
+}
+
+/**
+ * Lo que ve el cliente: los tokens sin el usuarioId interno, y el usuario
+ * entero. Va en las TRES rutas que abren sesion, renovar incluida: si al
+ * renovar no dijeramos quien es, un cliente que arranca con una sesion guardada
+ * no sabria con que cuenta esta --no podria ni mostrarlo ni detectar que su
+ * cache local es de otra (ver asentarCuenta en los clientes).
+ */
+function respuestaDeSesion(tokens: ParDeTokens) {
+  return {
+    tokenAcceso: tokens.tokenAcceso,
+    expiraEn: tokens.expiraEn,
+    tokenRefresco: tokens.tokenRefresco,
+    usuario: obtenerUsuarioPorId(tokens.usuarioId),
+  };
 }
 
 function paginaHtml(titulo: string, mensaje: string): string {
@@ -216,9 +238,7 @@ export async function registrarRutasAuth(app: FastifyInstance): Promise<void> {
       if (usuarioId === undefined) {
         return reply.code(400).send({ error: 'codigo invalido o caducado' });
       }
-      const usuario = obtenerUsuarioPorId(usuarioId);
-      const tokens = iniciarSesion(usuarioId, null);
-      return { ...tokens, usuario };
+      return respuestaDeSesion(iniciarSesion(usuarioId, null));
     },
   );
 
@@ -227,11 +247,11 @@ export async function registrarRutasAuth(app: FastifyInstance): Promise<void> {
     if (typeof tokenRefresco !== 'string' || tokenRefresco.length === 0) {
       return reply.code(400).send({ error: 'falta "tokenRefresco"' });
     }
-    const tokens = renovarSesion(tokenRefresco);
-    if (!tokens) {
+    const renovado = renovarSesion(tokenRefresco);
+    if (!renovado) {
       return reply.code(401).send({ error: 'token de refresco invalido o caducado' });
     }
-    return tokens;
+    return respuestaDeSesion(renovado);
   });
 
   app.post<{ Body: CuerpoTokenRefresco }>('/auth/logout', async (request) => {
@@ -266,8 +286,7 @@ export async function registrarRutasAuth(app: FastifyInstance): Promise<void> {
       if (!usuario) {
         return reply.code(400).send({ error: 'falta "email"' });
       }
-      const tokens = iniciarSesion(usuario.id, 'dev-login');
-      return { ...tokens, usuario };
+      return respuestaDeSesion(iniciarSesion(usuario.id, 'dev-login'));
     });
   }
 }

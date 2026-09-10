@@ -41,7 +41,13 @@ _TODAS_LAS_ETIQUETAS = "(todas las etiquetas)"
 
 class VentanaPrincipal(wx.Frame):
     def __init__(self, almacen: AlmacenLocal, cliente: ClienteApi, sesion: Sesion):
-        super().__init__(None, title="Guardar enlaces", size=(760, 520))
+        # La cuenta va en el TITULO, no en la barra de estado: el titulo lo
+        # anuncia el lector de pantalla al entrar en la ventana, y la barra se
+        # pisa con cada mensaje. Sin esto no habia forma de saber con que cuenta
+        # estabas, y diagnosticar "faltan enlaces" costaba una tarde.
+        correo = (sesion.usuario or {}).get("email")
+        titulo = f"Guardar enlaces — {correo}" if correo else "Guardar enlaces"
+        super().__init__(None, title=titulo, size=(760, 520))
         self._almacen = almacen
         self._cliente = cliente
         self._sesion = sesion

@@ -36,7 +36,8 @@ de vida. Cuando cambies algo en uno, no asumas que el otro se entera.
 El **contrato de API** entre el backend y los dos clientes está en
 [`backend/docs/CONTRATO-API.md`](backend/docs/CONTRATO-API.md) — es la
 fuente de la verdad; cualquier cambio de API se decide ahí primero, antes de
-tocar código de cliente.
+tocar código de cliente. Cómo se despliega el servidor, en
+[`backend/docs/DESPLIEGUE.md`](backend/docs/DESPLIEGUE.md).
 
 ## Por dónde empezar
 
