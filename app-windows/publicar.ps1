@@ -12,7 +12,20 @@ param(
     [string]$Novedades
 )
 
-$ErrorActionPreference = "Stop"
+# "Continue" y no "Stop" a proposito, y no es dejadez.
+#
+# En Windows PowerShell 5.1, lo que una herramienta de linea de comandos escribe
+# en la salida de ERRORES se convierte en un registro de error y, con "Stop", en
+# una excepcion que corta el script. Y gh escribe ahi "release not found"
+# justo cuando la publicacion NO existe, que es el caso normal antes de
+# publicarla; tambien escribe ahi el progreso de subida, que no es ningun fallo.
+#
+# Asi que aqui se hace lo unico fiable: mirar el CODIGO DE SALIDA despues de cada
+# llamada. Los cmdlets que si deben cortar llevan su -ErrorAction Stop.
+#
+# Ojo al comprobarlo: PowerShell 7 NO se comporta asi, no corta. Una prueba en 7
+# no dice nada sobre lo que pasara en el 5.1 que trae Windows.
+$ErrorActionPreference = "Continue"
 Set-Location $PSScriptRoot
 
 $python = ".\venv\Scripts\python.exe"
@@ -29,11 +42,6 @@ if (-not (Get-Command gh -ErrorAction SilentlyContinue)) {
 # Que no se publique una version que ya existe: la URL "latest/download" sirve
 # el ultimo publicado, y dos releases con la misma etiqueta dejan a los
 # clientes sin saber cual les toca.
-#
-# Se mira el CODIGO DE SALIDA, no lo que escriba gh: cuando la publicacion no
-# existe --que es lo normal la primera vez-- gh escribe "release not found" en
-# la salida de errores, y con $ErrorActionPreference = "Stop" PowerShell toma
-# eso por una excepcion y aborta el script entero.
 gh release view $etiqueta 2>&1 | Out-Null
 if ($LASTEXITCODE -eq 0) {
     Write-Host "Ya existe una publicacion con la etiqueta $etiqueta." -ForegroundColor Red
@@ -54,9 +62,9 @@ if ($LASTEXITCODE -ne 0) { exit 1 }
 $zip = "dist\GuardarEnlaces-$version.zip"
 if (Test-Path $zip) { Remove-Item $zip }
 Write-Host "Comprimiendo..." -ForegroundColor Cyan
-Compress-Archive -Path "dist\GuardarEnlaces\*" -DestinationPath $zip
+Compress-Archive -Path "dist\GuardarEnlaces\*" -DestinationPath $zip -ErrorAction Stop
 
-$sha = (Get-FileHash $zip -Algorithm SHA256).Hash.ToLower()
+$sha = (Get-FileHash $zip -Algorithm SHA256 -ErrorAction Stop).Hash.ToLower()
 $url = "https://github.com/jmortizsilva/guardar-enlaces/releases/download/$etiqueta/GuardarEnlaces-$version.zip"
 
 # El manifiesto que lee la aplicacion instalada. Va como fichero suelto de la

@@ -8,7 +8,14 @@
 # falsos positivos provoca en Defender. Que el antivirus lo ponga en cuarentena
 # en silencio es de los peores fallos posibles para quien no ve el aviso.
 
-$ErrorActionPreference = "Stop"
+# "Continue" y no "Stop" a proposito: en Windows PowerShell 5.1, lo que pip y
+# PyInstaller escriben en la salida de ERRORES (avisos, y su registro normal) se
+# convierte con "Stop" en una excepcion que corta el script en mitad de un
+# empaquetado que iba bien. Lo unico fiable es el codigo de salida.
+#
+# Ojo al comprobarlo: PowerShell 7 NO se comporta asi. Una prueba en 7 no dice
+# nada sobre lo que pasara en el 5.1 que trae Windows.
+$ErrorActionPreference = "Continue"
 Set-Location $PSScriptRoot
 
 $python = ".\venv\Scripts\python.exe"
@@ -18,11 +25,6 @@ if (-not (Test-Path $python)) {
     exit 1
 }
 
-# OJO con las herramientas de linea de comandos en PowerShell: pip y PyInstaller
-# escriben avisos y hasta su registro normal en la salida de ERRORES, y con
-# $ErrorActionPreference = "Stop" eso aborta el script en mitad de un
-# empaquetado que iba bien. Por eso cada una lleva su "2>&1" y se comprueba el
-# codigo de salida, que es lo unico que de verdad dice si fallo.
 function Invoke-Paso {
     param([string]$Descripcion, [scriptblock]$Accion)
 
