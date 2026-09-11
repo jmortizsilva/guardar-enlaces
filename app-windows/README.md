@@ -14,6 +14,33 @@ python -m guardar_enlaces          # arranca la app
 pytest                              # tests de la logica pura (modelo.py)
 ```
 
+## Ejecutable
+
+```
+.\empaquetar.ps1
+```
+
+Deja `dist\GuardarEnlaces\GuardarEnlaces.exe` con sus archivos al lado (unos
+60 MB). Es una carpeta y no un `.exe` suelto a propósito: el de fichero único
+se descomprime en temporales en cada arranque y es el formato que más falsos
+positivos provoca en Defender.
+
+El icono (un marcador de libro blanco sobre azul) se genera por código en
+`recursos/generar_icono.py`; el `.ico` no se versiona.
+
+Lo que ninguna prueba cubre y hay que comprobar a mano tras empaquetar:
+
+1. Que arranca sin ventana de consola.
+2. **Que recuerda la sesión** al cerrar y volver a abrir. El `keyring` carga su
+   motor por *entry points* y habla con el Administrador de credenciales a
+   través de `win32ctypes`; los empaquetadores se dejan fuera las dos cosas si
+   no se les dice (de ahí los `--collect-all` del script). Si falla, la
+   aplicación arranca igual pero pide entrar con Google cada vez.
+3. Que el título de la ventana dice con qué cuenta has entrado.
+
+La primera vez, Windows mostrará *"Windows protegió su PC"* por no estar
+firmado: **Más información → Ejecutar de todas formas**.
+
 ## Configuración
 
 La app apunta al backend por la variable de entorno `GUARDAR_ENLACES_API`

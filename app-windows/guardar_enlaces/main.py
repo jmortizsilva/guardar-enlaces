@@ -22,7 +22,11 @@ def _ruta_datos() -> Path:
 
 
 def _url_base() -> str:
-    return os.getenv("GUARDAR_ENLACES_API", "http://localhost:8081")
+    """El servidor real por defecto. Antes era localhost porque siempre se
+    arrancaba con un script que fijaba la variable; el ejecutable no tiene
+    script, asi que lo razonable es que funcione al abrirlo. La variable sigue
+    sirviendo para apuntar a un servidor local cuando se prueba."""
+    return os.getenv("GUARDAR_ENLACES_API", "https://api.jmortiz.es")
 
 
 def _preguntar_importacion(enlaces: EnlacesEnElEquipo) -> bool:

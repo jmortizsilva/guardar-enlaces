@@ -1,0 +1,7 @@
+# Empaquetado (PyInstaller)
+build/
+dist/
+*.spec
+
+# El icono se genera con recursos/generar_icono.py, no se versiona el binario
+recursos/*.ico

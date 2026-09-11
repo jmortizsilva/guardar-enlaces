@@ -1,2 +1,7 @@
 -r requirements.txt
 pytest>=8.0
+
+# Empaquetado (ver empaquetar.ps1). Solo hacen falta para generar el
+# ejecutable, no para ejecutar la aplicacion desde el codigo.
+pyinstaller>=6.0
+pillow>=10.0
