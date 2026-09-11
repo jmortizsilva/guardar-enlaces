@@ -8,4 +8,4 @@ Al publicar una version nueva: subir este numero, commitear, y lanzar
 publicar.ps1.
 """
 
-VERSION = "1.0.0"
+VERSION = "1.0.1"
