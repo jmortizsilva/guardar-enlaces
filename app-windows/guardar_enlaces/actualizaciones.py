@@ -129,28 +129,57 @@ def descargar(disponible: VersionDisponible, destino: Path) -> bool:
 
 
 # El relevo. Espera a que la aplicacion se cierre (Windows no deja sustituir un
-# .exe en marcha), copia lo nuevo encima y la vuelve a abrir. robocopy devuelve
-# codigos menores que 8 cuando ha ido bien, de ahi que no se compruebe con "if
-# errorlevel" al uso.
+# .exe en marcha), copia lo nuevo encima y la vuelve a abrir.
+#
+# Dos cosas que parecen detalles y son las que hacen que funcione o no, las dos
+# aprendidas midiendo un relevo que fallaba en silencio:
+#
+# - Se espera por IDENTIFICADOR de proceso, no por nombre. Esperar por nombre
+#   fallaba: el bucle salia antes de que la aplicacion hubiera cerrado, robocopy
+#   se encontraba el .exe todavia bloqueado y no lo sustituia. Como robocopy
+#   escribia en nul, no se enteraba nadie: la aplicacion se cerraba y no volvia.
+# - Se duerme con "ping" y no con "timeout". Este .cmd corre sin consola, y ahi
+#   timeout falla al instante (codigo 125) porque no puede leer del teclado; el
+#   bucle se convertia en una espera activa que ademas lanzaba un tasklist por
+#   vuelta. ping -n 2 contra la direccion local es el segundo de espera clasico
+#   que si funciona sin consola.
+#
+# robocopy considera exito cualquier codigo menor que 8, de ahi que no se
+# compruebe con un "if errorlevel" al uso. /R:5 /W:1 reintenta por si algun
+# fichero sigue bloqueado un instante mas.
 _RELEVO = """@echo off
+> "%~dp0registro.txt" echo Relevo iniciado, esperando a que cierre el proceso {pid}
 :esperar
-tasklist /FI "IMAGENAME eq {exe}" | find /I "{exe}" >nul
+tasklist /FI "PID eq {pid}" 2>nul | find "{pid}" >nul
 if not errorlevel 1 (
-    timeout /t 1 /nobreak >nul
+    ping -n 2 127.0.0.1 >nul
     goto esperar
 )
-robocopy "{origen}" "{destino}" /E /NFL /NDL /NJH /NJS /NC /NS >nul
+>> "%~dp0registro.txt" echo La aplicacion ya se cerro
+robocopy "{origen}" "{destino}" /E /R:5 /W:1 /NFL /NDL /NJH /NJS /NC /NS >> "%~dp0registro.txt"
+>> "%~dp0registro.txt" echo robocopy devolvio %errorlevel% (menos de 8 es correcto)
 start "" "{destino}\\{exe}"
+>> "%~dp0registro.txt" echo Relanzada
 """
 
 
-def aplicar(carpeta_nueva: Path, destino: Path | None = None) -> None:
+def aplicar(carpeta_nueva: Path, destino: Path | None = None) -> Path:
     """Lanza el relevo y devuelve el control: quien llama debe cerrar la
-    aplicacion inmediatamente despues, o el .cmd se quedara esperando."""
+    aplicacion inmediatamente despues, o el .cmd se quedara esperando.
+
+    Devuelve la ruta del registro que va dejando, que es la unica forma de
+    saber por donde fallo si la aplicacion no vuelve a abrirse.
+    """
     destino = destino or carpeta_instalacion()
-    guion = Path(tempfile.mkdtemp(prefix="guardar-enlaces-relevo-")) / "relevo.cmd"
+    carpeta_guion = Path(tempfile.mkdtemp(prefix="guardar-enlaces-relevo-"))
+    guion = carpeta_guion / "relevo.cmd"
     guion.write_text(
-        _RELEVO.format(exe=NOMBRE_EXE, origen=carpeta_nueva, destino=destino),
+        _RELEVO.format(
+            exe=NOMBRE_EXE,
+            origen=carpeta_nueva,
+            destino=destino,
+            pid=os.getpid(),
+        ),
         encoding="cp1252",
     )
     # DETACHED_PROCESS: el .cmd tiene que sobrevivir a que esta aplicacion muera,
@@ -160,6 +189,7 @@ def aplicar(carpeta_nueva: Path, destino: Path | None = None) -> None:
         creationflags=subprocess.DETACHED_PROCESS | subprocess.CREATE_NO_WINDOW,
         close_fds=True,
     )
+    return carpeta_guion / "registro.txt"
 
 
 def descomprimir(zip_descargado: Path) -> Path | None:

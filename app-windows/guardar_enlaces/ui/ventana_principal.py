@@ -13,6 +13,7 @@ usar el raton.
 
 from __future__ import annotations
 
+import logging
 import tempfile
 import threading
 import time
@@ -389,7 +390,11 @@ class VentanaPrincipal(wx.Frame):
     def _relevar(self, carpeta_nueva: Path) -> None:
         """Lanza el relevo y cierra: el .cmd esta esperando a que este proceso
         muera para poder sustituir el ejecutable."""
-        actualizaciones.aplicar(carpeta_nueva)
+        registro = actualizaciones.aplicar(carpeta_nueva)
+        # Si la aplicacion no vuelve a abrirse, ese fichero dice por donde fallo.
+        # Es lo unico que queda para diagnosticarlo, porque a partir de aqui ya
+        # no hay ninguna ventana donde contar nada.
+        logging.info("relevo lanzado, registro en %s", registro)
         self.Close()
 
     def _fallo_actualizando(self, mensaje: str) -> None:
