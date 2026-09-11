@@ -9,9 +9,10 @@ import wx
 
 from .almacen_local import AlmacenLocal
 from .api_cliente import ClienteApi
-from .asentar_cuenta import EnlacesEnElEquipo, asentar_cuenta, identidad_dueno
+from .asentar_cuenta import asentar_cuenta, identidad_dueno
 from .sesion import Sesion
 from .ui.dialogo_login import DialogoLogin
+from .ui.preguntas import preguntar_importacion
 from .ui.ventana_principal import VentanaPrincipal
 
 
@@ -27,25 +28,6 @@ def _url_base() -> str:
     script, asi que lo razonable es que funcione al abrirlo. La variable sigue
     sirviendo para apuntar a un servidor local cuando se prueba."""
     return os.getenv("GUARDAR_ENLACES_API", "https://api.jmortiz.es")
-
-
-def _preguntar_importacion(enlaces: EnlacesEnElEquipo) -> bool:
-    """Las dos salidas van nombradas por lo que hacen, no "Si" y "No": borrar no
-    se puede deshacer y hay que oirlo antes de elegir."""
-    cuenta = "1 enlace guardado" if enlaces.cuantos == 1 else f"{enlaces.cuantos} enlaces guardados"
-    origen = "con otra cuenta" if enlaces.de_otra_cuenta else "sin cuenta"
-    dialogo = wx.MessageDialog(
-        None,
-        f"Hay {cuenta} en este equipo {origen}. ¿Quieres añadirlos a esta "
-        "cuenta? Si eliges borrarlos, se quitan de este equipo y no se pueden "
-        "recuperar.",
-        "Enlaces en este equipo",
-        wx.YES_NO | wx.ICON_QUESTION,
-    )
-    dialogo.SetYesNoLabels("&Añadirlos", "&Borrarlos")
-    respuesta = dialogo.ShowModal()
-    dialogo.Destroy()
-    return respuesta == wx.ID_YES
 
 
 class AplicacionGuardarEnlaces(wx.App):
@@ -64,7 +46,7 @@ class AplicacionGuardarEnlaces(wx.App):
 
         correo = (sesion.usuario or {}).get("email")
         if correo:
-            dueno = identidad_dueno(_url_base(), correo)
+            dueno = identidad_dueno(cliente.url_base, correo)
             if restaurada:
                 # Sesion que ya venia de antes: lo que hay en la cache es de esta
                 # misma cuenta, se sincronizo bajo ella. Se marca sin preguntar
@@ -75,7 +57,7 @@ class AplicacionGuardarEnlaces(wx.App):
                 if almacen.dueno_actual() is None:
                     almacen.fijar_dueno(dueno)
             else:
-                asentar_cuenta(almacen, dueno, _preguntar_importacion)
+                asentar_cuenta(almacen, dueno, preguntar_importacion)
 
         ventana = VentanaPrincipal(almacen, cliente, sesion)
         ventana.Show()

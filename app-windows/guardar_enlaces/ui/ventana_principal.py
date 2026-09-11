@@ -21,6 +21,7 @@ import wx
 
 from ..almacen_local import AlmacenLocal
 from ..api_cliente import ClienteApi, ErrorApi
+from ..asentar_cuenta import asentar_cuenta, identidad_dueno
 from ..modelo import (
     Elemento,
     buscar,
@@ -35,19 +36,24 @@ from ..sincronizador import Sincronizador, toca_sincronizar
 from .bandeja import IconoBandeja
 from .dialogo_anadir import DialogoAnadir
 from .dialogo_detalle import DialogoDetalle
+from .dialogo_login import DialogoLogin
+from .preguntas import preguntar_importacion
 
 _TODAS_LAS_ETIQUETAS = "(todas las etiquetas)"
 
 
+def _titulo_con_cuenta(sesion: Sesion) -> str:
+    """La cuenta va en el TITULO, no en la barra de estado: el titulo lo
+    anuncia el lector de pantalla al entrar en la ventana, y la barra se pisa
+    con cada mensaje. No saber con que cuenta estabas convirtio un "faltan
+    enlaces" en una tarde de diagnostico."""
+    correo = (sesion.usuario or {}).get("email")
+    return f"Guardar enlaces — {correo}" if correo else "Guardar enlaces"
+
+
 class VentanaPrincipal(wx.Frame):
     def __init__(self, almacen: AlmacenLocal, cliente: ClienteApi, sesion: Sesion):
-        # La cuenta va en el TITULO, no en la barra de estado: el titulo lo
-        # anuncia el lector de pantalla al entrar en la ventana, y la barra se
-        # pisa con cada mensaje. Sin esto no habia forma de saber con que cuenta
-        # estabas, y diagnosticar "faltan enlaces" costaba una tarde.
-        correo = (sesion.usuario or {}).get("email")
-        titulo = f"Guardar enlaces — {correo}" if correo else "Guardar enlaces"
-        super().__init__(None, title=titulo, size=(760, 520))
+        super().__init__(None, title=_titulo_con_cuenta(sesion), size=(760, 520))
         self._almacen = almacen
         self._cliente = cliente
         self._sesion = sesion
@@ -70,18 +76,21 @@ class VentanaPrincipal(wx.Frame):
     def _construir_menu(self) -> None:
         id_anadir = wx.NewIdRef()
         id_sincronizar = wx.NewIdRef()
+        id_cerrar_sesion = wx.NewIdRef()
 
         barra = wx.MenuBar()
         menu_archivo = wx.Menu()
         menu_archivo.Append(id_anadir, "&Añadir enlace...\tCtrl+N")
         menu_archivo.Append(id_sincronizar, "&Sincronizar ahora\tF5")
         menu_archivo.AppendSeparator()
+        menu_archivo.Append(id_cerrar_sesion, "&Cerrar sesión...")
         menu_archivo.Append(wx.ID_EXIT, "&Salir\tCtrl+Q")
         barra.Append(menu_archivo, "&Archivo")
         self.SetMenuBar(barra)
 
         self.Bind(wx.EVT_MENU, self._al_anadir, id=id_anadir)
         self.Bind(wx.EVT_MENU, lambda e: self.sincronizar_en_segundo_plano(), id=id_sincronizar)
+        self.Bind(wx.EVT_MENU, self._al_cerrar_sesion, id=id_cerrar_sesion)
         self.Bind(wx.EVT_MENU, lambda e: self.Close(), id=wx.ID_EXIT)
 
     def _construir_controles(self) -> None:
@@ -300,6 +309,65 @@ class VentanaPrincipal(wx.Frame):
                 )
 
         threading.Thread(target=trabajo, daemon=True).start()
+
+    # --- cuenta ---
+
+    def _al_cerrar_sesion(self, evento: wx.CommandEvent) -> None:
+        """Cerrar sesion y ofrecer entrar con otra cuenta sin reiniciar.
+
+        Los enlaces NO se borran: se quedan aqui y, si luego entra otra cuenta,
+        asentar_cuenta pregunta antes de mezclarlos (y si vuelve la misma, no
+        pregunta nada). Por eso el aviso lo dice: lo que se pierde es la sesion,
+        no los datos.
+        """
+        confirmar = wx.MessageDialog(
+            self,
+            f"Se cerrará la sesión de {(self._sesion.usuario or {}).get('email')}. "
+            "Tus enlaces se quedan en este equipo. Para volver a sincronizar "
+            "tendrás que entrar de nuevo con Google.",
+            "Cerrar sesión",
+            wx.YES_NO | wx.ICON_QUESTION,
+        )
+        confirmar.SetYesNoLabels("&Cerrar sesión", "Cancelar")
+        salir = confirmar.ShowModal() == wx.ID_YES
+        confirmar.Destroy()
+        if not salir:
+            return
+
+        self.SetStatusText("Cerrando sesión…")
+
+        def trabajo() -> None:
+            # cerrar() avisa al servidor para revocar el token; si no hay red se
+            # cierra igual en local (lo resuelve Sesion, no hace falta nada aqui).
+            self._sesion.cerrar()
+            wx.CallAfter(self._tras_cerrar_sesion)
+
+        threading.Thread(target=trabajo, daemon=True).start()
+
+    def _tras_cerrar_sesion(self) -> None:
+        """Sin cuenta esta aplicacion no tiene nada que hacer --existe para
+        sincronizar--, asi que o entra alguien o se cierra."""
+        self.SetTitle(_titulo_con_cuenta(self._sesion))
+        self.SetStatusText("Sesión cerrada")
+
+        dialogo = DialogoLogin(self, self._sesion, self._cliente)
+        entro = dialogo.ShowModal() == wx.ID_OK
+        dialogo.Destroy()
+        if not entro:
+            self.Close()
+            return
+
+        correo = (self._sesion.usuario or {}).get("email")
+        if correo:
+            asentar_cuenta(
+                self._almacen,
+                identidad_dueno(self._cliente.url_base, correo),
+                lambda enlaces: preguntar_importacion(enlaces, self),
+            )
+        self.SetTitle(_titulo_con_cuenta(self._sesion))
+        self._cargar_desde_cache()
+        self._ultima_sincronizacion = 0.0  # cuenta nueva: sincronizar ya, sin esperar al freno
+        self.sincronizar_en_segundo_plano()
 
     # --- cierre ---
 
