@@ -18,22 +18,41 @@ if (-not (Test-Path $python)) {
     exit 1
 }
 
-Write-Host "Instalando herramientas de empaquetado (si faltan)..." -ForegroundColor Cyan
-& $python -m pip install --quiet --upgrade pyinstaller pillow
+# OJO con las herramientas de linea de comandos en PowerShell: pip y PyInstaller
+# escriben avisos y hasta su registro normal en la salida de ERRORES, y con
+# $ErrorActionPreference = "Stop" eso aborta el script en mitad de un
+# empaquetado que iba bien. Por eso cada una lleva su "2>&1" y se comprueba el
+# codigo de salida, que es lo unico que de verdad dice si fallo.
+function Invoke-Paso {
+    param([string]$Descripcion, [scriptblock]$Accion)
 
-Write-Host "Generando el icono..." -ForegroundColor Cyan
-& $python recursos\generar_icono.py
+    Write-Host $Descripcion -ForegroundColor Cyan
+    & $Accion 2>&1 | Write-Host
+    if ($LASTEXITCODE -ne 0) {
+        Write-Host "Fallo: $Descripcion" -ForegroundColor Red
+        exit 1
+    }
+}
 
-Write-Host "Empaquetando..." -ForegroundColor Cyan
-& $python -m PyInstaller `
-    --noconfirm `
-    --clean `
-    --windowed `
-    --name GuardarEnlaces `
-    --icon recursos\guardar-enlaces.ico `
-    --collect-all keyring `
-    --collect-all win32ctypes `
-    lanzar.py
+Invoke-Paso "Instalando herramientas de empaquetado (si faltan)..." {
+    & $python -m pip install --quiet --upgrade pyinstaller pillow
+}
+
+Invoke-Paso "Generando el icono..." {
+    & $python recursos\generar_icono.py
+}
+
+Invoke-Paso "Empaquetando..." {
+    & $python -m PyInstaller `
+        --noconfirm `
+        --clean `
+        --windowed `
+        --name GuardarEnlaces `
+        --icon recursos\guardar-enlaces.ico `
+        --collect-all keyring `
+        --collect-all win32ctypes `
+        lanzar.py
+}
 
 # --windowed: sin ventana de consola. Ademas de la consola negra, evita que
 #   aparezca una ventana de mas en el orden de tabulacion entre aplicaciones.
