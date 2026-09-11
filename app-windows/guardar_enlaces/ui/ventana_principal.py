@@ -13,12 +13,15 @@ usar el raton.
 
 from __future__ import annotations
 
+import tempfile
 import threading
 import time
 import webbrowser
+from pathlib import Path
 
 import wx
 
+from .. import actualizaciones
 from ..almacen_local import AlmacenLocal
 from ..api_cliente import ClienteApi, ErrorApi
 from ..asentar_cuenta import asentar_cuenta, identidad_dueno
@@ -33,6 +36,7 @@ from ..modelo import (
 from ..presentacion import texto_fila
 from ..sesion import Sesion
 from ..sincronizador import Sincronizador, toca_sincronizar
+from ..version import VERSION
 from .bandeja import IconoBandeja
 from .dialogo_anadir import DialogoAnadir
 from .dialogo_detalle import DialogoDetalle
@@ -70,6 +74,7 @@ class VentanaPrincipal(wx.Frame):
 
         self._cargar_desde_cache()
         self.sincronizar_en_segundo_plano()
+        self._buscar_actualizaciones_en_segundo_plano(manual=False)
 
     # --- construccion ---
 
@@ -77,12 +82,14 @@ class VentanaPrincipal(wx.Frame):
         id_anadir = wx.NewIdRef()
         id_sincronizar = wx.NewIdRef()
         id_cerrar_sesion = wx.NewIdRef()
+        id_actualizar = wx.NewIdRef()
 
         barra = wx.MenuBar()
         menu_archivo = wx.Menu()
         menu_archivo.Append(id_anadir, "&Añadir enlace...\tCtrl+N")
         menu_archivo.Append(id_sincronizar, "&Sincronizar ahora\tF5")
         menu_archivo.AppendSeparator()
+        menu_archivo.Append(id_actualizar, "Buscar act&ualizaciones...")
         menu_archivo.Append(id_cerrar_sesion, "&Cerrar sesión...")
         menu_archivo.Append(wx.ID_EXIT, "&Salir\tCtrl+Q")
         barra.Append(menu_archivo, "&Archivo")
@@ -90,6 +97,7 @@ class VentanaPrincipal(wx.Frame):
 
         self.Bind(wx.EVT_MENU, self._al_anadir, id=id_anadir)
         self.Bind(wx.EVT_MENU, lambda e: self.sincronizar_en_segundo_plano(), id=id_sincronizar)
+        self.Bind(wx.EVT_MENU, self._al_buscar_actualizaciones, id=id_actualizar)
         self.Bind(wx.EVT_MENU, self._al_cerrar_sesion, id=id_cerrar_sesion)
         self.Bind(wx.EVT_MENU, lambda e: self.Close(), id=wx.ID_EXIT)
 
@@ -309,6 +317,91 @@ class VentanaPrincipal(wx.Frame):
                 )
 
         threading.Thread(target=trabajo, daemon=True).start()
+
+    # --- actualizaciones ---
+
+    def _al_buscar_actualizaciones(self, evento: wx.CommandEvent) -> None:
+        self._buscar_actualizaciones_en_segundo_plano(manual=True)
+
+    def _buscar_actualizaciones_en_segundo_plano(self, manual: bool) -> None:
+        """`manual` distingue quien pregunta. Al arrancar se calla si no hay
+        nada; pedido desde el menu hay que contestar siempre, aunque sea para
+        decir que ya esta al dia: un menu que no responde parece roto."""
+        if not actualizaciones.esta_empaquetada():
+            if manual:
+                wx.MessageBox(
+                    "Esto se actualiza con git, no desde aqui: la aplicacion no "
+                    "esta corriendo como ejecutable.",
+                    "Buscar actualizaciones",
+                    wx.OK | wx.ICON_INFORMATION,
+                    self,
+                )
+            return
+
+        def trabajo() -> None:
+            disponible = actualizaciones.comprobar()
+            wx.CallAfter(self._al_terminar_comprobacion, disponible, manual)
+
+        threading.Thread(target=trabajo, daemon=True).start()
+
+    def _al_terminar_comprobacion(self, disponible, manual: bool) -> None:
+        if disponible is None:
+            if manual:
+                wx.MessageBox(
+                    f"Ya tienes la ultima version ({VERSION}).",
+                    "Buscar actualizaciones",
+                    wx.OK | wx.ICON_INFORMATION,
+                    self,
+                )
+            return
+
+        novedades = f" {disponible.novedades}" if disponible.novedades else ""
+        dialogo = wx.MessageDialog(
+            self,
+            f"Hay una versión nueva ({disponible.version}); tú tienes la "
+            f"{VERSION}.{novedades} Si la instalas, la aplicación se cerrará y "
+            "volverá a abrirse sola.",
+            "Nueva versión disponible",
+            wx.YES_NO | wx.ICON_QUESTION,
+        )
+        dialogo.SetYesNoLabels("&Instalar ahora", "Ahora no")
+        instalar = dialogo.ShowModal() == wx.ID_YES
+        dialogo.Destroy()
+        if instalar:
+            self._instalar(disponible)
+
+    def _instalar(self, disponible) -> None:
+        self.SetStatusText(f"Descargando la version {disponible.version}...")
+
+        def trabajo() -> None:
+            destino = Path(tempfile.gettempdir()) / f"GuardarEnlaces-{disponible.version}.zip"
+            if not actualizaciones.descargar(disponible, destino):
+                wx.CallAfter(self._fallo_actualizando, "La descarga fallo o llego corrompida.")
+                return
+            carpeta = actualizaciones.descomprimir(destino)
+            if carpeta is None:
+                wx.CallAfter(self._fallo_actualizando, "El paquete descargado no es valido.")
+                return
+            wx.CallAfter(self._relevar, carpeta)
+
+        threading.Thread(target=trabajo, daemon=True).start()
+
+    def _relevar(self, carpeta_nueva: Path) -> None:
+        """Lanza el relevo y cierra: el .cmd esta esperando a que este proceso
+        muera para poder sustituir el ejecutable."""
+        actualizaciones.aplicar(carpeta_nueva)
+        self.Close()
+
+    def _fallo_actualizando(self, mensaje: str) -> None:
+        # No se toca nada de la instalacion hasta tener el paquete entero y
+        # verificado, asi que un fallo aqui deja la aplicacion como estaba.
+        self.SetStatusText("")
+        wx.MessageBox(
+            f"{mensaje} La aplicacion sigue funcionando; puedes intentarlo mas tarde.",
+            "No se pudo actualizar",
+            wx.OK | wx.ICON_WARNING,
+            self,
+        )
 
     # --- cuenta ---
 

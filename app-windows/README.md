@@ -41,6 +41,32 @@ Lo que ninguna prueba cubre y hay que comprobar a mano tras empaquetar:
 La primera vez, Windows mostrará *"Windows protegió su PC"* por no estar
 firmado: **Más información → Ejecutar de todas formas**.
 
+## Publicar una versión nueva
+
+La aplicación instalada se actualiza sola desde GitHub Releases. Para publicar:
+
+1. Subir el número en `guardar_enlaces/version.py`.
+2. Commitear y hacer push.
+3. `.\publicar.ps1 -Novedades "Lo que ha cambiado, en una frase"`
+
+El script empaqueta, comprime, calcula el SHA-256, escribe el manifiesto
+`ultima.json` y crea la publicación con `gh`. Se niega a publicar si hay
+cambios sin commitear o si esa versión ya existe.
+
+La aplicación pide `releases/latest/download/ultima.json`, una URL fija que no
+gasta el límite de peticiones de la API de GitHub ni necesita ningún token
+—ahora que el repositorio es público—, compara la versión, descarga el zip y
+**comprueba su SHA-256** antes de tocar nada.
+
+Windows no deja reemplazar el ejecutable de un programa en marcha, así que el
+relevo lo hace un `.cmd` aparte: espera a que la aplicación se cierre, copia lo
+nuevo encima y la vuelve a abrir. Eso es lo único de todo esto que **ninguna
+prueba puede cubrir**; hay que actualizar de verdad al menos una vez para
+saber que funciona.
+
+Instala la aplicación en una carpeta tuya (no en `Archivos de programa`): el
+relevo escribe sin pedir permisos de administrador.
+
 ## Configuración
 
 La app apunta al backend por la variable de entorno `GUARDAR_ENLACES_API`
