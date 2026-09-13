@@ -89,7 +89,9 @@ class ClienteApi:
                 timeout=self.timeout,
             )
         except requests.RequestException as error:
-            raise ErrorApi(f"no se pudo conectar con el servidor: {error}") from error
+            # Sin el texto de requests: se lee en voz alta y es ilegible. Queda
+            # en la excepcion encadenada para diagnosticar.
+            raise ErrorApi("sin conexión con el servidor") from error
         return _procesar_respuesta(respuesta)
 
     def _get(self, ruta: str, parametros: dict, token_acceso: str | None = None) -> dict:
@@ -101,7 +103,9 @@ class ClienteApi:
                 timeout=self.timeout,
             )
         except requests.RequestException as error:
-            raise ErrorApi(f"no se pudo conectar con el servidor: {error}") from error
+            # Sin el texto de requests: se lee en voz alta y es ilegible. Queda
+            # en la excepcion encadenada para diagnosticar.
+            raise ErrorApi("sin conexión con el servidor") from error
         return _procesar_respuesta(respuesta)
 
 

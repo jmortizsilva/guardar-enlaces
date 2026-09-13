@@ -65,7 +65,8 @@ class TestErrores:
         with patch("requests.get", side_effect=requests.ConnectionError("rechazado")):
             with pytest.raises(ErrorApi) as exc:
                 cliente.pull(desde=0, token_acceso="tok")
-        assert "no se pudo conectar" in str(exc.value)
+        # Sin el texto de requests detras: el mensaje se lee en voz alta.
+        assert str(exc.value) == "sin conexión con el servidor"
 
     def test_un_error_sin_cuerpo_json_no_revienta(self, cliente):
         r = MagicMock(spec=requests.Response)
