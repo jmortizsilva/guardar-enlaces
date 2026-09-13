@@ -62,7 +62,7 @@ def _titulo_con_cuenta(sesion: Sesion) -> str:
     con cada mensaje. No saber con que cuenta estabas convirtio un "faltan
     enlaces" en una tarde de diagnostico."""
     correo = (sesion.usuario or {}).get("email")
-    return f"Guardar enlaces — {correo}" if correo else "Guardar enlaces"
+    return f"Guárdalo — {correo}" if correo else "Guárdalo"
 
 
 class VentanaPrincipal(wx.Frame):

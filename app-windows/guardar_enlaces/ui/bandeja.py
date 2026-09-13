@@ -16,7 +16,7 @@ class IconoBandeja(wx.adv.TaskBarIcon):
         bitmap = wx.ArtProvider.GetBitmap(wx.ART_TIP, wx.ART_OTHER, (16, 16))
         icono = wx.Icon()
         icono.CopyFromBitmap(bitmap)
-        self.SetIcon(icono, "Guardar enlaces")
+        self.SetIcon(icono, "Guárdalo")
         self.Bind(wx.adv.EVT_TASKBAR_LEFT_DCLICK, self._al_abrir)
 
     def CreatePopupMenu(self) -> wx.Menu:

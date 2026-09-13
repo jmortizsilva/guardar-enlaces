@@ -1,4 +1,4 @@
-# Guardar enlaces — descripción del proyecto
+# Guárdalo — descripción del proyecto
 
 App para guardar enlaces (artículos, vídeos) accesible con lector de
 pantalla, sincronizada entre iPhone y Windows. Este documento es el punto de

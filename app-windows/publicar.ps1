@@ -87,7 +87,7 @@ Write-Host "Creando la publicacion en GitHub..." -ForegroundColor Cyan
 # 2>&1 por lo mismo que arriba: gh informa del progreso de subida por la salida
 # de errores, y sin esto el script aborta en mitad de una publicacion correcta.
 gh release create $etiqueta $zip "dist\ultima.json" `
-    --title "Guardar enlaces para Windows $version" `
+    --title "Guárdalo para Windows $version" `
     --notes $Novedades 2>&1 | Write-Host
 if ($LASTEXITCODE -ne 0) {
     Write-Host "gh no pudo crear la publicacion." -ForegroundColor Red

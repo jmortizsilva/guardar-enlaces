@@ -1,4 +1,4 @@
-# Guardar enlaces
+# Guárdalo
 
 Ver [`PROYECTO.md`](PROYECTO.md) para la descripción completa del proyecto y
 cómo arrancar cada parte — este README es solo el resumen de estructura.

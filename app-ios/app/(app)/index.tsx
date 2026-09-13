@@ -76,7 +76,7 @@ export default function Lista() {
     <View style={[estilos.contenedor, { backgroundColor: tema.fondo }]}>
       <View style={estilos.cabecera}>
         <Text accessibilityRole="header" style={[estilos.titulo, { color: tema.texto }]}>
-          Guardar enlaces
+          Guárdalo
         </Text>
         <View style={estilos.accionesCabecera}>
           <Boton etiqueta="Añadir" variante="secundario" alPulsar={() => router.push('/anadir')} />

@@ -1,4 +1,4 @@
-# Contrato de API — backend de Guardar enlaces
+# Contrato de API — backend de Guárdalo
 
 Fuente de la verdad del API entre el backend (`backend/`) y los dos clientes
 (`app-ios/` y `app-windows/`), que no comparten código entre sí. Cualquier

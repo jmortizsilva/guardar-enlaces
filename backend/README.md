@@ -1,6 +1,6 @@
-# Guardar enlaces — backend
+# Guárdalo — backend
 
-Backend de "Guardar enlaces" (apps iOS y Windows con sincronización). Node +
+Backend de "Guárdalo" (apps iOS y Windows con sincronización). Node +
 Fastify + SQLite, proceso y contenedor **propios y separados** de
 `servidor-notificaciones/`: no comparten base de datos ni proceso.
 

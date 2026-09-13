@@ -1,4 +1,4 @@
-# Guardar enlaces — Windows
+# Guárdalo — Windows
 
 Cliente de escritorio en Python + wxPython. wxPython envuelve controles Win32
 nativos (`wx.ListCtrl` en modo report para la lista, por ejemplo), así que
