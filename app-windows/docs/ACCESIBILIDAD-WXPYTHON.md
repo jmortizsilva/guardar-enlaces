@@ -150,3 +150,17 @@ lector a través de prism (paquete `prismatoid`). Comprobado con prismatoid
   («Sincronizado», un fallo al sincronizar) sale sin esperar.
 - **Sincronizar a mano confirma**: F5, el menú o la bandeja dicen
   «Sincronizado». La automática, al volver a la ventana, calla si sale bien.
+
+## 8. Una tecla "de un solo control" no va en el `AcceleratorTable` del frame
+
+`wx.Frame.SetAcceleratorTable` captura la tecla en TODA la ventana, sin
+mirar qué control tiene el foco. Suprimir para borrar el elemento
+seleccionado se puso ahí, y borraba el elemento activo de la lista aunque el
+foco estuviera en el buscador o en el filtro de etiquetas — donde Suprimir
+ya tiene su propio significado (borrar un carácter, o nada) y no debe tocar
+la lista.
+
+El `AcceleratorTable` es para teclas que tienen sentido en toda la ventana
+(Ctrl+N, F5...). Una tecla que solo debe actuar cuando un control concreto
+tiene el foco va con `ese_control.Bind(wx.EVT_KEY_DOWN, ...)`, comprobando
+`evento.GetKeyCode()` y llamando a `evento.Skip()` para las demás teclas.

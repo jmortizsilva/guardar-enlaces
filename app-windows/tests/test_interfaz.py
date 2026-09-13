@@ -17,7 +17,7 @@ import wx
 from guardar_enlaces.almacen_local import AlmacenLocal
 from guardar_enlaces.api_cliente import ErrorApi
 from guardar_enlaces.modelo import nuevo_elemento_local
-from guardar_enlaces.ui import dialogo_detalle
+from guardar_enlaces.ui import dialogo_detalle, ventana_principal
 from guardar_enlaces.ui.bandeja import IconoBandeja
 from guardar_enlaces.ui.campos import etiqueta_de, etiqueta_widget_de
 from guardar_enlaces.ui.dialogo_anadir import DialogoAnadir
@@ -312,3 +312,34 @@ def test_dialogo_detalle_eliminar_pregunta_y_avisa_con_el_elemento(app, monkeypa
         assert eliminados == ([elemento] if confirma else [])
     finally:
         dialogo.Destroy()
+
+
+def _tecla(control: wx.Window, codigo: int) -> None:
+    evento = wx.KeyEvent(wx.wxEVT_KEY_DOWN)
+    evento.SetKeyCode(codigo)
+    evento.SetEventObject(control)
+    control.GetEventHandler().ProcessEvent(evento)
+
+
+def test_suprimir_solo_actua_si_el_foco_esta_en_la_lista(app, almacen, monkeypatch):
+    # Antes era un AcceleratorTable en toda la ventana: Suprimir borraba el
+    # elemento activo de la lista aunque el foco estuviera en el buscador o en
+    # el filtro de etiquetas, donde Suprimir tiene su propio significado.
+    almacen.marcar_pendiente(nuevo_elemento_local("https://a.com", titulo="A"))
+    preguntas = []
+    monkeypatch.setattr(
+        ventana_principal, "confirmar_eliminacion", lambda titulo, padre: preguntas.append(titulo) or True
+    )
+    ventana = _ventana(almacen)
+    try:
+        assert not ventana.GetAcceleratorTable().IsOk()  # nada de Suprimir a nivel de ventana
+
+        ventana.lista.Select(0)
+        ventana.lista.Focus(0)
+        _tecla(ventana.selector_etiqueta, wx.WXK_DELETE)
+        assert preguntas == []  # el foco no estaba en la lista: no pregunta nada
+
+        _tecla(ventana.lista, wx.WXK_DELETE)
+        assert preguntas == ["A"]
+    finally:
+        ventana.Destroy()

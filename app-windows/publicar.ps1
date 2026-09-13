@@ -1,4 +1,4 @@
-# Publica una version nueva de la aplicacion de Windows en GitHub Releases,
+﻿# Publica una version nueva de la aplicacion de Windows en GitHub Releases,
 # que es de donde se la bajan los que ya la tienen instalada.
 #
 # Antes de lanzarlo:
@@ -6,6 +6,12 @@
 #   2. Commitear y hacer push (la publicacion apunta al commit actual)
 #
 # Uso:  .\publicar.ps1 -Novedades "Lo que ha cambiado, en una frase"
+#
+# ESTE FICHERO LLEVA BOM UTF-8 A PROPOSITO. Sin el, Windows PowerShell 5.1 lee
+# el codigo fuente con la pagina de codigos del sistema en vez de UTF-8, y una
+# tilde escrita aqui (por ejemplo en --title) le llega a gh ya corrompida
+# ("Guárdalo" salio como "GuÃ¡rdalo" en la publicacion de GitHub). Si el editor
+# quita el BOM al guardar, hay que volver a ponerlo.
 
 param(
     [Parameter(Mandatory = $true)]

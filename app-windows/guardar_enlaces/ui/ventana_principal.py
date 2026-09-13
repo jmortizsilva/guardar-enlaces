@@ -152,6 +152,12 @@ class VentanaPrincipal(wx.Frame):
         self.lista.InsertColumn(0, "Enlace guardado", width=720)
         self.lista.Bind(wx.EVT_LIST_ITEM_ACTIVATED, self._al_abrir_seleccionado)
         self.lista.Bind(wx.EVT_CONTEXT_MENU, self._al_menu_contextual)
+        # Tecla Suprimir SOLO en la lista, no en toda la ventana: con un
+        # AcceleratorTable en el frame, Suprimir borraba el elemento activo de
+        # la lista aunque el foco estuviera en el buscador o en el filtro de
+        # etiquetas -- ahi Suprimir tiene su propio significado (borrar
+        # caracter, o nada) y no debe tocar la lista.
+        self.lista.Bind(wx.EVT_KEY_DOWN, self._al_tecla_en_lista)
         sizer.Add(etiqueta_lista, 0, wx.LEFT | wx.RIGHT, 8)
         sizer.Add(self.lista, 1, wx.EXPAND | wx.ALL, 8)
 
@@ -161,12 +167,6 @@ class VentanaPrincipal(wx.Frame):
         self.SetSizer(marco)
 
         self.CreateStatusBar()
-
-        id_eliminar = wx.NewIdRef()
-        self.SetAcceleratorTable(
-            wx.AcceleratorTable([(wx.ACCEL_NORMAL, wx.WXK_DELETE, id_eliminar)])
-        )
-        self.Bind(wx.EVT_MENU, self._al_eliminar_seleccionado, id=id_eliminar)
 
     # --- lista: cargar, filtrar, refrescar ---
 
@@ -321,7 +321,13 @@ class VentanaPrincipal(wx.Frame):
         # Sin la URL detras: leida en voz alta es larga y no dice nada que no se sepa.
         self._decir_estado("URL copiada", tras_cerrar_ventana=True)
 
-    def _al_eliminar_seleccionado(self, evento: wx.CommandEvent) -> None:
+    def _al_tecla_en_lista(self, evento: wx.KeyEvent) -> None:
+        if evento.GetKeyCode() == wx.WXK_DELETE:
+            self._al_eliminar_seleccionado(evento)
+        else:
+            evento.Skip()  # el resto de teclas (flechas, buscar por letra...) siguen su curso normal
+
+    def _al_eliminar_seleccionado(self, evento: wx.Event) -> None:
         elemento = self._elemento_en(self.lista.GetFirstSelected())
         if elemento:
             self._confirmar_y_eliminar(elemento)
