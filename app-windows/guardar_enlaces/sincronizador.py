@@ -6,7 +6,14 @@ from __future__ import annotations
 
 from .almacen_local import AlmacenLocal
 from .api_cliente import ClienteApi
-from .modelo import Elemento, aplicar_pull, aplicar_respuesta_push
+from .modelo import (
+    Elemento,
+    EtiquetaDefinida,
+    aplicar_pull,
+    aplicar_pull_etiquetas,
+    aplicar_respuesta_push,
+    aplicar_respuesta_push_etiquetas,
+)
 from .sesion import Sesion
 
 
@@ -54,15 +61,18 @@ class Sincronizador:
 
     def _subir_pendientes(self) -> int:
         pendientes = self._almacen.cargar_pendientes()
-        if not pendientes:
+        pendientes_etiquetas = self._almacen.cargar_etiquetas_pendientes()
+        if not pendientes and not pendientes_etiquetas:
             return 0
-        lote = [e.to_json_dict() for e in pendientes.values()]
-        respuesta = self._sesion.con_reintento(lambda token: self._cliente.push(lote, token))
-        definitivos = [Elemento.from_json_dict(d) for d in respuesta["elementos"]]
+        lote = [e.to_json_dict() for e in pendientes.values()] or None
+        lote_etiquetas = [e.to_json_dict() for e in pendientes_etiquetas.values()] or None
+        respuesta = self._sesion.con_reintento(
+            lambda token: self._cliente.push(lote, token, etiquetas_definidas=lote_etiquetas)
+        )
 
+        definitivos = [Elemento.from_json_dict(d) for d in respuesta.get("elementos") or []]
         cache = aplicar_respuesta_push(self._almacen.cargar_todos(), definitivos)
         self._almacen.guardar(cache)
-
         # Lo rechazado sale del outbox igual que lo aceptado: el servidor no lo va a
         # admitir por mucho que se insista, y dejarlo dentro reenvia el lote entero en
         # cada sincronizacion, para siempre y sin que se note.
@@ -70,11 +80,27 @@ class Sincronizador:
         self._almacen.limpiar_pendientes(
             [e.id for e in definitivos] + [r["id"] for r in rechazados]
         )
-        return len(rechazados)
+
+        definitivas_etiquetas = [
+            EtiquetaDefinida.from_json_dict(d) for d in respuesta.get("etiquetasDefinidas") or []
+        ]
+        cache_etiquetas = aplicar_respuesta_push_etiquetas(
+            self._almacen.cargar_etiquetas_definidas(), definitivas_etiquetas
+        )
+        self._almacen.guardar_etiquetas_definidas(cache_etiquetas)
+        etiquetas_rechazadas = respuesta.get("etiquetasRechazadas") or []
+        self._almacen.limpiar_etiquetas_pendientes(
+            [e.id for e in definitivas_etiquetas] + [r["id"] for r in etiquetas_rechazadas]
+        )
+
+        return len(rechazados) + len(etiquetas_rechazadas)
 
     def _bajar_cambios(self) -> None:
         # Repite el pull mientras el servidor diga que hay mas paginas (biblioteca grande o
-        # primera sincronizacion); ver "masDisponible" en docs/CONTRATO-API.md.
+        # primera sincronizacion); ver "masDisponible" en docs/CONTRATO-API.md. Las etiquetas
+        # reservadas viajan en la misma llamada, con el mismo "desde": el servidor las devuelve
+        # enteras en cada pagina (no tienen paginacion propia, ver CONTRATO-API.md), asi que se
+        # fusionan en cada vuelta igual que los elementos y comparten el mismo cursor.
         while True:
             desde = self._almacen.cursor()
             respuesta = self._sesion.con_reintento(
@@ -86,6 +112,16 @@ class Sincronizador:
                 self._almacen.cargar_todos(), recibidos, self._almacen.cargar_pendientes()
             )
             self._almacen.guardar(cache)
+
+            recibidas_etiquetas = [
+                EtiquetaDefinida.from_json_dict(d) for d in respuesta.get("etiquetasDefinidas") or []
+            ]
+            cache_etiquetas = aplicar_pull_etiquetas(
+                self._almacen.cargar_etiquetas_definidas(),
+                recibidas_etiquetas,
+                self._almacen.cargar_etiquetas_pendientes(),
+            )
+            self._almacen.guardar_etiquetas_definidas(cache_etiquetas)
 
             if respuesta.get("masDisponible") and recibidos:
                 self._almacen.fijar_cursor(max(e.actualizado_en for e in recibidos))

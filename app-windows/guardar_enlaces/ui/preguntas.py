@@ -66,3 +66,20 @@ def confirmar_eliminacion(titulo: str, padre: wx.Window | None = None) -> bool:
     respuesta = dialogo.ShowModal()
     dialogo.Destroy()
     return respuesta == wx.ID_OK
+
+
+def confirmar_eliminar_etiqueta(etiqueta: str, cuantos: int, padre: wx.Window | None = None) -> bool:
+    """La pregunta antes de eliminar una etiqueta de TODOS los enlaces que la
+    llevan, desde el gestor de etiquetas."""
+    cuenta = "1 enlace" if cuantos == 1 else f"{cuantos} enlaces"
+    dialogo = wx.MessageDialog(
+        padre,
+        f"¿Eliminar la etiqueta «{etiqueta}»? Se quitará de {cuenta}. "
+        "Esta acción no se puede deshacer.",
+        "Eliminar etiqueta",
+        wx.OK | wx.CANCEL | wx.CANCEL_DEFAULT | wx.ICON_QUESTION,
+    )
+    dialogo.SetOKCancelLabels("&Eliminar", "&Cancelar")
+    respuesta = dialogo.ShowModal()
+    dialogo.Destroy()
+    return respuesta == wx.ID_OK

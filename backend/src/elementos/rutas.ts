@@ -1,6 +1,11 @@
 import { FastifyInstance, FastifyReply, FastifyRequest } from 'fastify';
 import { crearExigirSesion } from '../auth/middleware';
 import { config } from '../config';
+import {
+  EtiquetaEntrada,
+  pull as pullEtiquetas,
+  push as pushEtiquetas,
+} from '../etiquetas/almacen';
 import { ElementoEntrada, pull, push } from './almacen';
 
 interface QuerySincronizar {
@@ -10,6 +15,7 @@ interface QuerySincronizar {
 
 interface CuerpoSincronizar {
   elementos?: unknown;
+  etiquetasDefinidas?: unknown;
 }
 
 const LIMITE_POR_DEFECTO = 300;
@@ -39,6 +45,19 @@ function entradaValida(x: unknown): x is ElementoEntrada {
   );
 }
 
+function entradaEtiquetaValida(x: unknown): x is EtiquetaEntrada {
+  if (typeof x !== 'object' || x === null) {
+    return false;
+  }
+  const e = x as Record<string, unknown>;
+  return (
+    typeof e.id === 'string' &&
+    e.id.length > 0 &&
+    typeof e.actualizadoEn === 'number' &&
+    (e.nombre === undefined || typeof e.nombre === 'string')
+  );
+}
+
 export async function registrarRutasElementos(app: FastifyInstance): Promise<void> {
   const exigirSesion = crearExigirSesion(config.tokenSecreto!);
 
@@ -48,7 +67,9 @@ export async function registrarRutasElementos(app: FastifyInstance): Promise<voi
     async (request: FastifyRequest<{ Querystring: QuerySincronizar }>) => {
       const desde = Number(request.query.desde ?? 0) || 0;
       const limite = limiteValido(request.query.limite);
-      return pull(request.usuarioId!, desde, limite);
+      const resultado = pull(request.usuarioId!, desde, limite);
+      const { etiquetasDefinidas } = pullEtiquetas(request.usuarioId!, desde);
+      return { ...resultado, etiquetasDefinidas };
     },
   );
 
@@ -57,16 +78,45 @@ export async function registrarRutasElementos(app: FastifyInstance): Promise<voi
     { preHandler: exigirSesion },
     async (request: FastifyRequest<{ Body: CuerpoSincronizar }>, reply: FastifyReply) => {
       const entradas = request.body?.elementos;
-      if (!Array.isArray(entradas) || entradas.length === 0) {
+      const entradasEtiquetas = request.body?.etiquetasDefinidas;
+      const hayElementos = entradas !== undefined;
+      const hayEtiquetas = entradasEtiquetas !== undefined;
+
+      if (!hayElementos && !hayEtiquetas) {
+        return reply.code(400).send({ error: 'falta el lote de elementos o de etiquetas' });
+      }
+      if (hayElementos && (!Array.isArray(entradas) || entradas.length === 0)) {
         return reply.code(400).send({ error: 'falta el lote de elementos' });
       }
-      if (entradas.length > LIMITE_MAXIMO) {
+      if (hayElementos && (entradas as unknown[]).length > LIMITE_MAXIMO) {
         return reply.code(400).send({ error: `maximo ${LIMITE_MAXIMO} elementos por lote` });
       }
-      if (!entradas.every(entradaValida)) {
+      if (hayElementos && !(entradas as unknown[]).every(entradaValida)) {
         return reply.code(400).send({ error: 'entrada de elemento invalida' });
       }
-      return push(request.usuarioId!, entradas as ElementoEntrada[]);
+      if (hayEtiquetas && (!Array.isArray(entradasEtiquetas) || entradasEtiquetas.length === 0)) {
+        return reply.code(400).send({ error: 'falta el lote de etiquetas' });
+      }
+      if (hayEtiquetas && (entradasEtiquetas as unknown[]).length > LIMITE_MAXIMO) {
+        return reply.code(400).send({ error: `maximo ${LIMITE_MAXIMO} etiquetas por lote` });
+      }
+      if (hayEtiquetas && !(entradasEtiquetas as unknown[]).every(entradaEtiquetaValida)) {
+        return reply.code(400).send({ error: 'entrada de etiqueta invalida' });
+      }
+
+      const resultado = hayElementos
+        ? push(request.usuarioId!, entradas as ElementoEntrada[])
+        : { elementos: [], rechazados: [] };
+      const resultadoEtiquetas = hayEtiquetas
+        ? pushEtiquetas(request.usuarioId!, entradasEtiquetas as EtiquetaEntrada[])
+        : { etiquetasDefinidas: [], rechazadas: [] };
+
+      return {
+        elementos: resultado.elementos,
+        rechazados: resultado.rechazados,
+        etiquetasDefinidas: resultadoEtiquetas.etiquetasDefinidas,
+        etiquetasRechazadas: resultadoEtiquetas.rechazadas,
+      };
     },
   );
 }

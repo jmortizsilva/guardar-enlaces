@@ -18,7 +18,7 @@ import uuid
 from pathlib import Path
 from typing import Iterable
 
-from .modelo import Elemento
+from .modelo import Elemento, EtiquetaDefinida
 
 
 class AlmacenLocal:
@@ -48,6 +48,16 @@ class AlmacenLocal:
             CREATE TABLE IF NOT EXISTS outbox (
                 id TEXT PRIMARY KEY
             );
+            CREATE TABLE IF NOT EXISTS etiquetas_definidas (
+                id TEXT PRIMARY KEY,
+                nombre TEXT NOT NULL,
+                creado_en INTEGER NOT NULL,
+                actualizado_en INTEGER NOT NULL,
+                borrado INTEGER NOT NULL DEFAULT 0
+            );
+            CREATE TABLE IF NOT EXISTS outbox_etiquetas (
+                id TEXT PRIMARY KEY
+            );
             CREATE TABLE IF NOT EXISTS estado_sincronizacion (
                 clave TEXT PRIMARY KEY,
                 valor INTEGER NOT NULL
@@ -68,11 +78,14 @@ class AlmacenLocal:
     # --- dueno de la cache (que cuenta, y de que servidor, dejo estos datos) ---
 
     def vaciar(self) -> None:
-        """Borra la cache entera: elementos, outbox, cursor y dueno."""
+        """Borra la cache entera: elementos, etiquetas reservadas, outbox,
+        cursor y dueno."""
         self._conexion.executescript(
             """
             DELETE FROM elementos;
             DELETE FROM outbox;
+            DELETE FROM etiquetas_definidas;
+            DELETE FROM outbox_etiquetas;
             DELETE FROM estado_sincronizacion;
             DELETE FROM estado_texto;
             """
@@ -122,21 +135,37 @@ class AlmacenLocal:
                 "UPDATE elementos SET id = ? WHERE id = ?", (str(uuid.uuid4()), id_viejo)
             )
         self._conexion.execute("INSERT INTO outbox (id) SELECT id FROM elementos")
+
+        # Mismo motivo que con los elementos: los ids de etiquetas reservadas
+        # de la cuenta anterior chocarian con los del dueno anterior en el
+        # servidor.
+        self._conexion.execute("DELETE FROM etiquetas_definidas WHERE borrado = 1")
+        self._conexion.execute("DELETE FROM outbox_etiquetas")
+        ids_etiquetas = [
+            f["id"] for f in self._conexion.execute("SELECT id FROM etiquetas_definidas")
+        ]
+        for id_viejo in ids_etiquetas:
+            self._conexion.execute(
+                "UPDATE etiquetas_definidas SET id = ? WHERE id = ?", (str(uuid.uuid4()), id_viejo)
+            )
+        self._conexion.execute(
+            "INSERT INTO outbox_etiquetas (id) SELECT id FROM etiquetas_definidas"
+        )
         self._conexion.commit()
 
     # --- cursor de sincronizacion (ultimo "servidorEn" recibido) ---
 
-    def cursor(self) -> int:
+    def cursor(self, clave: str = "cursor") -> int:
         fila = self._conexion.execute(
-            "SELECT valor FROM estado_sincronizacion WHERE clave = 'cursor'"
+            "SELECT valor FROM estado_sincronizacion WHERE clave = ?", (clave,)
         ).fetchone()
         return fila["valor"] if fila else 0
 
-    def fijar_cursor(self, valor: int) -> None:
+    def fijar_cursor(self, valor: int, clave: str = "cursor") -> None:
         self._conexion.execute(
-            "INSERT INTO estado_sincronizacion (clave, valor) VALUES ('cursor', ?) "
+            "INSERT INTO estado_sincronizacion (clave, valor) VALUES (?, ?) "
             "ON CONFLICT(clave) DO UPDATE SET valor = excluded.valor",
-            (valor,),
+            (clave, valor),
         )
         self._conexion.commit()
 
@@ -203,6 +232,54 @@ class AlmacenLocal:
             },
         )
 
+    # --- etiquetas reservadas ---
+
+    def cargar_etiquetas_definidas(self) -> dict[str, EtiquetaDefinida]:
+        filas = self._conexion.execute("SELECT * FROM etiquetas_definidas").fetchall()
+        return {f["id"]: _etiqueta_de_fila(f) for f in filas}
+
+    def cargar_etiquetas_pendientes(self) -> dict[str, EtiquetaDefinida]:
+        filas = self._conexion.execute(
+            "SELECT e.* FROM etiquetas_definidas e JOIN outbox_etiquetas o ON o.id = e.id"
+        ).fetchall()
+        return {f["id"]: _etiqueta_de_fila(f) for f in filas}
+
+    def guardar_etiquetas_definidas(self, cache: dict[str, EtiquetaDefinida]) -> None:
+        for etiqueta in cache.values():
+            self._upsert_etiqueta_definida(etiqueta)
+        self._conexion.commit()
+
+    def marcar_etiqueta_pendiente(self, etiqueta: EtiquetaDefinida) -> None:
+        self._upsert_etiqueta_definida(etiqueta)
+        self._conexion.execute(
+            "INSERT OR IGNORE INTO outbox_etiquetas (id) VALUES (?)", (etiqueta.id,)
+        )
+        self._conexion.commit()
+
+    def limpiar_etiquetas_pendientes(self, ids: Iterable[str]) -> None:
+        self._conexion.executemany(
+            "DELETE FROM outbox_etiquetas WHERE id = ?", [(i,) for i in ids]
+        )
+        self._conexion.commit()
+
+    def _upsert_etiqueta_definida(self, etiqueta: EtiquetaDefinida) -> None:
+        self._conexion.execute(
+            """
+            INSERT INTO etiquetas_definidas (id, nombre, creado_en, actualizado_en, borrado)
+            VALUES (:id, :nombre, :creado_en, :actualizado_en, :borrado)
+            ON CONFLICT(id) DO UPDATE SET
+                nombre = excluded.nombre, creado_en = excluded.creado_en,
+                actualizado_en = excluded.actualizado_en, borrado = excluded.borrado
+            """,
+            {
+                "id": etiqueta.id,
+                "nombre": etiqueta.nombre,
+                "creado_en": etiqueta.creado_en,
+                "actualizado_en": etiqueta.actualizado_en,
+                "borrado": int(etiqueta.borrado),
+            },
+        )
+
 
 def _elemento_de_fila(fila: sqlite3.Row) -> Elemento:
     return Elemento(
@@ -213,6 +290,16 @@ def _elemento_de_fila(fila: sqlite3.Row) -> Elemento:
         imagen_url=fila["imagen_url"],
         tipo=fila["tipo"],
         etiquetas=tuple(json.loads(fila["etiquetas"])),
+        creado_en=fila["creado_en"],
+        actualizado_en=fila["actualizado_en"],
+        borrado=bool(fila["borrado"]),
+    )
+
+
+def _etiqueta_de_fila(fila: sqlite3.Row) -> EtiquetaDefinida:
+    return EtiquetaDefinida(
+        id=fila["id"],
+        nombre=fila["nombre"],
         creado_en=fila["creado_en"],
         actualizado_en=fila["actualizado_en"],
         borrado=bool(fila["borrado"]),

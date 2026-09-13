@@ -16,12 +16,13 @@ import wx
 
 from guardar_enlaces.almacen_local import AlmacenLocal
 from guardar_enlaces.api_cliente import ErrorApi
-from guardar_enlaces.modelo import nuevo_elemento_local
-from guardar_enlaces.ui import dialogo_detalle, ventana_principal
+from guardar_enlaces.modelo import elementos_visibles, nueva_etiqueta_definida, nuevo_elemento_local
+from guardar_enlaces.ui import dialogo_detalle, dialogo_gestion_etiquetas, ventana_principal
 from guardar_enlaces.ui.bandeja import IconoBandeja
 from guardar_enlaces.ui.campos import etiqueta_de, etiqueta_widget_de
 from guardar_enlaces.ui.dialogo_anadir import DialogoAnadir
 from guardar_enlaces.ui.dialogo_detalle import DialogoDetalle
+from guardar_enlaces.ui.dialogo_gestion_etiquetas import DialogoGestionEtiquetas
 from guardar_enlaces.ui.dialogo_login import DialogoLogin
 from guardar_enlaces.ui.ventana_principal import VentanaPrincipal
 from guardar_enlaces.voz import SinScreenReader, Voz
@@ -341,5 +342,215 @@ def test_suprimir_solo_actua_si_el_foco_esta_en_la_lista(app, almacen, monkeypat
 
         _tecla(ventana.lista, wx.WXK_DELETE)
         assert preguntas == ["A"]
+    finally:
+        ventana.Destroy()
+
+
+def _dialogo_gestion(
+    elementos: list, reservadas: list | None = None
+) -> tuple[DialogoGestionEtiquetas, list, list, list]:
+    renombrados: list[tuple[str, str]] = []
+    eliminados: list[str] = []
+    anadidos: list[str] = []
+    dialogo = DialogoGestionEtiquetas(
+        None,
+        obtener_elementos=lambda: elementos,
+        obtener_reservadas=lambda: reservadas or [],
+        al_renombrar=lambda vieja, nueva: renombrados.append((vieja, nueva)),
+        al_eliminar=eliminados.append,
+        al_anadir=anadidos.append,
+    )
+    return dialogo, renombrados, eliminados, anadidos
+
+
+def test_dialogo_gestion_etiquetas_muestra_nombre_y_recuento(app):
+    elementos = [
+        nuevo_elemento_local("https://a.com", etiquetas=("ocio", "trabajo")),
+        nuevo_elemento_local("https://b.com", etiquetas=("ocio",)),
+    ]
+    dialogo, _, _, _ = _dialogo_gestion(elementos)
+    try:
+        assert etiqueta_de(dialogo.lista) == "Etiquetas:"
+        filas = [dialogo.lista.GetItemText(i) for i in range(dialogo.lista.GetItemCount())]
+        assert filas == ["ocio (2 enlaces)", "trabajo (1 enlace)"]
+        _comprobar_pantalla(dialogo)
+    finally:
+        dialogo.Destroy()
+
+
+def test_dialogo_gestion_etiquetas_incluye_las_reservadas_sin_ningun_enlace(app):
+    reservada = nueva_etiqueta_definida("vacaciones")
+    dialogo, _, _, _ = _dialogo_gestion([], reservadas=[reservada])
+    try:
+        filas = [dialogo.lista.GetItemText(i) for i in range(dialogo.lista.GetItemCount())]
+        assert filas == ["vacaciones (0 enlaces)"]
+    finally:
+        dialogo.Destroy()
+
+
+def test_dialogo_gestion_etiquetas_suprimir_solo_actua_en_la_lista(app, monkeypatch):
+    monkeypatch.setattr(dialogo_gestion_etiquetas, "confirmar_eliminar_etiqueta", lambda *a: True)
+    elementos = [nuevo_elemento_local("https://a.com", etiquetas=("ocio",))]
+    dialogo, _, eliminados, _ = _dialogo_gestion(elementos)
+    try:
+        dialogo.lista.Select(0)
+        dialogo.lista.Focus(0)
+        _tecla(dialogo.boton_cerrar, wx.WXK_DELETE)  # cualquier otro control del dialogo
+        assert eliminados == []
+
+        _tecla(dialogo.lista, wx.WXK_DELETE)
+        assert eliminados == ["ocio"]
+    finally:
+        dialogo.Destroy()
+
+
+def test_dialogo_gestion_etiquetas_eliminar_pregunta_y_refresca(app, monkeypatch):
+    preguntas = []
+    monkeypatch.setattr(
+        dialogo_gestion_etiquetas,
+        "confirmar_eliminar_etiqueta",
+        lambda etiqueta, n, padre: preguntas.append((etiqueta, n)) or False,
+    )
+    elementos = [nuevo_elemento_local("https://a.com", etiquetas=("ocio",))]
+    dialogo, _, eliminados, _ = _dialogo_gestion(elementos)
+    try:
+        dialogo._eliminar("ocio")
+        assert preguntas == [("ocio", 1)]
+        assert eliminados == []  # cancelado: no se llama al callback
+    finally:
+        dialogo.Destroy()
+
+
+def _dialogo_nombre_falso(nombre: str):
+    class _DialogoFalso:
+        def __init__(self, *args, **kwargs):
+            self.nombre = nombre
+
+        def ShowModal(self):
+            return wx.ID_OK
+
+        def Destroy(self):
+            pass
+
+    return _DialogoFalso
+
+
+def test_dialogo_gestion_etiquetas_renombrar_llama_al_callback_y_refresca(app, monkeypatch):
+    monkeypatch.setattr(
+        dialogo_gestion_etiquetas, "DialogoNombreEtiqueta", _dialogo_nombre_falso("hobby")
+    )
+    elementos = [nuevo_elemento_local("https://a.com", etiquetas=("ocio",))]
+    dialogo, renombrados, _, _ = _dialogo_gestion(elementos)
+    try:
+        dialogo._renombrar("ocio")
+        assert renombrados == [("ocio", "hobby")]
+    finally:
+        dialogo.Destroy()
+
+
+def test_dialogo_gestion_etiquetas_anadir_llama_al_callback_y_refresca(app, monkeypatch):
+    monkeypatch.setattr(
+        dialogo_gestion_etiquetas, "DialogoNombreEtiqueta", _dialogo_nombre_falso("vacaciones")
+    )
+    dialogo, _, _, anadidos = _dialogo_gestion([])
+    try:
+        dialogo._anadir()
+        assert anadidos == ["vacaciones"]
+    finally:
+        dialogo.Destroy()
+
+
+def test_dialogo_nombre_etiqueta_se_puede_leer_y_valida_el_nombre(app, monkeypatch):
+    avisos = []
+    monkeypatch.setattr(
+        dialogo_gestion_etiquetas, "avisar", lambda texto, titulo, padre: avisos.append(texto)
+    )
+    dialogo = dialogo_gestion_etiquetas.DialogoNombreEtiqueta(
+        None, "Renombrar «ocio»", "&Guardar", valor_inicial="ocio"
+    )
+    dialogo.EndModal = lambda codigo: None  # no esta abierto de verdad
+    try:
+        assert etiqueta_de(dialogo.campo_nombre) == "Nombre:"
+        assert dialogo.campo_nombre.GetValue() == "ocio"
+        _comprobar_pantalla(dialogo)
+
+        dialogo.campo_nombre.SetValue("   ")
+        _pulsar(dialogo.boton_guardar)
+        assert avisos != []
+        assert dialogo.nombre is None
+
+        dialogo.campo_nombre.SetValue("hobby")
+        _pulsar(dialogo.boton_guardar)
+        assert dialogo.nombre == "hobby"
+    finally:
+        dialogo.Destroy()
+
+
+def test_dialogo_nombre_etiqueta_rechaza_un_nombre_prohibido(app, monkeypatch):
+    avisos = []
+    monkeypatch.setattr(
+        dialogo_gestion_etiquetas, "avisar", lambda texto, titulo, padre: avisos.append(texto)
+    )
+    dialogo = dialogo_gestion_etiquetas.DialogoNombreEtiqueta(
+        None, "Añadir etiqueta", "&Añadir", nombres_prohibidos=["ocio"]
+    )
+    dialogo.EndModal = lambda codigo: None
+    try:
+        dialogo.campo_nombre.SetValue("ocio")
+        _pulsar(dialogo.boton_guardar)
+        assert avisos != []
+        assert dialogo.nombre is None
+    finally:
+        dialogo.Destroy()
+
+
+def test_ventana_principal_renombrar_y_eliminar_etiqueta_afecta_a_todos_los_enlaces(app, almacen):
+    almacen.marcar_pendiente(nuevo_elemento_local("https://a.com", etiquetas=("ocio", "trabajo")))
+    almacen.marcar_pendiente(nuevo_elemento_local("https://b.com", etiquetas=("ocio",)))
+    almacen.marcar_pendiente(nuevo_elemento_local("https://c.com", etiquetas=("trabajo",)))
+    ventana = _ventana(almacen)
+    try:
+        ventana._al_renombrar_etiqueta("ocio", "hobby")
+        vivos = elementos_visibles(almacen.cargar_todos())
+        assert sorted(e.etiquetas for e in vivos if "hobby" in e.etiquetas or "ocio" in e.etiquetas) == [
+            ("hobby",),
+            ("hobby", "trabajo"),
+        ]
+
+        ventana._al_eliminar_etiqueta("trabajo")
+        vivos = elementos_visibles(almacen.cargar_todos())
+        assert all("trabajo" not in e.etiquetas for e in vivos)
+    finally:
+        ventana.Destroy()
+
+
+def test_ventana_principal_anadir_etiqueta_la_deja_pendiente_y_reservada(app, almacen):
+    ventana = _ventana(almacen)
+    try:
+        ventana._al_anadir_etiqueta("vacaciones")
+
+        reservadas = almacen.cargar_etiquetas_definidas()
+        assert [e.nombre for e in reservadas.values()] == ["vacaciones"]
+        assert almacen.cargar_etiquetas_pendientes() == reservadas
+    finally:
+        ventana.Destroy()
+
+
+def test_ventana_principal_renombrar_y_eliminar_tambien_afecta_a_la_reservada(app, almacen):
+    # Si la etiqueta que se renombra/elimina tambien tenia un registro reservado
+    # (por ejemplo, se creo con "Anadir etiqueta nueva" antes de usarla en ningun
+    # enlace), no debe quedar suelta con el nombre antiguo.
+    almacen.marcar_pendiente(nuevo_elemento_local("https://a.com", etiquetas=("ocio",)))
+    ventana = _ventana(almacen)
+    try:
+        ventana._al_anadir_etiqueta("ocio")
+        ventana._al_renombrar_etiqueta("ocio", "hobby")
+
+        reservadas = [e for e in almacen.cargar_etiquetas_definidas().values() if not e.borrado]
+        assert [e.nombre for e in reservadas] == ["hobby"]
+
+        ventana._al_eliminar_etiqueta("hobby")
+        reservadas = [e for e in almacen.cargar_etiquetas_definidas().values() if not e.borrado]
+        assert reservadas == []
     finally:
         ventana.Destroy()

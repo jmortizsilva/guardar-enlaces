@@ -70,10 +70,18 @@ class ClienteApi:
             token_acceso=token_acceso,
         )
 
-    def push(self, elementos: list[dict], token_acceso: str) -> dict:
-        return self._post(
-            "/sincronizar", cuerpo={"elementos": elementos}, token_acceso=token_acceso
-        )
+    def push(
+        self,
+        elementos: list[dict] | None = None,
+        token_acceso: str = "",
+        etiquetas_definidas: list[dict] | None = None,
+    ) -> dict:
+        cuerpo: dict = {}
+        if elementos:
+            cuerpo["elementos"] = elementos
+        if etiquetas_definidas:
+            cuerpo["etiquetasDefinidas"] = etiquetas_definidas
+        return self._post("/sincronizar", cuerpo=cuerpo, token_acceso=token_acceso)
 
     # --- internals ---
 

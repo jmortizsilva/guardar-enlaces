@@ -55,6 +55,18 @@ CREATE TABLE IF NOT EXISTS elementos (
 CREATE INDEX IF NOT EXISTS idx_elementos_usuario_actualizado
   ON elementos (usuario_id, actualizado_en);
 
+CREATE TABLE IF NOT EXISTS etiquetas_definidas (
+  id TEXT PRIMARY KEY,
+  usuario_id INTEGER NOT NULL REFERENCES usuarios(id),
+  nombre TEXT NOT NULL,
+  creado_en INTEGER NOT NULL,
+  actualizado_en INTEGER NOT NULL,
+  borrado_en INTEGER
+);
+
+CREATE INDEX IF NOT EXISTS idx_etiquetas_definidas_usuario_actualizado
+  ON etiquetas_definidas (usuario_id, actualizado_en);
+
 CREATE INDEX IF NOT EXISTS idx_sesiones_usuario
   ON sesiones (usuario_id);
 `;

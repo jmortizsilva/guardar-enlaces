@@ -4,7 +4,7 @@ from unittest.mock import MagicMock
 import pytest
 
 from guardar_enlaces.almacen_local import AlmacenLocal
-from guardar_enlaces.modelo import nuevo_elemento_local
+from guardar_enlaces.modelo import nueva_etiqueta_definida, nuevo_elemento_local
 from guardar_enlaces.sincronizador import Sincronizador, aviso_tras_sincronizar, toca_sincronizar
 
 
@@ -103,6 +103,59 @@ def test_lo_rechazado_tambien_sale_del_outbox(almacen, cliente, sesion):
     assert almacen.cargar_pendientes() == {}
     # El enlace no se pierde de la cache local, solo deja de reintentarse.
     assert almacen.cargar_todos()[local.id] is not None
+
+
+def test_baja_etiquetas_reservadas_nuevas_del_pull(almacen, cliente, sesion):
+    nueva = {"id": "t1", "nombre": "ocio", "actualizadoEn": 100, "creadoEn": 100, "borrado": False}
+    cliente.pull.return_value = {
+        "elementos": [],
+        "etiquetasDefinidas": [nueva],
+        "servidorEn": 200,
+        "masDisponible": False,
+    }
+
+    Sincronizador(almacen, cliente, sesion).sincronizar()
+
+    assert almacen.cargar_etiquetas_definidas()["t1"].nombre == "ocio"
+
+
+def test_sube_una_etiqueta_pendiente_en_el_mismo_push_que_los_elementos(almacen, cliente, sesion):
+    etiqueta = nueva_etiqueta_definida("ocio", ahora=lambda: 50)
+    almacen.marcar_etiqueta_pendiente(etiqueta)
+
+    cliente.push.return_value = {
+        "elementos": [],
+        "rechazados": [],
+        "etiquetasDefinidas": [etiqueta.to_json_dict()],
+        "etiquetasRechazadas": [],
+    }
+    cliente.pull.return_value = {"elementos": [], "servidorEn": 500, "masDisponible": False}
+
+    Sincronizador(almacen, cliente, sesion).sincronizar()
+
+    cliente.push.assert_called_once()
+    _, kwargs = cliente.push.call_args
+    assert kwargs["etiquetas_definidas"] == [etiqueta.to_json_dict()]
+    assert almacen.cargar_etiquetas_pendientes() == {}
+    assert almacen.cargar_etiquetas_definidas()[etiqueta.id].nombre == "ocio"
+
+
+def test_una_etiqueta_rechazada_tambien_sale_del_outbox_y_cuenta(almacen, cliente, sesion):
+    etiqueta = nueva_etiqueta_definida("ocio", ahora=lambda: 50)
+    almacen.marcar_etiqueta_pendiente(etiqueta)
+
+    cliente.push.return_value = {
+        "elementos": [],
+        "rechazados": [],
+        "etiquetasDefinidas": [],
+        "etiquetasRechazadas": [{"id": etiqueta.id, "motivo": "no_aplicable"}],
+    }
+    cliente.pull.return_value = {"elementos": [], "servidorEn": 500, "masDisponible": False}
+
+    rechazados = Sincronizador(almacen, cliente, sesion).sincronizar()
+
+    assert rechazados == 1
+    assert almacen.cargar_etiquetas_pendientes() == {}
 
 
 class TestTocaSincronizar:

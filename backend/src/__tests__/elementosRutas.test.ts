@@ -69,7 +69,7 @@ describe('rutas de elementos', () => {
     expect(pull.json().elementos).toHaveLength(1);
   });
 
-  it('push sin cuerpo de elementos (400)', async () => {
+  it('push sin cuerpo de elementos ni etiquetas (400)', async () => {
     const res = await app.inject({
       method: 'POST',
       url: '/sincronizar',
@@ -77,5 +77,27 @@ describe('rutas de elementos', () => {
       payload: {},
     });
     expect(res.statusCode).toBe(400);
+  });
+
+  it('push solo de etiquetasDefinidas (sin elementos) seguido de pull las devuelve', async () => {
+    const auth = { authorization: `Bearer ${tokenValido()}` };
+
+    const push = await app.inject({
+      method: 'POST',
+      url: '/sincronizar',
+      headers: auth,
+      payload: { etiquetasDefinidas: [{ id: 't1', nombre: 'ocio', actualizadoEn: 100 }] },
+    });
+    expect(push.statusCode).toBe(200);
+    expect(push.json().etiquetasDefinidas[0].nombre).toBe('ocio');
+    expect(push.json().elementos).toEqual([]);
+
+    const pull = await app.inject({
+      method: 'GET',
+      url: '/sincronizar?desde=0',
+      headers: auth,
+    });
+    expect(pull.statusCode).toBe(200);
+    expect(pull.json().etiquetasDefinidas).toHaveLength(1);
   });
 });

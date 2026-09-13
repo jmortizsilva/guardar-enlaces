@@ -243,3 +243,51 @@ dentro reenvía el lote entero en cada sincronización, para siempre. Motivos:
 
 Un lote puede aplicarse a medias: `200` no significa "se ha aceptado todo",
 significa "esto es lo que ha pasado con cada entrada".
+
+---
+
+## Etiquetas reservadas
+
+Una etiqueta puede crearse **antes** de que ningún elemento la lleve —
+sirve para tenerla lista y asignarla más tarde desde cualquiera de los dos
+clientes. Mismo mecanismo que los elementos (alta/edición/baja por lote,
+`id` generado por el cliente, conflictos por `actualizadoEn` más reciente),
+en el mismo `GET`/`POST /sincronizar`, no una ruta aparte.
+
+Modelo:
+
+```json
+{
+  "id": "uuid-generado-por-el-cliente",
+  "nombre": "ocio",
+  "creadoEn": 1735000000000,
+  "actualizadoEn": 1735600000000,
+  "borrado": false
+}
+```
+
+`GET /sincronizar` añade `etiquetasDefinidas` a la respuesta, con el mismo
+`desde`/`servidorEn` que los elementos. **Sin paginación propia**: el
+volumen de etiquetas de una persona nunca se acerca al límite de lote, así
+que siempre se devuelven todas las que cambiaron desde `desde` en la misma
+llamada (no hace falta repetir con `masDisponible` como con `elementos`).
+
+`POST /sincronizar` acepta `etiquetasDefinidas` en el cuerpo, junto a
+`elementos` — **los dos son opcionales, pero hace falta al menos uno**:
+
+```json
+{ "etiquetasDefinidas": [ { "id": "...", "nombre": "ocio", "actualizadoEn": 1735600000000 } ] }
+```
+
+→ `200`, con las mismas claves que ya trae la respuesta de elementos, más:
+
+```json
+{
+  "etiquetasDefinidas": [ /* version definitiva de cada entrada aplicada */ ],
+  "etiquetasRechazadas": [ { "id": "...", "motivo": "sin_nombre" } ]
+}
+```
+
+Motivo de rechazo `sin_nombre` (era un alta y no traía `nombre`), paralelo a
+`sin_url` en elementos. `no_aplicable` significa lo mismo que en elementos
+(el `id` es de otro usuario).

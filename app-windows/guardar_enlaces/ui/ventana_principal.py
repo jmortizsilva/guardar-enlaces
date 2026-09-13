@@ -28,11 +28,18 @@ from ..api_cliente import ClienteApi, ErrorApi
 from ..asentar_cuenta import asentar_cuenta, identidad_dueno
 from ..modelo import (
     Elemento,
+    EtiquetaDefinida,
     buscar,
     elementos_visibles,
+    eliminar_etiqueta_definida,
     etiquetas_disponibles,
+    etiquetas_reservadas_visibles,
     filtrar_por_etiqueta,
     marcar_borrado,
+    nueva_etiqueta_definida,
+    quitar_etiqueta,
+    renombrar_etiqueta,
+    renombrar_etiqueta_definida,
 )
 from ..presentacion import texto_fila
 from ..seleccion import fila_tras_refrescar
@@ -44,6 +51,7 @@ from .bandeja import IconoBandeja
 from .campos import con_etiqueta
 from .dialogo_anadir import DialogoAnadir
 from .dialogo_detalle import DialogoDetalle
+from .dialogo_gestion_etiquetas import DialogoGestionEtiquetas
 from .dialogo_login import DialogoLogin
 from .preguntas import avisar, confirmar_eliminacion, preguntar_importacion
 
@@ -97,6 +105,7 @@ class VentanaPrincipal(wx.Frame):
         id_sincronizar = wx.NewIdRef()
         id_cerrar_sesion = wx.NewIdRef()
         id_actualizar = wx.NewIdRef()
+        id_gestionar_etiquetas = wx.NewIdRef()
 
         barra = wx.MenuBar()
         menu_archivo = wx.Menu()
@@ -107,6 +116,11 @@ class VentanaPrincipal(wx.Frame):
         menu_archivo.Append(id_cerrar_sesion, "&Cerrar sesión...")
         menu_archivo.Append(wx.ID_EXIT, "&Salir\tCtrl+Q")
         barra.Append(menu_archivo, "&Archivo")
+
+        menu_etiquetas = wx.Menu()
+        menu_etiquetas.Append(id_gestionar_etiquetas, "&Gestionar etiquetas...")
+        barra.Append(menu_etiquetas, "Et&iquetas")  # "&Etiquetas" chocaba con "&Etiqueta:" del filtro
+
         self.SetMenuBar(barra)
 
         self.Bind(wx.EVT_MENU, self._al_anadir, id=id_anadir)
@@ -116,6 +130,7 @@ class VentanaPrincipal(wx.Frame):
         self.Bind(wx.EVT_MENU, self._al_buscar_actualizaciones, id=id_actualizar)
         self.Bind(wx.EVT_MENU, self._al_cerrar_sesion, id=id_cerrar_sesion)
         self.Bind(wx.EVT_MENU, lambda e: self.Close(), id=wx.ID_EXIT)
+        self.Bind(wx.EVT_MENU, self._al_gestionar_etiquetas, id=id_gestionar_etiquetas)
 
     def _construir_controles(self) -> None:
         panel = wx.Panel(self)
@@ -339,6 +354,63 @@ class VentanaPrincipal(wx.Frame):
     def _al_elemento_editado(self, elemento: Elemento) -> None:
         self._almacen.marcar_pendiente(elemento)
         self._cargar_desde_cache()
+        self.sincronizar_en_segundo_plano()
+
+    # --- gestor de etiquetas ---
+
+    def _al_gestionar_etiquetas(self, evento: wx.CommandEvent) -> None:
+        dialogo = DialogoGestionEtiquetas(
+            self,
+            obtener_elementos=lambda: elementos_visibles(self._almacen.cargar_todos()),
+            obtener_reservadas=lambda: etiquetas_reservadas_visibles(
+                self._almacen.cargar_etiquetas_definidas()
+            ),
+            al_renombrar=self._al_renombrar_etiqueta,
+            al_eliminar=self._al_eliminar_etiqueta,
+            al_anadir=self._al_anadir_etiqueta,
+        )
+        dialogo.ShowModal()
+        dialogo.Destroy()
+        self._cargar_desde_cache()
+
+    def _etiqueta_reservada_por_nombre(self, nombre: str) -> EtiquetaDefinida | None:
+        for etiqueta in etiquetas_reservadas_visibles(self._almacen.cargar_etiquetas_definidas()):
+            if etiqueta.nombre == nombre:
+                return etiqueta
+        return None
+
+    def _al_renombrar_etiqueta(self, vieja: str, nueva: str) -> None:
+        cambiados = renombrar_etiqueta(elementos_visibles(self._almacen.cargar_todos()), vieja, nueva)
+        for elemento in cambiados:
+            self._almacen.marcar_pendiente(elemento)
+
+        reservada = self._etiqueta_reservada_por_nombre(vieja)
+        if reservada:
+            self._almacen.marcar_etiqueta_pendiente(renombrar_etiqueta_definida(reservada, nueva))
+
+        self._decir_estado(
+            f"Etiqueta «{vieja}» renombrada a «{nueva}» en {len(cambiados)} enlaces",
+            tras_cerrar_ventana=True,
+        )
+        self.sincronizar_en_segundo_plano()
+
+    def _al_eliminar_etiqueta(self, etiqueta: str) -> None:
+        cambiados = quitar_etiqueta(elementos_visibles(self._almacen.cargar_todos()), etiqueta)
+        for elemento in cambiados:
+            self._almacen.marcar_pendiente(elemento)
+
+        reservada = self._etiqueta_reservada_por_nombre(etiqueta)
+        if reservada:
+            self._almacen.marcar_etiqueta_pendiente(eliminar_etiqueta_definida(reservada))
+
+        self._decir_estado(
+            f"Etiqueta «{etiqueta}» eliminada de {len(cambiados)} enlaces", tras_cerrar_ventana=True
+        )
+        self.sincronizar_en_segundo_plano()
+
+    def _al_anadir_etiqueta(self, nombre: str) -> None:
+        self._almacen.marcar_etiqueta_pendiente(nueva_etiqueta_definida(nombre))
+        self._decir_estado(f"Etiqueta «{nombre}» añadida", tras_cerrar_ventana=True)
         self.sincronizar_en_segundo_plano()
 
     def _al_elemento_eliminado(self, elemento: Elemento) -> None:
