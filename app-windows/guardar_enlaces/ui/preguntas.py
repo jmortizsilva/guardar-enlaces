@@ -68,6 +68,21 @@ def confirmar_eliminacion(titulo: str, padre: wx.Window | None = None) -> bool:
     return respuesta == wx.ID_OK
 
 
+def confirmar_guardar_duplicado(titulo: str, padre: wx.Window | None = None) -> bool:
+    """La pregunta al anadir un enlace que ya esta guardado: no se duplica,
+    se ACTUALIZA ese mismo enlace con la comprobacion de ahora."""
+    dialogo = wx.MessageDialog(
+        padre,
+        f"Ya tienes guardado «{titulo}». ¿Actualizarlo con la comprobación de ahora?",
+        "Enlace repetido",
+        wx.OK | wx.CANCEL | wx.CANCEL_DEFAULT | wx.ICON_QUESTION,
+    )
+    dialogo.SetOKCancelLabels("&Actualizar", "&Cancelar")
+    respuesta = dialogo.ShowModal()
+    dialogo.Destroy()
+    return respuesta == wx.ID_OK
+
+
 def confirmar_eliminar_etiqueta(etiqueta: str, cuantos: int, padre: wx.Window | None = None) -> bool:
     """La pregunta antes de eliminar una etiqueta de TODOS los enlaces que la
     llevan, desde el gestor de etiquetas."""

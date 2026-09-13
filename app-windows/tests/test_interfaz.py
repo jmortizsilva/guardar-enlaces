@@ -17,7 +17,7 @@ import wx
 from guardar_enlaces.almacen_local import AlmacenLocal
 from guardar_enlaces.api_cliente import ErrorApi
 from guardar_enlaces.modelo import elementos_visibles, nueva_etiqueta_definida, nuevo_elemento_local
-from guardar_enlaces.ui import dialogo_detalle, dialogo_gestion_etiquetas, ventana_principal
+from guardar_enlaces.ui import dialogo_anadir, dialogo_detalle, dialogo_gestion_etiquetas, ventana_principal
 from guardar_enlaces.ui.bandeja import IconoBandeja
 from guardar_enlaces.ui.campos import etiqueta_de, etiqueta_widget_de
 from guardar_enlaces.ui.dialogo_anadir import DialogoAnadir
@@ -260,17 +260,130 @@ def test_dialogo_login_se_puede_leer_y_el_estado_no_esta_hasta_que_dice_algo(app
         dialogo.Destroy()
 
 
-def test_dialogo_anadir_se_puede_leer_el_fallo_de_la_comprobacion(app):
+def test_dialogo_anadir_los_campos_se_pueden_leer(app):
     dialogo = DialogoAnadir(None, MagicMock(), MagicMock())
     try:
         assert etiqueta_de(dialogo.campo_url) == "URL:"
-        assert etiqueta_de(dialogo.vista_previa) == "Vista previa:"
+        assert etiqueta_de(dialogo.campo_etiquetas) == "Etiquetas, separadas por comas:"
+        assert etiqueta_de(dialogo.estado) == "Estado:"
+        assert not dialogo.estado.IsShown()
         _comprobar_pantalla(dialogo)
+    finally:
+        dialogo.Destroy()
 
-        assert not dialogo.vista_previa.IsShown()
-        dialogo._al_fallar_comprobacion("sin red")
-        assert dialogo.vista_previa.IsShown()
-        assert dialogo.vista_previa.GetValue() == "No se pudo comprobar: sin red"
+
+def test_dialogo_anadir_url_invalida_no_llega_a_la_red(app):
+    cliente = MagicMock()
+    dialogo = DialogoAnadir(None, cliente, MagicMock())
+    dialogo.EndModal = lambda codigo: None  # no esta abierto de verdad
+    try:
+        dialogo.campo_url.SetValue("no-es-una-url")
+        _pulsar(dialogo.boton_guardar)
+
+        assert dialogo.estado.GetValue() == "Escribe una URL que empiece por http:// o https://"
+        assert dialogo.elemento_creado is None
+        cliente.metadatos.assert_not_called()
+    finally:
+        dialogo.Destroy()
+
+
+def test_dialogo_anadir_un_duplicado_cancelado_no_llega_a_la_red(app, monkeypatch):
+    preguntas = []
+    monkeypatch.setattr(
+        dialogo_anadir,
+        "confirmar_guardar_duplicado",
+        lambda titulo, padre: preguntas.append(titulo) or False,
+    )
+    existente = nuevo_elemento_local("https://a.com", titulo="Ya guardado")
+    cliente = MagicMock()
+    dialogo = DialogoAnadir(None, cliente, MagicMock(), guardados=[existente])
+    dialogo.EndModal = lambda codigo: None
+    try:
+        dialogo.campo_url.SetValue("https://a.com")
+        _pulsar(dialogo.boton_guardar)
+
+        assert preguntas == ["Ya guardado"]
+        assert dialogo.elemento_creado is None
+        cliente.metadatos.assert_not_called()
+    finally:
+        dialogo.Destroy()
+
+
+def test_dialogo_anadir_completar_guardado_crea_el_elemento_con_metadatos_y_etiquetas(app):
+    dialogo = DialogoAnadir(None, MagicMock(), MagicMock())
+    dialogo.EndModal = lambda codigo: None
+    try:
+        dialogo._al_completar_guardado(
+            "https://a.com",
+            {"titulo": "A", "descripcion": "d", "imagenUrl": "https://a.com/i.jpg", "tipo": "articulo"},
+            ("ocio", "trabajo"),
+            None,
+        )
+        e = dialogo.elemento_creado
+        assert e.url == "https://a.com"
+        assert e.titulo == "A"
+        assert e.descripcion == "d"
+        assert e.imagen_url == "https://a.com/i.jpg"
+        assert e.tipo == "articulo"
+        assert e.etiquetas == ("ocio", "trabajo")
+        assert dialogo.actualizado_existente is False
+    finally:
+        dialogo.Destroy()
+
+
+def test_dialogo_anadir_completar_guardado_sin_metadatos_guarda_solo_la_url(app):
+    # La comprobacion fallo (sin red, sitio caido): se guarda igual.
+    dialogo = DialogoAnadir(None, MagicMock(), MagicMock())
+    dialogo.EndModal = lambda codigo: None
+    try:
+        dialogo._al_completar_guardado("https://a.com", {}, (), None)
+        e = dialogo.elemento_creado
+        assert e.url == "https://a.com"
+        assert e.titulo is None
+        assert e.tipo == "enlace"
+    finally:
+        dialogo.Destroy()
+
+
+def test_dialogo_anadir_completar_guardado_con_duplicado_actualiza_el_existente(app):
+    existente = nuevo_elemento_local(
+        "https://a.com", titulo="Viejo", etiquetas=("archivado",), ahora=lambda: 100
+    )
+    dialogo = DialogoAnadir(None, MagicMock(), MagicMock())
+    dialogo.EndModal = lambda codigo: None
+    try:
+        dialogo._al_completar_guardado(
+            "https://a.com", {"titulo": "Nuevo"}, ("reciente",), existente
+        )
+        e = dialogo.elemento_creado
+        assert e.id == existente.id  # mismo enlace, no uno nuevo
+        assert e.titulo == "Nuevo"
+        assert e.etiquetas == ("archivado", "reciente")  # fusionadas, ninguna se pierde
+        assert dialogo.actualizado_existente is True
+    finally:
+        dialogo.Destroy()
+
+
+def test_dialogo_anadir_completar_guardado_con_duplicado_y_sin_metadatos_conserva_lo_que_habia(app):
+    existente = nuevo_elemento_local("https://a.com", titulo="Viejo", descripcion="antes")
+    dialogo = DialogoAnadir(None, MagicMock(), MagicMock())
+    dialogo.EndModal = lambda codigo: None
+    try:
+        dialogo._al_completar_guardado("https://a.com", {}, (), existente)
+        e = dialogo.elemento_creado
+        assert e.titulo == "Viejo"
+        assert e.descripcion == "antes"
+    finally:
+        dialogo.Destroy()
+
+
+def test_dialogo_anadir_cancelar_mientras_se_guarda_no_completa_el_guardado(app):
+    dialogo = DialogoAnadir(None, MagicMock(), MagicMock())
+    dialogo.EndModal = lambda codigo: None
+    try:
+        dialogo._cerrado = True  # como si se hubiera pulsado Cancelar mientras se comprobaba
+        dialogo._al_completar_guardado("https://a.com", {"titulo": "A"}, (), None)
+        assert dialogo.elemento_creado is None
     finally:
         dialogo.Destroy()
 

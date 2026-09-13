@@ -279,8 +279,9 @@ class VentanaPrincipal(wx.Frame):
             elemento = dialogo.elemento_creado
             self._almacen.marcar_pendiente(elemento)
             self._cargar_desde_cache()
+            verbo = "Actualizado" if dialogo.actualizado_existente else "Añadido"
             self._decir_estado(
-                f"Añadido: {elemento.titulo or elemento.url}", tras_cerrar_ventana=True
+                f"{verbo}: {elemento.titulo or elemento.url}", tras_cerrar_ventana=True
             )
             self.sincronizar_en_segundo_plano()
         dialogo.Destroy()
