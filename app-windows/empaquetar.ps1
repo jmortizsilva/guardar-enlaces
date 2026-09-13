@@ -44,6 +44,12 @@ Invoke-Paso "Generando el icono..." {
     & $python recursos\generar_icono.py
 }
 
+$prismNativo = & $python -c "import os, prism; print(os.path.join(os.path.dirname(prism.__file__), '_native'))"
+if ($LASTEXITCODE -ne 0 -or -not (Test-Path (Join-Path $prismNativo "_prism_cffi.pyd"))) {
+    Write-Host "No se encuentra el modulo nativo de prism en el entorno virtual." -ForegroundColor Red
+    exit 1
+}
+
 Invoke-Paso "Empaquetando..." {
     & $python -m PyInstaller `
         --noconfirm `
@@ -53,6 +59,8 @@ Invoke-Paso "Empaquetando..." {
         --icon recursos\guardar-enlaces.ico `
         --collect-all keyring `
         --collect-all win32ctypes `
+        --collect-all prism `
+        --add-binary "$prismNativo\_prism_cffi.pyd;prism\_native" `
         lanzar.py
 }
 
@@ -65,6 +73,14 @@ Invoke-Paso "Empaquetando..." {
 #   paquete se queda sin el (PyInstaller no lo ve porque el import va escondido
 #   dentro del backend), la app arranca igual pero NO recuerda la sesion y pide
 #   entrar con Google cada vez. Es lo primero que hay que probar del ejecutable.
+# --collect-all prism: prism lleva su DLL y su modulo nativo en la carpeta
+#   prism\_native y los busca ahi al importarse. Si faltan, la aplicacion arranca
+#   igual pero no le dice nada al lector de pantalla.
+# --add-binary _prism_cffi.pyd: --collect-all se trae prism.dll pero no este
+#   modulo. prism no lo importa desde su carpeta sino anadiendo _native a su ruta
+#   al arrancar, y PyInstaller no lo ve ("missing module named prism._prism_cffi"
+#   en build\GuardarEnlaces\warn-GuardarEnlaces.txt). Comprobado con prismatoid
+#   0.18.2: sin esta linea el ejecutable empaqueta sin errores y queda mudo.
 
 $destino = Join-Path $PSScriptRoot "dist\GuardarEnlaces\GuardarEnlaces.exe"
 if (-not (Test-Path $destino)) {
@@ -82,5 +98,6 @@ Write-Host "Que hay que comprobar a mano, porque ninguna prueba lo cubre:" -Fore
 Write-Host "  1. Que arranca sin ventana de consola."
 Write-Host "  2. Que RECUERDA la sesion al cerrarlo y volverlo a abrir (keyring)."
 Write-Host "  3. Que el titulo de la ventana dice con que cuenta has entrado."
-Write-Host "  4. La primera vez, Windows dira que protegio tu PC: Mas informacion"
+Write-Host "  4. Que habla con el lector: copiar una URL tiene que decir 'URL copiada'."
+Write-Host "  5. La primera vez, Windows dira que protegio tu PC: Mas informacion"
 Write-Host "     -> Ejecutar de todas formas. Es por no estar firmado."

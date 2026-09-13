@@ -37,6 +37,10 @@ Lo que ninguna prueba cubre y hay que comprobar a mano tras empaquetar:
    no se les dice (de ahí los `--collect-all` del script). Si falla, la
    aplicación arranca igual pero pide entrar con Google cada vez.
 3. Que el título de la ventana dice con qué cuenta has entrado.
+4. **Que habla con el lector de pantalla**: copiar una URL tiene que decir
+   «URL copiada». prism lleva su parte nativa en `prism\_native`, y PyInstaller
+   no ve `_prism_cffi.pyd` (de ahí el `--add-binary` del script); si falta, la
+   aplicación empaqueta sin errores, arranca igual y queda muda.
 
 La primera vez, Windows mostrará *"Windows protegió su PC"* por no estar
 firmado: **Más información → Ejecutar de todas formas**.
@@ -92,6 +96,8 @@ crea la cuenta.
 - `guardar_enlaces/api_cliente.py` — llamadas HTTP al backend.
 - `guardar_enlaces/credenciales.py` — guarda los tokens con `keyring`
   (Administrador de credenciales de Windows), nunca en fichero plano.
+- `guardar_enlaces/voz.py` — le dice al lector de pantalla lo que se escribe
+  en la barra de estado, que NVDA no lee sola (con `prismatoid`).
 - `guardar_enlaces/ui/` — ventanas wxPython.
 
 ## Accesibilidad

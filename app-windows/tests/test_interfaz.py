@@ -24,6 +24,7 @@ from guardar_enlaces.ui.dialogo_anadir import DialogoAnadir
 from guardar_enlaces.ui.dialogo_detalle import DialogoDetalle
 from guardar_enlaces.ui.dialogo_login import DialogoLogin
 from guardar_enlaces.ui.ventana_principal import VentanaPrincipal
+from guardar_enlaces.voz import SinScreenReader, Voz
 
 # Los controles que toman el nombre de la etiqueta de delante. Los botones no:
 # su propio texto es el nombre.
@@ -42,13 +43,61 @@ def almacen():
     a.cerrar()
 
 
-def _ventana(almacen: AlmacenLocal) -> VentanaPrincipal:
+def _ventana(almacen: AlmacenLocal, voz: Voz | None = None) -> VentanaPrincipal:
     # El constructor lanza una sincronizacion en segundo plano; con una sesion mock que no
     # simula una respuesta real, que falle limpio con ErrorApi (evita ruido de una excepcion
     # sin capturar en el hilo de fondo, que no tiene nada que ver con estas pruebas).
     sesion = MagicMock()
     sesion.con_reintento.side_effect = ErrorApi("sin red en el test")
-    return VentanaPrincipal(almacen, MagicMock(), sesion)
+    # Sin el lector de verdad: las pruebas no pueden ponerse a hablar por NVDA.
+    return VentanaPrincipal(almacen, MagicMock(), sesion, voz if voz is not None else Voz(SinScreenReader()))
+
+
+class _ScreenReaderQueApunta:
+    def __init__(self):
+        self.dicho = []
+
+    def decir(self, texto):
+        self.dicho.append(texto)
+
+
+def test_lo_que_se_escribe_en_la_barra_tambien_se_dice_medio_segundo_despues(
+    app, almacen, monkeypatch
+):
+    programados = []
+    monkeypatch.setattr(
+        wx, "CallLater", lambda ms, funcion, *args: programados.append((ms, funcion, args))
+    )
+    elemento = nuevo_elemento_local("https://a.com", titulo="A")
+    almacen.marcar_pendiente(elemento)
+    screen_reader = _ScreenReaderQueApunta()
+    ventana = _ventana(almacen, Voz(screen_reader))
+    try:
+        ventana._al_elemento_eliminado(elemento)
+        assert ventana.GetStatusBar().GetStatusText() == "Eliminado: A"
+        # Todavia no: al cerrarse el cuadro, la relectura de la lista lo pisaria.
+        assert screen_reader.dicho == []
+        assert [ms for ms, _, _ in programados] == [500]
+
+        _, funcion, args = programados[0]
+        funcion(*args)
+        assert screen_reader.dicho == ["Eliminado: A"]
+    finally:
+        ventana.Destroy()
+
+
+def test_lo_que_no_viene_de_cerrar_una_ventana_se_dice_sin_esperar(app, almacen, monkeypatch):
+    # Un fallo al sincronizar no cierra nada: esperar solo retrasaria el aviso.
+    programados = []
+    monkeypatch.setattr(wx, "CallLater", lambda *args: programados.append(args))
+    screen_reader = _ScreenReaderQueApunta()
+    ventana = _ventana(almacen, Voz(screen_reader))
+    try:
+        ventana._decir_estado("No se pudo sincronizar: sin conexión con el servidor")
+        assert screen_reader.dicho == ["No se pudo sincronizar: sin conexión con el servidor"]
+        assert programados == []
+    finally:
+        ventana.Destroy()
 
 
 def _descendientes(ventana: wx.Window):

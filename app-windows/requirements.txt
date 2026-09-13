@@ -1,3 +1,5 @@
 wxPython>=4.2
 requests>=2.31
 keyring>=25.0
+# Fijada: una version nueva puede cambiar como habla con cada lector de pantalla.
+prismatoid==0.18.2

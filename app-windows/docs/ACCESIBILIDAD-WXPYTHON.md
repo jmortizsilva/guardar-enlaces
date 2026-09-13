@@ -125,3 +125,26 @@ Escape sepa qué botón pulsar.
 
 Esto sale de cómo documenta Windows sus cuadros de mensaje; falta comprobarlo
 con teclado en la aplicación.
+
+## 7. La barra de estado no se lee sola
+
+Con NVDA, la barra de estado no se oye cuando cambia; solo al pedirla con
+NVDA+Fin. Lo que se escribe ahí como respuesta a algo (añadido, eliminado, URL
+copiada, un fallo al sincronizar) se dice además con `voz.py`, que habla con el
+lector a través de prism (paquete `prismatoid`). Comprobado con prismatoid
+0.18.2:
+
+- **Solo lectores de pantalla.** Sin lector abierto, prism elige una voz del
+  sistema (OneCore o SAPI) y la aplicación hablaría en voz alta a quien la usa
+  sin lector. Esas se descartan.
+- **El Narrador se queda sin voz.** La vía de UIA que declara prism falla al
+  pedirla (`PrismInvalidParamError`).
+- **El lector se busca al abrir la aplicación.** Si se abre después, no habla
+  hasta reiniciarla.
+- **El número de elementos no se dice**: cambia con cada letra del buscador, y
+  la lista ya dice la posición y el total al entrar en ella.
+- **Tras cerrarse un menú o un cuadro, la voz sale 500 ms después que la
+  barra** (añadido, eliminado, URL copiada, descargando): el foco vuelve a la
+  lista, NVDA la relee y pisaría el aviso. NVDA hace lo mismo con sus propios
+  avisos cuando hay cambio de ventana. Lo que no viene de cerrar nada (un fallo
+  al sincronizar) sale sin esperar.

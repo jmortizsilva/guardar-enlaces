@@ -39,6 +39,7 @@ from ..seleccion import fila_tras_refrescar
 from ..sesion import Sesion
 from ..sincronizador import Sincronizador, toca_sincronizar
 from ..version import VERSION
+from ..voz import Voz
 from .bandeja import IconoBandeja
 from .campos import con_etiqueta
 from .dialogo_anadir import DialogoAnadir
@@ -47,6 +48,12 @@ from .dialogo_login import DialogoLogin
 from .preguntas import avisar, confirmar_eliminacion, preguntar_importacion
 
 _TODAS_LAS_ETIQUETAS = "(todas las etiquetas)"
+
+# Lo que se anuncia al cerrarse un menu o un cuadro espera esto: el foco vuelve a
+# la lista, NVDA la relee y pisaria el aviso. NVDA hace lo mismo con sus propios
+# avisos cuando hay cambio de ventana. Lo que no viene de cerrar nada (un fallo
+# al sincronizar) sale sin esperar.
+_RETRASO_TRAS_CERRAR_VENTANA_MS = 500
 
 
 def _titulo_con_cuenta(sesion: Sesion) -> str:
@@ -59,11 +66,14 @@ def _titulo_con_cuenta(sesion: Sesion) -> str:
 
 
 class VentanaPrincipal(wx.Frame):
-    def __init__(self, almacen: AlmacenLocal, cliente: ClienteApi, sesion: Sesion):
+    def __init__(
+        self, almacen: AlmacenLocal, cliente: ClienteApi, sesion: Sesion, voz: Voz | None = None
+    ):
         super().__init__(None, title=_titulo_con_cuenta(sesion), size=(760, 520))
         self._almacen = almacen
         self._cliente = cliente
         self._sesion = sesion
+        self._voz = voz if voz is not None else Voz()
         self._sincronizador = Sincronizador(almacen, cliente, sesion)
         self._ultima_sincronizacion = 0.0
         self._elementos_mostrados: list[Elemento] = []
@@ -192,7 +202,8 @@ class VentanaPrincipal(wx.Frame):
     def _refrescar_lista(self, elementos: list[Elemento]) -> None:
         self._elementos_mostrados = elementos
         n = len(elementos)
-        # el StatusBar de Win32 se anuncia solo al cambiar (no hace falta anuncio aparte)
+        # Solo en la barra, sin decirlo: cambia con cada letra del buscador, y la
+        # lista ya dice la posicion y el total al entrar en ella.
         self.SetStatusText(f"{n} elemento{'s' if n != 1 else ''}")
 
         filas = [(elemento.id, texto_fila(elemento)) for elemento in elementos]
@@ -230,6 +241,17 @@ class VentanaPrincipal(wx.Frame):
     def _al_cambiar_filtro(self, evento: wx.Event) -> None:
         self._aplicar_filtros()
 
+    def _decir_estado(self, texto: str, tras_cerrar_ventana: bool = False) -> None:
+        """A la barra de estado y al lector: NVDA no lee la barra cuando cambia.
+
+        `tras_cerrar_ventana` cuando sale al cerrarse un menu o un cuadro: la voz
+        espera a que NVDA relea la lista (ver _RETRASO_TRAS_CERRAR_VENTANA_MS)."""
+        self.SetStatusText(texto)
+        if tras_cerrar_ventana:
+            wx.CallLater(_RETRASO_TRAS_CERRAR_VENTANA_MS, self._voz.anunciar, texto)
+        else:
+            self._voz.anunciar(texto)
+
     # --- anadir / abrir / menu contextual / eliminar ---
 
     def _al_anadir(self, evento: wx.CommandEvent) -> None:
@@ -240,7 +262,9 @@ class VentanaPrincipal(wx.Frame):
             elemento = dialogo.elemento_creado
             self._almacen.marcar_pendiente(elemento)
             self._cargar_desde_cache()
-            self.SetStatusText(f"Añadido: {elemento.titulo or elemento.url}")
+            self._decir_estado(
+                f"Añadido: {elemento.titulo or elemento.url}", tras_cerrar_ventana=True
+            )
             self.sincronizar_en_segundo_plano()
         dialogo.Destroy()
 
@@ -288,11 +312,12 @@ class VentanaPrincipal(wx.Frame):
     def _copiar_url(self, elemento: Elemento) -> None:
         if not wx.TheClipboard.Open():
             # Otro programa puede tenerlo abierto; decir "copiada" seria mentir.
-            self.SetStatusText("No se pudo copiar la URL")
+            self._decir_estado("No se pudo copiar la URL", tras_cerrar_ventana=True)
             return
         wx.TheClipboard.SetData(wx.TextDataObject(elemento.url))
         wx.TheClipboard.Close()
-        self.SetStatusText(f"URL copiada: {elemento.url}")
+        # Sin la URL detras: leida en voz alta es larga y no dice nada que no se sepa.
+        self._decir_estado("URL copiada", tras_cerrar_ventana=True)
 
     def _al_eliminar_seleccionado(self, evento: wx.CommandEvent) -> None:
         elemento = self._elemento_en(self.lista.GetFirstSelected())
@@ -312,7 +337,8 @@ class VentanaPrincipal(wx.Frame):
         borrado = marcar_borrado(elemento)
         self._almacen.marcar_pendiente(borrado)
         self._cargar_desde_cache()
-        self.SetStatusText(f"Eliminado: {elemento.titulo or elemento.url}")
+        # Siempre tras un cuadro: la confirmacion o el detalle.
+        self._decir_estado(f"Eliminado: {elemento.titulo or elemento.url}", tras_cerrar_ventana=True)
         self.sincronizar_en_segundo_plano()
 
     # --- sincronizacion ---
@@ -334,17 +360,17 @@ class VentanaPrincipal(wx.Frame):
             try:
                 rechazados = self._sincronizador.sincronizar()
             except ErrorApi as error:
-                wx.CallAfter(self.SetStatusText, f"No se pudo sincronizar: {error}")
+                wx.CallAfter(self._decir_estado, f"No se pudo sincronizar: {error}")
                 return
             wx.CallAfter(self._cargar_desde_cache)
             if rechazados:
                 # _cargar_desde_cache deja el numero de elementos en la barra, asi
-                # que esto va despues para que no lo pise. La barra de estado de
-                # Win32 se anuncia sola al cambiar (docs/ACCESIBILIDAD-WXPYTHON.md).
+                # que esto va despues para que no lo pise.
                 wx.CallAfter(
-                    self.SetStatusText,
-                    f"{rechazados} cambio{'s' if rechazados != 1 else ''} no se "
-                    "pudo subir al servidor",
+                    self._decir_estado,
+                    "1 cambio no se pudo subir al servidor"
+                    if rechazados == 1
+                    else f"{rechazados} cambios no se pudieron subir al servidor",
                 )
 
         threading.Thread(target=trabajo, daemon=True).start()
@@ -398,7 +424,7 @@ class VentanaPrincipal(wx.Frame):
             self._instalar(disponible)
 
     def _instalar(self, disponible) -> None:
-        self.SetStatusText(f"Descargando la versión {disponible.version}…")
+        self._decir_estado(f"Descargando la versión {disponible.version}…", tras_cerrar_ventana=True)
 
         def trabajo() -> None:
             destino = Path(tempfile.gettempdir()) / f"GuardarEnlaces-{disponible.version}.zip"
