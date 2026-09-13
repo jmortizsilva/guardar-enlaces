@@ -87,14 +87,14 @@ def test_lo_que_se_escribe_en_la_barra_tambien_se_dice_medio_segundo_despues(
 
 
 def test_lo_que_no_viene_de_cerrar_una_ventana_se_dice_sin_esperar(app, almacen, monkeypatch):
-    # Un fallo al sincronizar no cierra nada: esperar solo retrasaria el aviso.
+    # F5 no cierra nada: esperar medio segundo solo retrasaria la respuesta.
     programados = []
     monkeypatch.setattr(wx, "CallLater", lambda *args: programados.append(args))
     screen_reader = _ScreenReaderQueApunta()
     ventana = _ventana(almacen, Voz(screen_reader))
     try:
-        ventana._decir_estado("No se pudo sincronizar: sin conexión con el servidor")
-        assert screen_reader.dicho == ["No se pudo sincronizar: sin conexión con el servidor"]
+        ventana._decir_estado("Sincronizado")
+        assert screen_reader.dicho == ["Sincronizado"]
         assert programados == []
     finally:
         ventana.Destroy()

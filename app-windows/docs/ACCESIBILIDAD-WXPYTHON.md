@@ -146,5 +146,7 @@ lector a través de prism (paquete `prismatoid`). Comprobado con prismatoid
 - **Tras cerrarse un menú o un cuadro, la voz sale 500 ms después que la
   barra** (añadido, eliminado, URL copiada, descargando): el foco vuelve a la
   lista, NVDA la relee y pisaría el aviso. NVDA hace lo mismo con sus propios
-  avisos cuando hay cambio de ventana. Lo que no viene de cerrar nada (un fallo
-  al sincronizar) sale sin esperar.
+  avisos cuando hay cambio de ventana. Lo que no viene de cerrar nada
+  («Sincronizado», un fallo al sincronizar) sale sin esperar.
+- **Sincronizar a mano confirma**: F5, el menú o la bandeja dicen
+  «Sincronizado». La automática, al volver a la ventana, calla si sale bien.

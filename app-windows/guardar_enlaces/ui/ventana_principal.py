@@ -37,7 +37,7 @@ from ..modelo import (
 from ..presentacion import texto_fila
 from ..seleccion import fila_tras_refrescar
 from ..sesion import Sesion
-from ..sincronizador import Sincronizador, toca_sincronizar
+from ..sincronizador import Sincronizador, aviso_tras_sincronizar, toca_sincronizar
 from ..version import VERSION
 from ..voz import Voz
 from .bandeja import IconoBandeja
@@ -51,8 +51,8 @@ _TODAS_LAS_ETIQUETAS = "(todas las etiquetas)"
 
 # Lo que se anuncia al cerrarse un menu o un cuadro espera esto: el foco vuelve a
 # la lista, NVDA la relee y pisaria el aviso. NVDA hace lo mismo con sus propios
-# avisos cuando hay cambio de ventana. Lo que no viene de cerrar nada (un fallo
-# al sincronizar) sale sin esperar.
+# avisos cuando hay cambio de ventana. Lo que no viene de cerrar nada (F5, un
+# fallo al sincronizar) sale sin esperar.
 _RETRASO_TRAS_CERRAR_VENTANA_MS = 500
 
 
@@ -110,7 +110,9 @@ class VentanaPrincipal(wx.Frame):
         self.SetMenuBar(barra)
 
         self.Bind(wx.EVT_MENU, self._al_anadir, id=id_anadir)
-        self.Bind(wx.EVT_MENU, lambda e: self.sincronizar_en_segundo_plano(), id=id_sincronizar)
+        self.Bind(
+            wx.EVT_MENU, lambda e: self.sincronizar_en_segundo_plano(manual=True), id=id_sincronizar
+        )
         self.Bind(wx.EVT_MENU, self._al_buscar_actualizaciones, id=id_actualizar)
         self.Bind(wx.EVT_MENU, self._al_cerrar_sesion, id=id_cerrar_sesion)
         self.Bind(wx.EVT_MENU, lambda e: self.Close(), id=wx.ID_EXIT)
@@ -353,7 +355,9 @@ class VentanaPrincipal(wx.Frame):
         ):
             self.sincronizar_en_segundo_plano()
 
-    def sincronizar_en_segundo_plano(self) -> None:
+    def sincronizar_en_segundo_plano(self, manual: bool = False) -> None:
+        """`manual` si la ha pedido el usuario (F5, menu, bandeja): entonces se
+        confirma al terminar. Ver aviso_tras_sincronizar."""
         self._ultima_sincronizacion = time.monotonic()
 
         def trabajo() -> None:
@@ -363,15 +367,11 @@ class VentanaPrincipal(wx.Frame):
                 wx.CallAfter(self._decir_estado, f"No se pudo sincronizar: {error}")
                 return
             wx.CallAfter(self._cargar_desde_cache)
-            if rechazados:
+            aviso = aviso_tras_sincronizar(rechazados, manual)
+            if aviso:
                 # _cargar_desde_cache deja el numero de elementos en la barra, asi
                 # que esto va despues para que no lo pise.
-                wx.CallAfter(
-                    self._decir_estado,
-                    "1 cambio no se pudo subir al servidor"
-                    if rechazados == 1
-                    else f"{rechazados} cambios no se pudieron subir al servidor",
-                )
+                wx.CallAfter(self._decir_estado, aviso)
 
         threading.Thread(target=trabajo, daemon=True).start()
 

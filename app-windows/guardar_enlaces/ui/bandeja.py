@@ -35,7 +35,7 @@ class IconoBandeja(wx.adv.TaskBarIcon):
         self._ventana.Raise()
 
     def _al_sincronizar(self, evento: wx.CommandEvent) -> None:
-        self._ventana.sincronizar_en_segundo_plano()
+        self._ventana.sincronizar_en_segundo_plano(manual=True)
 
     def _al_salir(self, evento: wx.CommandEvent) -> None:
         self._ventana.Close(force=True)

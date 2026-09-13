@@ -25,6 +25,21 @@ def toca_sincronizar(
     return ahora_s - ultima_s >= intervalo_s
 
 
+def aviso_tras_sincronizar(rechazados: int, manual: bool) -> str:
+    """Lo que se dice al terminar sin error, o nada.
+
+    La que se pide (F5, menu, bandeja) confirma siempre: sin respuesta no se
+    distingue de que la tecla no haya hecho nada. La automatica, que salta al
+    volver a la ventana, calla si todo fue bien para no hablar a cada vuelta.
+    Los rechazos se dicen siempre.
+    """
+    if rechazados == 1:
+        return "1 cambio no se pudo subir al servidor"
+    if rechazados > 1:
+        return f"{rechazados} cambios no se pudieron subir al servidor"
+    return "Sincronizado" if manual else ""
+
+
 class Sincronizador:
     def __init__(self, almacen: AlmacenLocal, cliente: ClienteApi, sesion: Sesion):
         self._almacen = almacen

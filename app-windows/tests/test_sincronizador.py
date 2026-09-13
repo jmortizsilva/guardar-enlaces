@@ -5,7 +5,7 @@ import pytest
 
 from guardar_enlaces.almacen_local import AlmacenLocal
 from guardar_enlaces.modelo import nuevo_elemento_local
-from guardar_enlaces.sincronizador import Sincronizador, toca_sincronizar
+from guardar_enlaces.sincronizador import Sincronizador, aviso_tras_sincronizar, toca_sincronizar
 
 
 @pytest.fixture
@@ -116,3 +116,16 @@ class TestTocaSincronizar:
 
     def test_pasado_el_intervalo_vuelve_a_tocar(self):
         assert toca_sincronizar(1000.0, 1031.0, 30.0)
+
+
+class TestAvisoTrasSincronizar:
+    def test_la_pedida_confirma(self):
+        # F5 no decia nada: no se sabia si habia hecho algo.
+        assert aviso_tras_sincronizar(0, manual=True) == "Sincronizado"
+
+    def test_la_automatica_calla_si_todo_fue_bien(self):
+        assert aviso_tras_sincronizar(0, manual=False) == ""
+
+    def test_los_rechazos_se_dicen_siempre_y_concuerdan(self):
+        assert aviso_tras_sincronizar(1, manual=False) == "1 cambio no se pudo subir al servidor"
+        assert aviso_tras_sincronizar(3, manual=True) == "3 cambios no se pudieron subir al servidor"
