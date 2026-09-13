@@ -21,7 +21,7 @@ pytest                              # tests de la logica pura (modelo.py)
 ```
 
 Deja `dist\GuardarEnlaces\GuardarEnlaces.exe` con sus archivos al lado (unos
-60 MB). Es una carpeta y no un `.exe` suelto a propósito: el de fichero único
+48 MB; ver los `--exclude-module` del script, sin ellos pasa de 90). Es una carpeta y no un `.exe` suelto a propósito: el de fichero único
 se descomprime en temporales en cada arranque y es el formato que más falsos
 positivos provoca en Defender.
 

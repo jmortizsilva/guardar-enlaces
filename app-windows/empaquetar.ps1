@@ -61,6 +61,10 @@ Invoke-Paso "Empaquetando..." {
         --collect-all win32ctypes `
         --collect-all prism `
         --add-binary "$prismNativo\_prism_cffi.pyd;prism\_native" `
+        --exclude-module keyring.testing `
+        --exclude-module pytest `
+        --exclude-module numpy `
+        --exclude-module PIL `
         lanzar.py
 }
 
@@ -81,6 +85,11 @@ Invoke-Paso "Empaquetando..." {
 #   al arrancar, y PyInstaller no lo ve ("missing module named prism._prism_cffi"
 #   en build\GuardarEnlaces\warn-GuardarEnlaces.txt). Comprobado con prismatoid
 #   0.18.2: sin esta linea el ejecutable empaqueta sin errores y queda mudo.
+# --exclude-module: --collect-all keyring se trae tambien keyring.testing, que
+#   importa pytest; pytest importa numpy, y pygments (que viene con el) importa
+#   Pillow. La aplicacion no usa ninguno y eran unos 40 MB de los 92 del paquete.
+#   Se excluyen los cuatro por nombre: si otro paquete volviera a traer numpy o
+#   Pillow por su cuenta, tampoco entrarian.
 
 $destino = Join-Path $PSScriptRoot "dist\GuardarEnlaces\GuardarEnlaces.exe"
 if (-not (Test-Path $destino)) {
