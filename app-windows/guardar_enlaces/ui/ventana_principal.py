@@ -35,14 +35,16 @@ from ..modelo import (
     marcar_borrado,
 )
 from ..presentacion import texto_fila
+from ..seleccion import fila_tras_refrescar
 from ..sesion import Sesion
 from ..sincronizador import Sincronizador, toca_sincronizar
 from ..version import VERSION
 from .bandeja import IconoBandeja
+from .campos import con_etiqueta
 from .dialogo_anadir import DialogoAnadir
 from .dialogo_detalle import DialogoDetalle
 from .dialogo_login import DialogoLogin
-from .preguntas import preguntar_importacion
+from .preguntas import avisar, confirmar_eliminacion, preguntar_importacion
 
 _TODAS_LAS_ETIQUETAS = "(todas las etiquetas)"
 
@@ -65,6 +67,7 @@ class VentanaPrincipal(wx.Frame):
         self._sincronizador = Sincronizador(almacen, cliente, sesion)
         self._ultima_sincronizacion = 0.0
         self._elementos_mostrados: list[Elemento] = []
+        self._filas: list[tuple[str, str]] = []  # (id, texto) de lo que hay en la lista
 
         self._construir_menu()
         self._construir_controles()
@@ -88,7 +91,7 @@ class VentanaPrincipal(wx.Frame):
         barra = wx.MenuBar()
         menu_archivo = wx.Menu()
         menu_archivo.Append(id_anadir, "&Añadir enlace...\tCtrl+N")
-        menu_archivo.Append(id_sincronizar, "&Sincronizar ahora\tF5")
+        menu_archivo.Append(id_sincronizar, "Si&ncronizar ahora\tF5")
         menu_archivo.AppendSeparator()
         menu_archivo.Append(id_actualizar, "Buscar act&ualizaciones...")
         menu_archivo.Append(id_cerrar_sesion, "&Cerrar sesión...")
@@ -108,35 +111,36 @@ class VentanaPrincipal(wx.Frame):
 
         fila_filtros = wx.BoxSizer(wx.HORIZONTAL)
 
-        # El wx.StaticText de al lado es solo para quien ve la pantalla: desde wxPython 4.0.4,
-        # NVDA/Narrador NO infieren el nombre accesible de un control por estar al lado de una
-        # etiqueta ni por su texto de sugerencia (SetDescriptiveText/SetHint) -- hace falta
-        # SetName() explicito (o el kwarg name= del constructor), o el control se anuncia con un
-        # rotulo generico ("edicion"). Ver docs/ACCESIBILIDAD-WXPYTHON.md.
-        etiqueta_buscar = wx.StaticText(panel, label="&Buscar:")
-        fila_filtros.Add(etiqueta_buscar, 0, wx.ALIGN_CENTER_VERTICAL | wx.RIGHT, 4)
-        self.buscador = wx.SearchCtrl(panel)
-        self.buscador.SetName("Buscar por título, URL o etiqueta")
-        self.buscador.SetDescriptiveText("Título, URL o etiqueta")
-        self.buscador.ShowCancelButton(True)
+        # Cada etiqueta se crea justo antes de su control: es lo que le da el
+        # nombre accesible (ver ui/campos.py). Un TextCtrl y no un SearchCtrl: el
+        # SearchCtrl mete el campo dentro de otra ventana, el foco va a ese campo
+        # interior y la etiqueta ya no le queda delante.
+        etiqueta_buscar, self.buscador = con_etiqueta(panel, "&Buscar:", wx.TextCtrl)
+        self.buscador.SetHint("Título, URL o etiqueta")
         self.buscador.Bind(wx.EVT_TEXT, self._al_cambiar_filtro)
-        self.buscador.Bind(wx.EVT_SEARCHCTRL_CANCEL_BTN, self._al_cancelar_busqueda)
+        fila_filtros.Add(etiqueta_buscar, 0, wx.ALIGN_CENTER_VERTICAL | wx.RIGHT, 4)
         fila_filtros.Add(self.buscador, 1, wx.ALIGN_CENTER_VERTICAL | wx.RIGHT, 12)
 
-        etiqueta_filtro = wx.StaticText(panel, label="&Etiqueta:")
-        fila_filtros.Add(etiqueta_filtro, 0, wx.ALIGN_CENTER_VERTICAL | wx.RIGHT, 4)
-        self.selector_etiqueta = wx.Choice(panel, choices=[_TODAS_LAS_ETIQUETAS])
-        self.selector_etiqueta.SetName("Filtrar por etiqueta")
+        etiqueta_filtro, self.selector_etiqueta = con_etiqueta(
+            panel, "&Etiqueta:", lambda padre: wx.Choice(padre, choices=[_TODAS_LAS_ETIQUETAS])
+        )
         self.selector_etiqueta.SetSelection(0)
         self.selector_etiqueta.Bind(wx.EVT_CHOICE, self._al_cambiar_filtro)
+        fila_filtros.Add(etiqueta_filtro, 0, wx.ALIGN_CENTER_VERTICAL | wx.RIGHT, 4)
         fila_filtros.Add(self.selector_etiqueta, 0, wx.ALIGN_CENTER_VERTICAL)
 
         sizer.Add(fila_filtros, 0, wx.EXPAND | wx.ALL, 8)
 
-        self.lista = wx.ListCtrl(panel, style=wx.LC_REPORT | wx.LC_SINGLE_SEL)
+        # Sin cabecera: con una sola columna no dice nada que no diga la etiqueta.
+        etiqueta_lista, self.lista = con_etiqueta(
+            panel,
+            "En&laces:",
+            lambda padre: wx.ListCtrl(padre, style=wx.LC_REPORT | wx.LC_SINGLE_SEL | wx.LC_NO_HEADER),
+        )
         self.lista.InsertColumn(0, "Enlace guardado", width=720)
         self.lista.Bind(wx.EVT_LIST_ITEM_ACTIVATED, self._al_abrir_seleccionado)
         self.lista.Bind(wx.EVT_CONTEXT_MENU, self._al_menu_contextual)
+        sizer.Add(etiqueta_lista, 0, wx.LEFT | wx.RIGHT, 8)
         sizer.Add(self.lista, 1, wx.EXPAND | wx.ALL, 8)
 
         panel.SetSizer(sizer)
@@ -153,6 +157,12 @@ class VentanaPrincipal(wx.Frame):
         self.Bind(wx.EVT_MENU, self._al_eliminar_seleccionado, id=id_eliminar)
 
     # --- lista: cargar, filtrar, refrescar ---
+
+    def enfocar_lo_primero(self) -> None:
+        """El foco a la lista, que es a lo que se viene. Hay que llamarlo con la
+        ventana ya activa (main.py lo hace con wx.CallAfter): antes, Windows no
+        lo respeta y el foco cae en el buscador, el primer control."""
+        self.lista.SetFocus()
 
     def _cargar_desde_cache(self) -> None:
         cache = self._almacen.cargar_todos()
@@ -181,12 +191,36 @@ class VentanaPrincipal(wx.Frame):
 
     def _refrescar_lista(self, elementos: list[Elemento]) -> None:
         self._elementos_mostrados = elementos
-        self.lista.DeleteAllItems()
-        for indice, elemento in enumerate(elementos):
-            self.lista.InsertItem(indice, texto_fila(elemento))
         n = len(elementos)
         # el StatusBar de Win32 se anuncia solo al cambiar (no hace falta anuncio aparte)
         self.SetStatusText(f"{n} elemento{'s' if n != 1 else ''}")
+
+        filas = [(elemento.id, texto_fila(elemento)) for elemento in elementos]
+        if filas == self._filas:
+            # Esto se llama en cada sincronizacion, tambien mientras se esta
+            # leyendo la lista: rehacerla sin cambios movia al lector de sitio.
+            return
+        destino = fila_tras_refrescar(
+            [id_ for id_, _ in self._filas],
+            self.lista.GetFirstSelected(),
+            [id_ for id_, _ in filas],
+        )
+        self._filas = filas
+
+        self.lista.Freeze()
+        try:
+            self.lista.DeleteAllItems()
+            for indice, (_, texto) in enumerate(filas):
+                self.lista.InsertItem(indice, texto)
+        finally:
+            self.lista.Thaw()
+
+        if destino >= 0:
+            # Focus marca la fila activa, la que lee el lector al entrar en la
+            # lista. No es el foco del teclado: quien este escribiendo en el
+            # buscador sigue alli.
+            self.lista.Select(destino)
+            self.lista.Focus(destino)
 
     def _elemento_en(self, indice: int) -> Elemento | None:
         if 0 <= indice < len(self._elementos_mostrados):
@@ -194,10 +228,6 @@ class VentanaPrincipal(wx.Frame):
         return None
 
     def _al_cambiar_filtro(self, evento: wx.Event) -> None:
-        self._aplicar_filtros()
-
-    def _al_cancelar_busqueda(self, evento: wx.CommandEvent) -> None:
-        self.buscador.SetValue("")
         self._aplicar_filtros()
 
     # --- anadir / abrir / menu contextual / eliminar ---
@@ -243,7 +273,7 @@ class VentanaPrincipal(wx.Frame):
         menu = wx.Menu()
         item_abrir = menu.Append(wx.ID_ANY, "&Abrir en el navegador")
         item_copiar = menu.Append(wx.ID_ANY, "&Copiar URL")
-        item_editar = menu.Append(wx.ID_ANY, "&Editar etiquetas...")
+        item_editar = menu.Append(wx.ID_ANY, "Editar e&tiquetas...")
         menu.AppendSeparator()
         item_eliminar = menu.Append(wx.ID_ANY, "&Eliminar")
 
@@ -256,9 +286,12 @@ class VentanaPrincipal(wx.Frame):
         menu.Destroy()
 
     def _copiar_url(self, elemento: Elemento) -> None:
-        if wx.TheClipboard.Open():
-            wx.TheClipboard.SetData(wx.TextDataObject(elemento.url))
-            wx.TheClipboard.Close()
+        if not wx.TheClipboard.Open():
+            # Otro programa puede tenerlo abierto; decir "copiada" seria mentir.
+            self.SetStatusText("No se pudo copiar la URL")
+            return
+        wx.TheClipboard.SetData(wx.TextDataObject(elemento.url))
+        wx.TheClipboard.Close()
         self.SetStatusText(f"URL copiada: {elemento.url}")
 
     def _al_eliminar_seleccionado(self, evento: wx.CommandEvent) -> None:
@@ -267,10 +300,7 @@ class VentanaPrincipal(wx.Frame):
             self._confirmar_y_eliminar(elemento)
 
     def _confirmar_y_eliminar(self, elemento: Elemento) -> None:
-        titulo = elemento.titulo or elemento.url
-        if wx.MessageBox(
-            f"¿Eliminar «{titulo}»?", "Confirmar eliminación", wx.YES_NO | wx.ICON_QUESTION, self
-        ) == wx.YES:
+        if confirmar_eliminacion(elemento.titulo or elemento.url, self):
             self._al_elemento_eliminado(elemento)
 
     def _al_elemento_editado(self, elemento: Elemento) -> None:
@@ -330,11 +360,10 @@ class VentanaPrincipal(wx.Frame):
         decir que ya esta al dia: un menu que no responde parece roto."""
         if not actualizaciones.esta_empaquetada():
             if manual:
-                wx.MessageBox(
-                    "Esto se actualiza con git, no desde aqui: la aplicacion no "
-                    "esta corriendo como ejecutable.",
+                avisar(
+                    "Esto se actualiza con git, no desde aquí: la aplicación no "
+                    "está corriendo como ejecutable.",
                     "Buscar actualizaciones",
-                    wx.OK | wx.ICON_INFORMATION,
                     self,
                 )
             return
@@ -348,12 +377,7 @@ class VentanaPrincipal(wx.Frame):
     def _al_terminar_comprobacion(self, disponible, manual: bool) -> None:
         if disponible is None:
             if manual:
-                wx.MessageBox(
-                    f"Ya tienes la ultima version ({VERSION}).",
-                    "Buscar actualizaciones",
-                    wx.OK | wx.ICON_INFORMATION,
-                    self,
-                )
+                avisar(f"Ya tienes la última versión ({VERSION}).", "Buscar actualizaciones", self)
             return
 
         novedades = f" {disponible.novedades}" if disponible.novedades else ""
@@ -363,25 +387,27 @@ class VentanaPrincipal(wx.Frame):
             f"{VERSION}.{novedades} Si la instalas, la aplicación se cerrará y "
             "volverá a abrirse sola.",
             "Nueva versión disponible",
-            wx.YES_NO | wx.ICON_QUESTION,
+            # Aceptar y Cancelar y no Si y No: sin boton de cancelar, Escape no
+            # cierra el cuadro.
+            wx.OK | wx.CANCEL | wx.ICON_QUESTION,
         )
-        dialogo.SetYesNoLabels("&Instalar ahora", "Ahora no")
-        instalar = dialogo.ShowModal() == wx.ID_YES
+        dialogo.SetOKCancelLabels("&Instalar ahora", "Ahora no")
+        instalar = dialogo.ShowModal() == wx.ID_OK
         dialogo.Destroy()
         if instalar:
             self._instalar(disponible)
 
     def _instalar(self, disponible) -> None:
-        self.SetStatusText(f"Descargando la version {disponible.version}...")
+        self.SetStatusText(f"Descargando la versión {disponible.version}…")
 
         def trabajo() -> None:
             destino = Path(tempfile.gettempdir()) / f"GuardarEnlaces-{disponible.version}.zip"
             if not actualizaciones.descargar(disponible, destino):
-                wx.CallAfter(self._fallo_actualizando, "La descarga fallo o llego corrompida.")
+                wx.CallAfter(self._fallo_actualizando, "La descarga falló o llegó corrompida.")
                 return
             carpeta = actualizaciones.descomprimir(destino)
             if carpeta is None:
-                wx.CallAfter(self._fallo_actualizando, "El paquete descargado no es valido.")
+                wx.CallAfter(self._fallo_actualizando, "El paquete descargado no es válido.")
                 return
             wx.CallAfter(self._relevar, carpeta)
 
@@ -401,11 +427,11 @@ class VentanaPrincipal(wx.Frame):
         # No se toca nada de la instalacion hasta tener el paquete entero y
         # verificado, asi que un fallo aqui deja la aplicacion como estaba.
         self.SetStatusText("")
-        wx.MessageBox(
-            f"{mensaje} La aplicacion sigue funcionando; puedes intentarlo mas tarde.",
+        avisar(
+            f"{mensaje} La aplicación sigue funcionando; puedes intentarlo más tarde.",
             "No se pudo actualizar",
-            wx.OK | wx.ICON_WARNING,
             self,
+            grave=True,
         )
 
     # --- cuenta ---
@@ -424,10 +450,10 @@ class VentanaPrincipal(wx.Frame):
             "Tus enlaces se quedan en este equipo. Para volver a sincronizar "
             "tendrás que entrar de nuevo con Google.",
             "Cerrar sesión",
-            wx.YES_NO | wx.ICON_QUESTION,
+            wx.OK | wx.CANCEL | wx.ICON_QUESTION,
         )
-        confirmar.SetYesNoLabels("&Cerrar sesión", "Cancelar")
-        salir = confirmar.ShowModal() == wx.ID_YES
+        confirmar.SetOKCancelLabels("Cerrar &sesión", "&Cancelar")
+        salir = confirmar.ShowModal() == wx.ID_OK
         confirmar.Destroy()
         if not salir:
             return

@@ -61,6 +61,10 @@ class AplicacionGuardarEnlaces(wx.App):
 
         ventana = VentanaPrincipal(almacen, cliente, sesion)
         ventana.Show()
+        ventana.Raise()
+        # Con CallAfter: justo despues de Show() la ventana aun no esta activa, y
+        # al activarse el foco iba al primer control, el buscador.
+        wx.CallAfter(ventana.enfocar_lo_primero)
         self.SetTopWindow(ventana)
         return True
 

@@ -1,5 +1,5 @@
 from guardar_enlaces.modelo import nuevo_elemento_local
-from guardar_enlaces.presentacion import texto_fila
+from guardar_enlaces.presentacion import texto_detalle, texto_fila
 
 
 def test_incluye_titulo_dominio_etiquetas_y_fecha():
@@ -21,3 +21,9 @@ def test_sin_titulo_usa_la_url():
 def test_sin_etiquetas_no_deja_un_separador_vacio():
     e = nuevo_elemento_local("https://a.com", titulo="A", ahora=lambda: 1_700_000_000_000)
     assert " —  — " not in texto_fila(e)
+
+
+def test_detalle_una_linea_por_dato_y_sin_lineas_vacias():
+    completo = nuevo_elemento_local("https://a.com", titulo="A", descripcion="Una descripcion")
+    assert texto_detalle(completo) == "A\nhttps://a.com\nUna descripcion"
+    assert texto_detalle(nuevo_elemento_local("https://a.com")) == "https://a.com"

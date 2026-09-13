@@ -96,7 +96,7 @@ crea la cuenta.
 
 ## Accesibilidad
 
-Ver `docs/ACCESIBILIDAD-WXPYTHON.md` — hallazgos probados con NVDA real
-(sin equivalente en `comun/`, que es solo para iOS/RN). Antes de añadir un
-control nuevo, échale un vistazo: ahí está, por ejemplo, por qué el texto
-de sugerencia de un campo de búsqueda no basta como su nombre accesible.
+Ver `docs/ACCESIBILIDAD-WXPYTHON.md` (sin equivalente en `comun/`, que es
+solo para iOS/RN). Antes de añadir un control nuevo, échale un vistazo: ahí
+está, por ejemplo, por qué cada campo necesita su texto estático creado justo
+antes que él, y por qué `SetName()` no le da nombre.

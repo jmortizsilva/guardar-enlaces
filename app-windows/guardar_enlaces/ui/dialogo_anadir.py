@@ -17,6 +17,7 @@ from ..api_cliente import ClienteApi, ErrorApi
 from ..duplicados import buscar_duplicado
 from ..modelo import Elemento, nuevo_elemento_local
 from ..sesion import Sesion
+from .campos import ESTILO_SOLO_LECTURA, con_etiqueta, mostrar_con_etiqueta
 
 
 class DialogoAnadir(wx.Dialog):
@@ -34,34 +35,40 @@ class DialogoAnadir(wx.Dialog):
         self._metadatos: dict | None = None
         self.elemento_creado: Elemento | None = None
 
-        panel = wx.Panel(self)
+        self._panel = wx.Panel(self)
         sizer = wx.BoxSizer(wx.VERTICAL)
 
-        etiqueta_url = wx.StaticText(panel, label="&URL:")
-        sizer.Add(etiqueta_url, 0, wx.LEFT | wx.RIGHT | wx.TOP, 12)
-        self.campo_url = wx.TextCtrl(panel)
-        self.campo_url.SetName("URL del enlace a añadir")  # ver docs/ACCESIBILIDAD-WXPYTHON.md
+        etiqueta_url, self.campo_url = con_etiqueta(self._panel, "&URL:", wx.TextCtrl)
         self.campo_url.SetHint("https://...")
+        sizer.Add(etiqueta_url, 0, wx.LEFT | wx.RIGHT | wx.TOP, 12)
         sizer.Add(self.campo_url, 0, wx.EXPAND | wx.ALL, 12)
 
-        self.boton_comprobar = wx.Button(panel, label="&Comprobar")
+        self.boton_comprobar = wx.Button(self._panel, label="Com&probar")
         sizer.Add(self.boton_comprobar, 0, wx.LEFT | wx.RIGHT | wx.BOTTOM, 12)
 
-        self.etiqueta_vista_previa = wx.StaticText(panel, label="")
-        sizer.Add(self.etiqueta_vista_previa, 0, wx.EXPAND | wx.ALL, 12)
+        # Cuadro de solo lectura y no StaticText, para poder leerla con las
+        # flechas. Oculto mientras no haya nada que mostrar.
+        etiqueta_vista_previa, self.vista_previa = con_etiqueta(
+            self._panel,
+            "&Vista previa:",
+            lambda padre: wx.TextCtrl(padre, style=ESTILO_SOLO_LECTURA, size=(420, 80)),
+        )
+        sizer.Add(etiqueta_vista_previa, 0, wx.LEFT | wx.RIGHT | wx.TOP, 12)
+        sizer.Add(self.vista_previa, 0, wx.EXPAND | wx.ALL, 12)
+        mostrar_con_etiqueta(self.vista_previa, False)
 
         botones = wx.StdDialogButtonSizer()
-        self.boton_guardar = wx.Button(panel, wx.ID_OK, "&Guardar")
+        self.boton_guardar = wx.Button(self._panel, wx.ID_OK, "&Guardar")
         self.boton_guardar.Disable()  # hasta que haya una vista previa comprobada
-        boton_cancelar = wx.Button(panel, wx.ID_CANCEL, "Cancelar")
+        boton_cancelar = wx.Button(self._panel, wx.ID_CANCEL, "&Cancelar")
         botones.AddButton(self.boton_guardar)
         botones.AddButton(boton_cancelar)
         botones.Realize()
         sizer.Add(botones, 0, wx.ALIGN_RIGHT | wx.ALL, 12)
 
-        panel.SetSizer(sizer)
+        self._panel.SetSizer(sizer)
         marco = wx.BoxSizer(wx.VERTICAL)
-        marco.Add(panel, 1, wx.EXPAND)
+        marco.Add(self._panel, 1, wx.EXPAND)
         self.SetSizerAndFit(marco)
 
         self.boton_comprobar.Bind(wx.EVT_BUTTON, self._al_comprobar)
@@ -69,20 +76,30 @@ class DialogoAnadir(wx.Dialog):
         self.campo_url.Bind(wx.EVT_TEXT, self._al_cambiar_url)
         self.campo_url.SetFocus()
 
+    def _mostrar_vista_previa(self, texto: str) -> None:
+        if not texto and not self.vista_previa.IsShown():
+            return  # cada tecla en la URL pasa por aqui
+        self.vista_previa.SetValue(texto)
+        mostrar_con_etiqueta(self.vista_previa, bool(texto))
+        self._panel.Layout()
+        self.Fit()
+
     def _al_cambiar_url(self, evento: wx.CommandEvent) -> None:
         # cambiar la URL invalida la vista previa ya comprobada: hay que volver a comprobar
         self._metadatos = None
         self.boton_guardar.Disable()
-        self.etiqueta_vista_previa.SetLabel("")
+        self._mostrar_vista_previa("")
 
     def _al_comprobar(self, evento: wx.CommandEvent) -> None:
         url = self.campo_url.GetValue().strip()
         if not url.startswith(("http://", "https://")):
-            self.etiqueta_vista_previa.SetLabel("Escribe una URL que empiece por http:// o https://")
+            self._mostrar_vista_previa("Escribe una URL que empiece por http:// o https://")
+            # Con el foco en el boton, el aviso aparecia y no lo oia nadie.
+            self.vista_previa.SetFocus()
             return
 
         self.boton_comprobar.Disable()
-        self.etiqueta_vista_previa.SetLabel("Comprobando…")
+        self._mostrar_vista_previa("Comprobando…")
 
         def trabajo() -> None:
             try:
@@ -98,7 +115,8 @@ class DialogoAnadir(wx.Dialog):
 
     def _al_fallar_comprobacion(self, mensaje: str) -> None:
         self.boton_comprobar.Enable()
-        self.etiqueta_vista_previa.SetLabel(f"No se pudo comprobar: {mensaje}")
+        self._mostrar_vista_previa(f"No se pudo comprobar: {mensaje}")
+        self.vista_previa.SetFocus()
 
     def _al_completar_comprobacion(self, url: str, metadatos: dict) -> None:
         self.boton_comprobar.Enable()
@@ -107,16 +125,15 @@ class DialogoAnadir(wx.Dialog):
 
         duplicado = buscar_duplicado(self._guardados, url)
         if duplicado:
-            self.etiqueta_vista_previa.SetLabel(
-                f"{titulo}\n\nYa tienes este enlace guardado: "
+            self._mostrar_vista_previa(
+                f"{titulo}\nYa tienes este enlace guardado: "
                 f"{duplicado.titulo or duplicado.url}"
             )
             self.boton_guardar.SetLabel("Guardar de todas &formas")
         else:
-            self.etiqueta_vista_previa.SetLabel(titulo)
+            self._mostrar_vista_previa(titulo)
             self.boton_guardar.SetLabel("&Guardar")
 
-        self.etiqueta_vista_previa.GetParent().Layout()
         self.boton_guardar.Enable()
         self.boton_guardar.SetFocus()
 

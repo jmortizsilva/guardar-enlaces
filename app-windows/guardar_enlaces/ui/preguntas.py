@@ -33,3 +33,36 @@ def preguntar_importacion(enlaces: EnlacesEnElEquipo, padre: wx.Window | None = 
     respuesta = dialogo.ShowModal()
     dialogo.Destroy()
     return respuesta == wx.ID_YES
+
+
+def avisar(texto: str, titulo: str, padre: wx.Window | None = None, grave: bool = False) -> None:
+    """Un aviso con un solo botón, que dice Aceptar y no OK.
+
+    `wx.MessageBox` no deja cambiar el texto de sus botones y sale en inglés; hay
+    una prueba que impide usarlo.
+    """
+    dialogo = wx.MessageDialog(
+        padre, texto, titulo, wx.OK | (wx.ICON_WARNING if grave else wx.ICON_INFORMATION)
+    )
+    dialogo.SetOKLabel("&Aceptar")
+    dialogo.ShowModal()
+    dialogo.Destroy()
+
+
+def confirmar_eliminacion(titulo: str, padre: wx.Window | None = None) -> bool:
+    """La pregunta antes de eliminar un enlace, desde la lista o desde su detalle.
+
+    Aceptar y Cancelar y no Sí y No: un cuadro de Sí y No no tiene botón de
+    cancelar, y sin él Escape no lo cierra. Cancelar es el botón de partida
+    porque eliminar no se puede deshacer y un Enter de más no debería bastar.
+    """
+    dialogo = wx.MessageDialog(
+        padre,
+        f"¿Eliminar «{titulo}»? Esta acción no se puede deshacer.",
+        "Confirmar eliminación",
+        wx.OK | wx.CANCEL | wx.CANCEL_DEFAULT | wx.ICON_QUESTION,
+    )
+    dialogo.SetOKCancelLabels("&Eliminar", "&Cancelar")
+    respuesta = dialogo.ShowModal()
+    dialogo.Destroy()
+    return respuesta == wx.ID_OK

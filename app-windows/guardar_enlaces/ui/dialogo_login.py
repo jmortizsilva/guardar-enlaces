@@ -21,6 +21,14 @@ import wx
 from .. import login_oauth
 from ..api_cliente import ClienteApi, ErrorApi
 from ..sesion import Sesion
+from .campos import ESTILO_SOLO_LECTURA, con_etiqueta, mostrar_con_etiqueta
+
+AVISO = (
+    "Para sincronizar tus enlaces con el iPhone necesitas entrar con tu cuenta "
+    "de Google.\n"
+    "Al pulsar Entrar se abre el navegador. Termina ahí y vuelve a esta "
+    "ventana: se cerrará sola cuando hayas entrado."
+)
 
 
 class DialogoLogin(wx.Dialog):
@@ -31,48 +39,55 @@ class DialogoLogin(wx.Dialog):
         self._cancelar = threading.Event()
         self._cerrado = False
 
-        panel = wx.Panel(self)
+        self._panel = wx.Panel(self)
         sizer = wx.BoxSizer(wx.VERTICAL)
 
-        aviso = wx.StaticText(
-            panel,
-            label="Para sincronizar tus enlaces con el iPhone necesitas entrar\n"
-            "con tu cuenta de Google.\n\n"
-            "Al pulsar Entrar se abre el navegador. Termina ahí y vuelve a esta\n"
-            "ventana: se cerrará sola cuando hayas entrado.",
+        # Cuadros de solo lectura y no StaticText: a un StaticText no llega el
+        # tabulador ni se puede recorrer con las flechas.
+        etiqueta_aviso, self.aviso = con_etiqueta(
+            self._panel,
+            "&Qué hay que hacer:",
+            lambda padre: wx.TextCtrl(
+                padre, value=AVISO, style=ESTILO_SOLO_LECTURA, size=(420, 80)
+            ),
         )
-        sizer.Add(aviso, 0, wx.ALL, 12)
+        sizer.Add(etiqueta_aviso, 0, wx.LEFT | wx.RIGHT | wx.TOP, 12)
+        sizer.Add(self.aviso, 0, wx.EXPAND | wx.ALL, 12)
 
-        # Cuadro de texto y no StaticText a proposito: puede recibir el foco, y
-        # asi NVDA lee el mensaje al volver a la aplicacion desde el navegador.
-        # PENDIENTE de confirmar con NVDA real antes de llevarlo a la guia.
-        self.estado = wx.TextCtrl(
-            panel,
-            value="",
-            style=wx.TE_READONLY | wx.TE_MULTILINE | wx.TE_NO_VSCROLL,
-            size=(420, 60),
+        # Oculto hasta que haya algo que contar: vacio era una parada del
+        # tabulador en la que las flechas no leian nada.
+        etiqueta_estado, self.estado = con_etiqueta(
+            self._panel,
+            "E&stado:",
+            lambda padre: wx.TextCtrl(padre, style=ESTILO_SOLO_LECTURA, size=(420, 60)),
         )
-        self.estado.SetName("Estado del inicio de sesión")
+        sizer.Add(etiqueta_estado, 0, wx.LEFT | wx.RIGHT | wx.TOP, 12)
         sizer.Add(self.estado, 0, wx.EXPAND | wx.ALL, 12)
+        mostrar_con_etiqueta(self.estado, False)
 
         botones = wx.StdDialogButtonSizer()
-        self.boton_entrar = wx.Button(panel, wx.ID_OK, "&Entrar con Google")
-        boton_cancelar = wx.Button(panel, wx.ID_CANCEL, "Cancelar")
+        self.boton_entrar = wx.Button(self._panel, wx.ID_OK, "&Entrar con Google")
+        boton_cancelar = wx.Button(self._panel, wx.ID_CANCEL, "&Cancelar")
         self.boton_entrar.SetDefault()
         botones.AddButton(self.boton_entrar)
         botones.AddButton(boton_cancelar)
         botones.Realize()
         sizer.Add(botones, 0, wx.ALIGN_RIGHT | wx.ALL, 12)
 
-        panel.SetSizer(sizer)
+        self._panel.SetSizer(sizer)
         marco = wx.BoxSizer(wx.VERTICAL)
-        marco.Add(panel, 1, wx.EXPAND)
+        marco.Add(self._panel, 1, wx.EXPAND)
         self.SetSizerAndFit(marco)
 
         self.boton_entrar.Bind(wx.EVT_BUTTON, self._al_entrar)
         boton_cancelar.Bind(wx.EVT_BUTTON, self._al_cancelar)
         self.Bind(wx.EVT_CLOSE, self._al_cancelar)
-        self.boton_entrar.SetFocus()
+
+    def ShowModal(self) -> int:
+        # El foco se pone con el cuadro ya a la vista. Puesto en el constructor,
+        # Windows no lo respeta y el foco cae en el primer control.
+        wx.CallAfter(self.boton_entrar.SetFocus)
+        return super().ShowModal()
 
     # --- hilo de la interfaz ---
 
@@ -134,4 +149,7 @@ class DialogoLogin(wx.Dialog):
 
     def _decir(self, mensaje: str) -> None:
         self.estado.SetValue(mensaje)
+        mostrar_con_etiqueta(self.estado, True)
+        self._panel.Layout()
+        self.Fit()
         self.estado.SetFocus()

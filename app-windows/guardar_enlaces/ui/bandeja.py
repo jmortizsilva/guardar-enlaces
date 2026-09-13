@@ -22,7 +22,7 @@ class IconoBandeja(wx.adv.TaskBarIcon):
     def CreatePopupMenu(self) -> wx.Menu:
         menu = wx.Menu()
         item_abrir = menu.Append(wx.ID_ANY, "&Abrir")
-        item_sincronizar = menu.Append(wx.ID_ANY, "&Sincronizar ahora")
+        item_sincronizar = menu.Append(wx.ID_ANY, "Si&ncronizar ahora")
         menu.AppendSeparator()
         item_salir = menu.Append(wx.ID_ANY, "&Salir")
         self.Bind(wx.EVT_MENU, self._al_abrir, item_abrir)

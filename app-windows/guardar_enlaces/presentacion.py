@@ -24,6 +24,11 @@ def texto_fila(elemento: Elemento) -> str:
     return " — ".join(partes)
 
 
+def texto_detalle(elemento: Elemento) -> str:
+    """Titulo, URL y descripcion, uno por linea, para recorrerlos con las flechas."""
+    return "\n".join(parte for parte in (elemento.titulo, elemento.url, elemento.descripcion) if parte)
+
+
 def _fecha_legible(timestamp_ms: int) -> str:
     if not timestamp_ms:
         return "sin fecha"
