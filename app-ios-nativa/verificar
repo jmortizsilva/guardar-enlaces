@@ -1,0 +1,31 @@
+#!/bin/bash
+# Tipos + formato + pruebas, igual que `npm run verificar` en app-ios/ o
+# `pytest` en app-windows/. Si esto no pasa, no está terminado.
+#
+# El simulador se fija por nombre Y versión a propósito: hay un "iPhone 16
+# Pro" por cada runtime instalado, y sin la versión xcodebuild no sabe cuál
+# es y falla listando los cuarenta destinos que no valen.
+set -euo pipefail
+
+cd "$(dirname "$0")"
+
+SIMULADOR="${SIMULADOR:-platform=iOS Simulator,name=iPhone 17,OS=27.0}"
+
+echo "== Dominio: pruebas =="
+(cd Dominio && swift test)
+
+echo
+echo "== Formato =="
+xcrun swift-format lint --strict --recursive Dominio/Fuentes Dominio/Pruebas Guardalo
+
+echo
+echo "== App: compila para el simulador =="
+xcodebuild -project Guardalo.xcodeproj \
+    -scheme Guardalo \
+    -destination "$SIMULADOR" \
+    -derivedDataPath .build-xcode \
+    -quiet \
+    build
+
+echo
+echo "Todo en verde."
