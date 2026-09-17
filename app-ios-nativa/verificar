@@ -2,6 +2,11 @@
 # Tipos + formato + pruebas, igual que `npm run verificar` en app-ios/ o
 # `pytest` en app-windows/. Si esto no pasa, no está terminado.
 #
+# Los avisos del compilador cuentan como error aquí, y solo aquí (no en el
+# proyecto de Xcode, para no estorbar mientras se escribe). Sin esto,
+# xcodebuild -quiet imprime el aviso, devuelve cero, y el script acaba
+# diciendo "Todo en verde" con un aviso a la vista.
+#
 # El simulador se fija por nombre Y versión a propósito: hay un "iPhone 16
 # Pro" por cada runtime instalado, y sin la versión xcodebuild no sabe cuál
 # es y falla listando los cuarenta destinos que no valen.
@@ -12,7 +17,7 @@ cd "$(dirname "$0")"
 SIMULADOR="${SIMULADOR:-platform=iOS Simulator,name=iPhone 17,OS=27.0}"
 
 echo "== Dominio: pruebas =="
-(cd Dominio && swift test)
+(cd Dominio && swift test -Xswiftc -warnings-as-errors)
 
 echo
 echo "== Formato =="
@@ -25,6 +30,7 @@ xcodebuild -project Guardalo.xcodeproj \
     -destination "$SIMULADOR" \
     -derivedDataPath .build-xcode \
     -quiet \
+    SWIFT_TREAT_WARNINGS_AS_ERRORS=YES \
     build
 
 echo

@@ -1,6 +1,6 @@
 # Pasar la app de iPhone a nativo
 
-Estado: fase 0 terminada (2026-09-17).
+Estado: fases 0 y 1 terminadas (2026-09-17).
 
 ## Por qué
 
@@ -66,10 +66,17 @@ dejaba preparada.
 ## Fases
 
 - [x] **0. Andamiaje.** Rama, paquete `Dominio`, proyecto Xcode, `verificar`.
-- [ ] **1. Dominio en Swift.** Elemento, duplicados, presentación,
-      sincronización, asentar cuenta, extracción de metadatos, y el modelo de
-      etiquetas reservadas. Las 80 pruebas de hoy, portadas, más las que
-      falten. Se verifica entero con `swift test`, sin simulador.
+- [x] **1. Dominio en Swift.** Elemento, duplicados, presentación,
+      sincronización, asentar cuenta, extracción de metadatos y el modelo de
+      etiquetas reservadas, con 73 pruebas que corren en el Mac en seis
+      milisegundos. Tres cosas cambiaron respecto al original, y no por
+      gusto: `asentarCuenta` es ahora una función pura que dice qué hay que
+      hacer, en vez de recibir el almacén y una promesa (se prueba sin
+      simulacros); la lista desempata por identificador cuando dos enlaces
+      comparten fecha, porque un diccionario de Swift no promete orden y la
+      lista se recolocaría sola entre dos aperturas; y la dirección del
+      oEmbed de YouTube se escapa a mano, porque `URLComponents` deja pasar
+      los dos puntos y las barras.
 - [ ] **2. Fontanería.** Almacén SQLite, cliente HTTP, sesión con Keychain y
       rotación de token, sincronizador. Decidir aquí si la app nueva adopta la
       base de datos que ya hay en el teléfono o empieza limpia.
