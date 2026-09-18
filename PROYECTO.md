@@ -110,18 +110,26 @@ Además de correr el backend en local, hay una instancia compartida en
 mismo `Dockerfile` de este repo) para que los tres probéis contra los mismos
 datos. El alta es abierta: entrar con Google o Apple crea la cuenta sola.
 
-**Riesgo abierto, ahora mayor que antes:** ese backend corre con
-`PERMITIR_LOGIN_DEV=true` y las credenciales de Google/Apple todavía en
-placeholder (`x`), porque no hay OAuth real configurado aún — comprobado el
-2026-09-09: `/auth/iniciar` redirige a Google con `client_id=x`, así que el
-login real **no puede funcionar todavía** contra este servidor.
+**Estado comprobado el 2026-09-18**, contra el servidor:
 
-Eso deja activa `POST /auth/dev-login`, que da sesión con solo escribir un
-correo, sin contraseña. Antes eso lo acotaba la lista de invitados; desde que
-el alta es abierta, **cualquiera que dé con la URL puede crearse una cuenta
-con el correo que quiera** y usar el servidor. **Hay que desplegar con
-`PERMITIR_LOGIN_DEV=false` en cuanto haya credenciales reales de Google**, y
-quitar esta nota.
+- **Google funciona.** `/auth/iniciar?proveedor=google` redirige con un
+  `client_id` real y `redirect_uri=https://api.jmortiz.es/auth/callback/google`.
+  Se puede probar el inicio de sesión de verdad contra este servidor.
+- **`POST /auth/dev-login` responde 404**, así que está desplegado con
+  `PERMITIR_LOGIN_DEV=false`. Hasta el 2026-09-09 no era así, y este documento
+  avisaba de que cualquiera que diera con la URL podía crearse una cuenta con
+  el correo que quisiera. Ya no: esa puerta está cerrada.
+- **Apple sigue sin configurar.** `/auth/iniciar?proveedor=apple` redirige con
+  `client_id=x`, así que ese inicio de sesión no puede funcionar. Hace falta
+  antes de publicar en la App Store: Apple exige ofrecer su inicio de sesión a
+  quien ofrezca el de Google.
+
+Si vuelve a hacer falta comprobarlo, se ve sin tocar nada ni crear cuentas:
+
+```
+curl -sSI "https://api.jmortiz.es/auth/iniciar?proveedor=google&modo=deeplink&estado=x&esquema=guardarenlaces"
+curl -sS -o /dev/null -w "%{http_code}" -X POST -H "Content-Type: application/json" -d "{}" https://api.jmortiz.es/auth/dev-login
+```
 
 ## Verificar antes de dar nada por hecho
 
