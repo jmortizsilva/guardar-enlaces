@@ -27,7 +27,7 @@ echo "== Formato =="
 xcrun swift-format lint --strict --recursive \
     Dominio/Fuentes Dominio/Pruebas \
     Fontaneria/Fuentes Fontaneria/Pruebas \
-    Guardalo
+    Guardalo PruebasInterfaz
 
 echo
 echo "== App: compila para el simulador =="
@@ -38,6 +38,22 @@ xcodebuild -project Guardalo.xcodeproj \
     -quiet \
     SWIFT_TREAT_WARNINGS_AS_ERRORS=YES \
     build
+
+echo
+echo "== App: pruebas de interfaz =="
+# Aparte de las demás porque tardan un minuto largo: cada una arranca la app
+# en el simulador. Leen el árbol de accesibilidad de verdad, que es lo mismo
+# que lee VoiceOver.
+xcodebuild test -project Guardalo.xcodeproj \
+    -scheme Guardalo \
+    -destination "$SIMULADOR" \
+    -derivedDataPath .build-xcode \
+    -quiet \
+    SWIFT_TREAT_WARNINGS_AS_ERRORS=YES 2>&1 |
+    # xcodebuild escupe líneas suyas sobre el depurador y los tiempos que no
+    # dicen nada de si las pruebas pasan. Con pipefail, si xcodebuild falla el
+    # script falla igual, aunque el filtro se quede sin líneas que enseñar.
+    { grep -vE "IDELaunchParametersSnapshot|IDETestOperationsObserverDebug|^$" || true; }
 
 echo
 echo "Todo en verde."

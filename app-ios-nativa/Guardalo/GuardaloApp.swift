@@ -31,9 +31,19 @@ struct GuardaloApp: App {
         }
     }
 
+    /// Las pruebas de interfaz arrancan la app con una base de datos en
+    /// memoria y enlaces de fecha fija, para que no dependan de lo que
+    /// hubiera guardado en el simulador ni del día que se ejecuten.
+    private static var enPruebasDeInterfaz: Bool {
+        ProcessInfo.processInfo.arguments.contains("-pruebas-de-interfaz")
+    }
+
     private func arrancar() {
         do {
-            modelo = try ModeloApp()
+            modelo =
+                Self.enPruebasDeInterfaz
+                ? try ModeloApp(enMemoriaCon: EnlacesDeEjemplo.todos)
+                : try ModeloApp()
         } catch {
             // Si la base de datos no abre no hay nada que hacer, pero sí hay
             // que decirlo: una pantalla en blanco no cuenta qué ha pasado.

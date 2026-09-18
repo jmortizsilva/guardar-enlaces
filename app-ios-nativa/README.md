@@ -12,9 +12,13 @@ la fuente de la verdad.
 
 ```
 ./verificar                 # tipos + formato + pruebas. Si esto no pasa, no está terminado
-cd Dominio && swift test    # solo la lógica pura: segundos, sin simulador
+cd Dominio && swift test    # solo la lógica pura: milisegundos, sin simulador
 open Guardalo.xcodeproj     # para trabajar en la interfaz
 ```
+
+`verificar` tarda algo más de un minuto, casi todo en las pruebas de interfaz:
+cada una arranca la app en el simulador. Mientras se escribe código, `swift
+test` en `Dominio/` o en `Fontaneria/` responde en milisegundos.
 
 Requiere Xcode 27 y el runtime de simulador de iOS 27 (`xcodebuild
 -downloadPlatform iOS`). El objetivo de despliegue es iOS 18.
@@ -31,7 +35,13 @@ SIMULADOR='platform=iOS Simulator,name=iPhone 18 Pro,OS=27.0' ./verificar
   base de datos. Todo lo que decide algo vive aquí y se prueba en el propio
   Mac, sin simulador. Es la separación de la que habla la regla 8 del
   proyecto, y es lo que hace que las pruebas tarden milisegundos.
-- `Guardalo/` — la app: interfaz, almacén SQLite, cliente HTTP y sesión.
+- `Fontaneria/` — paquete con lo que habla con el mundo: SQLite, HTTP y
+  llavero. Depende de `Dominio`, nunca al revés.
+- `Guardalo/` — la app: pantallas y cableado.
+- `PruebasInterfaz/` — pruebas contra el árbol de accesibilidad de verdad, el
+  mismo que lee VoiceOver. No pueden cubrirlo todo: las acciones del rotor no
+  se pueden enumerar desde una prueba, así que ésas siguen siendo comprobación
+  de oído.
 
 ## Lo que todavía no está
 

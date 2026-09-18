@@ -88,6 +88,13 @@ dejaba preparada.
 - [ ] **3. Interfaz.** Lista, detalle, añadir, gestión de etiquetas, ajustes,
       login. Los textos de cada pantalla se escriben y se revisan juntos,
       antes de la pantalla.
+      - [x] Lista de enlaces, con búsqueda, filtro, acciones y eliminación.
+      - [x] Elegir etiquetas de un enlace.
+      - [x] Pruebas de interfaz contra el árbol de accesibilidad (7).
+      - [ ] Añadir enlace.
+      - [ ] Ajustes y login.
+      - [ ] Detalle de un enlace.
+      - [ ] Gestionar etiquetas (renombrar y eliminar en todos los enlaces).
 - [ ] **4. Extensión de compartir** y guardado silencioso, compartiendo código
       con la app. Mueren el plugin de 94 líneas y las 315 de Swift con
       marcadores de posición.
