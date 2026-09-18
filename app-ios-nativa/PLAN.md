@@ -120,6 +120,11 @@ dejaba preparada.
 
 ## Cabos sueltos
 
+- **El nombre visible también es temporal.** En la pantalla de inicio pone
+  «Guárdalo nativo», para no tener dos iconos llamados igual mientras se
+  comparan las dos apps. Dentro, el título de la pantalla sigue siendo
+  «Guárdalo», que es el nombre de verdad y lo que dicen sus pruebas. En la
+  fase 5 vuelve a ser «Guárdalo» a secas.
 - **El identificador es temporal.** `com.jmortizsilva.guardarenlaces.nativa`,
   para poder tener las dos apps instaladas a la vez en el mismo iPhone y
   compararlas. En la fase 5 pasa a ser el de siempre,
