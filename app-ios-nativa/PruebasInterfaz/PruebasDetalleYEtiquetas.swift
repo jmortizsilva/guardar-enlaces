@@ -16,7 +16,7 @@ final class PruebasDetalle: XCTestCase {
             .firstMatch
         XCTAssertTrue(fila.waitForExistence(timeout: 5))
         fila.press(forDuration: 1.2)
-        app.buttons["Ver detalles"].tap()
+        app.buttons["Ver detalles"].firstMatch.tap()
     }
 
     func testElDetalleEnseniaCadaCosaPorSeparado() {
@@ -87,7 +87,7 @@ final class PruebasGestionEtiquetas: XCTestCase {
     }
 
     func testAntesDeEliminarDiceACuantosEnlacesAfecta() {
-        app.staticTexts["pendiente, 2 enlaces"].swipeLeft()
+        app.staticTexts["pendiente, 2 enlaces"].press(forDuration: 1.2)
         app.buttons["Eliminar"].firstMatch.tap()
 
         XCTAssertTrue(

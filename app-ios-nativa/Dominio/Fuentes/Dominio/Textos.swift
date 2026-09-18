@@ -263,3 +263,12 @@ extension Textos {
         "Etiqueta «\(nombre)» añadida"
     }
 }
+
+extension Textos {
+    /// Se dice al abrir «Añadir enlace» cuando hay una dirección copiada.
+    ///
+    /// El botón de pegar solo aparece si hay algo que pegar, y un botón que
+    /// aparece y desaparece no lo encuentra quien no mira la pantalla: hay
+    /// que contarlo, o es como si no estuviera.
+    public static let hayEnlaceCopiado = "Hay un enlace copiado, puedes pegarlo"
+}

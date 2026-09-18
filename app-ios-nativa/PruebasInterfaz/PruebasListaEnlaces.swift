@@ -91,7 +91,7 @@ final class PruebasListaEnlaces: XCTestCase {
         let fila = fila(queEmpiezaPor: "Guía de Swift Testing")
         XCTAssertTrue(fila.waitForExistence(timeout: 5))
 
-        fila.swipeLeft()
+        fila.press(forDuration: 1.2)
         app.buttons["Eliminar"].firstMatch.tap()
 
         // El diálogo dice qué se elimina y qué va a pasar con ello.
@@ -108,27 +108,10 @@ final class PruebasListaEnlaces: XCTestCase {
         XCTAssertFalse(fila.waitForExistence(timeout: 3))
     }
 
-    func testDeslizarHaciaLaDerechaAbreElDetalle() {
-        let fila = fila(queEmpiezaPor: "Guía de Swift Testing")
-        XCTAssertTrue(fila.waitForExistence(timeout: 5))
-
-        fila.swipeRight()
-        app.buttons["Ver detalles"].firstMatch.tap()
-
-        XCTAssertTrue(app.navigationBars["Guía de Swift Testing"].waitForExistence(timeout: 3))
-    }
-
-    func testDeslizarHaciaLaIzquierdaOfreceEliminar() {
-        // A la izquierda es donde todo iPhone pone Eliminar, y ahí se queda.
-        let fila = fila(queEmpiezaPor: "Guía de Swift Testing")
-        XCTAssertTrue(fila.waitForExistence(timeout: 5))
-
-        fila.swipeLeft()
-
-        XCTAssertTrue(app.buttons["Eliminar"].firstMatch.waitForExistence(timeout: 3))
-    }
-
-    func testLaPulsacionLargaTieneTodasLasAccionesParaQuienNoUsaElRotor() {
+    func testLaPulsacionLargaOfreceLasCuatroAcciones() {
+        // Sin gestos de deslizar: lo que se pone en uno se ofrece dos veces en
+        // el rotor (ver docs/ACCESIBILIDAD.md). Quien mira la pantalla llega a
+        // las acciones con una pulsación larga.
         let fila = fila(queEmpiezaPor: "Guía de Swift Testing")
         XCTAssertTrue(fila.waitForExistence(timeout: 5))
 
@@ -138,4 +121,5 @@ final class PruebasListaEnlaces: XCTestCase {
             XCTAssertTrue(app.buttons[accion].exists, "falta «\(accion)» en la pulsación larga")
         }
     }
+
 }

@@ -114,3 +114,11 @@ struct PruebasRecorte {
         #expect(corto.hasSuffix("…"))
     }
 }
+
+@Suite("Aviso del portapapeles")
+struct PruebasAvisoPortapapeles {
+    @Test("dice que hay algo copiado y qué se puede hacer, sin explicar la app")
+    func aviso() {
+        #expect(Textos.hayEnlaceCopiado == "Hay un enlace copiado, puedes pegarlo")
+    }
+}
