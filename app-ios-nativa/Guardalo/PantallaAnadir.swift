@@ -31,6 +31,9 @@ struct PantallaAnadir: View {
     /// llegaba justo cuando ya no era verdad.
     @State private var guardando = false
     @FocusState private var enElCampo: Bool
+    /// Si el portapapeles trae una dirección. Se consulta sin leerlo: saber
+    /// que hay una URL no cuenta como mirar, y así no sale el aviso de iOS.
+    @State private var hayEnlaceCopiado = false
 
     private var urlLimpia: String {
         url.trimmingCharacters(in: .whitespacesAndNewlines)
@@ -58,6 +61,18 @@ struct PantallaAnadir: View {
                         .autocorrectionDisabled()
                         .textInputAutocapitalization(.never)
                         .focused($enElCampo)
+                    // El botón de pegar del sistema, y no leer el
+                    // portapapeles por nuestra cuenta: leerlo directamente
+                    // saca el aviso de «Guárdalo ha pegado de…» cada vez, y
+                    // con lector de pantalla eso es una frase de más en cada
+                    // enlace que guardas. Así lo pides tú y no avisa nadie.
+                    if hayEnlaceCopiado && urlLimpia.isEmpty {
+                        PasteButton(payloadType: URL.self) { direcciones in
+                            guard let primera = direcciones.first else { return }
+                            url = primera.absoluteString
+                        }
+                        .labelStyle(.titleOnly)
+                    }
                 } footer: {
                     if !urlLimpia.isEmpty && !urlValida {
                         Text(Textos.urlNoValida)
@@ -125,7 +140,20 @@ struct PantallaAnadir: View {
                     Anuncios.importante(Textos.enlaceRepetido)
                 }
             }
-            .onAppear { enElCampo = true }
+            .onAppear {
+                enElCampo = true
+                hayEnlaceCopiado = UIPasteboard.general.hasURLs
+                if hayEnlaceCopiado {
+                    // Con un respiro y en prioridad alta. Lanzado justo al
+                    // aparecer, el aviso se perdía: VoiceOver estaba leyendo
+                    // la pantalla recién abierta y uno que espera turno nunca
+                    // llegaba a sonar.
+                    Task {
+                        try? await Task.sleep(for: .milliseconds(900))
+                        Anuncios.importante(Textos.hayEnlaceCopiado)
+                    }
+                }
+            }
         }
     }
 

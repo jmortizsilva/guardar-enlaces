@@ -24,23 +24,35 @@ struct PantallaGestionEtiquetas: View {
                         // La fila entera se lee de una vez, con su recuento:
                         // sin él hay que salir a contar los enlaces antes de
                         // decidir si renombrarla o tirarla.
+                        // Mismo criterio que la lista de enlaces: el rotor se
+                        // sirve solo desde `accessibilityActions` y el menú
+                        // contextual es para quien mira la pantalla. Nada de
+                        // gestos de deslizar. Ver docs/ACCESIBILIDAD.md.
                         Text(Textos.etiquetaConRecuento(etiqueta.nombre, enlaces: etiqueta.enlaces))
-                            .swipeActions(edge: .trailing) {
+                            .contextMenu {
+                                Button(Textos.renombrar) {
+                                    nombreNuevo = etiqueta.nombre
+                                    renombrando = etiqueta.nombre
+                                }
                                 Button(Textos.eliminar, role: .destructive) {
                                     eliminando = etiqueta.nombre
                                 }
-                                Button(Textos.renombrar) {
-                                    nombreNuevo = etiqueta.nombre
-                                    renombrando = etiqueta.nombre
-                                }
-                                .tint(.accentColor)
                             }
+                            // Al revés de como se oyen.
                             .accessibilityActions {
+                                Button(Textos.eliminar) { eliminando = etiqueta.nombre }
                                 Button(Textos.renombrar) {
                                     nombreNuevo = etiqueta.nombre
                                     renombrando = etiqueta.nombre
                                 }
+                            }
+                            // Al revés de como se oyen.
+                            .accessibilityActions {
                                 Button(Textos.eliminar) { eliminando = etiqueta.nombre }
+                                Button(Textos.renombrar) {
+                                    nombreNuevo = etiqueta.nombre
+                                    renombrando = etiqueta.nombre
+                                }
                             }
                     }
                 }

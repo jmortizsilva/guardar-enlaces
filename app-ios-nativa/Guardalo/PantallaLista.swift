@@ -75,12 +75,21 @@ struct PantallaLista: View {
             List(visibles, id: \.id) { elemento in
                 FilaEnlace(
                     elemento: elemento,
-                    alAbrir: { abrir(elemento) },
                     alCopiar: { copiar(elemento) },
                     alEtiquetar: { aEtiquetar = elemento },
                     alVerDetalles: { enDetalle = elemento },
-                    alEliminar: { aEliminar = elemento }
+                    alEliminar: { aEliminar = elemento },
+                    alAbrir: { abrir(elemento) }
                 )
+                // Para quien mira la pantalla. No llega al rotor, y por eso
+                // puede repetir las mismas cuatro sin ensuciarlo.
+                // Ver docs/ACCESIBILIDAD.md.
+                .contextMenu {
+                    Button(Textos.verDetalles) { enDetalle = elemento }
+                    Button(Textos.editarEtiquetas) { aEtiquetar = elemento }
+                    Button(Textos.copiarUrl) { copiar(elemento) }
+                    Button(Textos.eliminar, role: .destructive) { aEliminar = elemento }
+                }
             }
         }
     }
@@ -153,56 +162,60 @@ struct PantallaLista: View {
 /// el rotor de acciones.
 struct FilaEnlace: View {
     let elemento: Elemento
-    let alAbrir: () -> Void
     let alCopiar: () -> Void
     let alEtiquetar: () -> Void
     let alVerDetalles: () -> Void
     let alEliminar: () -> Void
+    let alAbrir: () -> Void
 
     var body: some View {
-        Button(action: alAbrir) {
-            VStack(alignment: .leading, spacing: 2) {
-                Text(Presentacion.titulo(de: elemento))
-                    .font(.headline)
-                Text(Presentacion.subtitulo(de: elemento))
-                    .font(.subheadline)
-                    .foregroundStyle(.secondary)
-            }
-            .frame(maxWidth: .infinity, alignment: .leading)
+        // Ojo: esto NO es un Button.
+        //
+        // Siéndolo, la fila tenía dos elementos accesibles, uno dentro de
+        // otro: la celda de la lista, que es la que lleva los gestos de
+        // deslizar, y el botón de dentro. VoiceOver ofrecía las acciones del
+        // deslizar en los dos, así que «ver detalles» y «eliminar» se oían
+        // dos veces cada una: seis acciones donde había cuatro.
+        //
+        // Con un contenedor normal agrupado en un solo elemento, las acciones
+        // se cuelgan de un único sitio. El toque y el doble toque de
+        // VoiceOver se atienden aparte, abajo.
+        VStack(alignment: .leading, spacing: 2) {
+            Text(Presentacion.titulo(de: elemento))
+                .font(.headline)
+            Text(Presentacion.subtitulo(de: elemento))
+                .font(.subheadline)
+                .foregroundStyle(.secondary)
         }
-        .foregroundStyle(.primary)
+        .frame(maxWidth: .infinity, alignment: .leading)
+        // Para que el toque valga en toda la fila y no solo sobre las letras.
+        .contentShape(Rectangle())
+        .onTapGesture(perform: alAbrir)
+        .accessibilityElement(children: .combine)
+        .accessibilityAddTraits(.isButton)
         .accessibilityLabel(
             "\(Presentacion.titulo(de: elemento)). \(Presentacion.subtitulo(de: elemento))"
         )
         .accessibilityHint(Textos.abrirEnModoLector)
-        // Aquí NO van eliminar ni ver detalles: lo que se pone en el gesto de
-        // deslizar, iOS lo añade solo al rotor, y ponerlo también aquí es lo
-        // que hacía que se oyeran dos veces.
+        .accessibilityAction(.default, alAbrir)
+        // Las cuatro del rotor, y aquí está todo lo que oye VoiceOver.
+        //
+        // Nada de `swipeActions`: cada gesto se ofrece DOS veces en el rotor.
+        // Medido en el teléfono con cuatro combinaciones (ver
+        // docs/ACCESIBILIDAD.md): dos gestos solos daban cuatro acciones.
+        //
+        // Van al revés de como se oyen: VoiceOver las lee en orden inverso al
+        // declarado, también medido.
         .accessibilityActions {
-            Button(Textos.editarEtiquetas, action: alEtiquetar)
+            Button(Textos.eliminar, action: alEliminar)
             Button(Textos.copiarUrl, action: alCopiar)
-        }
-        // Eliminar hacia la izquierda, que es donde lo tiene todo iPhone.
-        .swipeActions(edge: .trailing) {
-            Button(Textos.eliminar, role: .destructive, action: alEliminar)
-        }
-        .swipeActions(edge: .leading) {
-            Button(Textos.verDetalles, action: alVerDetalles)
-                .tint(.accentColor)
-        }
-        // Las cinco, para quien ni desliza ni usa el rotor.
-        .contextMenu {
-            Button(Textos.verDetalles, action: alVerDetalles)
             Button(Textos.editarEtiquetas, action: alEtiquetar)
-            Button(Textos.copiarUrl, action: alCopiar)
-            Button(Textos.eliminar, role: .destructive, action: alEliminar)
+            Button(Textos.verDetalles, action: alVerDetalles)
         }
     }
 }
 
-/// Qué enlace se está abriendo y cómo. Sin el «cómo», «Abrir en Safari»
-/// acabaría abriendo igualmente en modo lector: son dos acciones distintas
-/// del rotor y tienen que hacer dos cosas distintas.
+/// El enlace que se está abriendo, para poder presentarlo como hoja.
 struct EnlaceAAbrir: Identifiable {
     let url: URL
 
