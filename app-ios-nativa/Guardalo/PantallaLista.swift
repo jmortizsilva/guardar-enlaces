@@ -9,6 +9,7 @@ struct PantallaLista: View {
     @State private var aEliminar: Elemento?
     @State private var aEtiquetar: Elemento?
     @State private var aAbrir: EnlaceAAbrir?
+    @State private var anadiendo = false
 
     private var visibles: [Elemento] {
         Biblioteca.buscar(
@@ -34,6 +35,9 @@ struct PantallaLista: View {
                     ) { etiquetas in
                         modelo.cambiarEtiquetas(de: elemento, a: etiquetas)
                     }
+                }
+                .sheet(isPresented: $anadiendo) {
+                    PantallaAnadir(presentada: $anadiendo)
                 }
                 .sheet(item: $aAbrir) { enlace in
                     VistaSafari(url: enlace.url, modoLector: enlace.modoLector)
@@ -82,7 +86,7 @@ struct PantallaLista: View {
                     .accessibilityLabel(Textos.sincronizando)
             }
             Button {
-                // La pantalla de añadir llega en el paso siguiente.
+                anadiendo = true
             } label: {
                 Label(Textos.anadirEnlace, systemImage: "plus")
             }

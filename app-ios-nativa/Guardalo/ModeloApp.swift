@@ -23,6 +23,7 @@ final class ModeloApp {
     private let cliente: ClienteApi
     private let sesion: Sesion
     private let sincronizador: Sincronizador
+    private let resolvedor: ResolverMetadatos
     /// Para no sincronizar dos veces seguidas al alternar entre aplicaciones.
     private var ultimaSincronizacion: MarcaDeTiempo = 0
 
@@ -31,6 +32,7 @@ final class ModeloApp {
         cliente = ClienteApi(urlBase: Configuracion.urlApi)
         sesion = Sesion(cliente: cliente, credenciales: CredencialesKeychain())
         sincronizador = Sincronizador(almacen: almacen, cliente: cliente, sesion: sesion)
+        resolvedor = ResolverMetadatos(cliente: cliente, sesion: sesion)
     }
 
     /// Solo para las vistas previas de Xcode y las pruebas de interfaz.
@@ -39,6 +41,19 @@ final class ModeloApp {
         cliente = ClienteApi(urlBase: "https://api.ejemplo.com")
         sesion = Sesion(cliente: cliente, credenciales: CredencialesKeychain())
         sincronizador = Sincronizador(almacen: almacen, cliente: cliente, sesion: sesion)
+        // Sin red: las pruebas de interfaz no pueden depender de que
+        // swift.org conteste, ni ponerse a descargar páginas de verdad cada
+        // vez que se ejecutan. Con este tiempo de espera, cualquier petición
+        // falla al instante y la comprobación siempre devuelve «no se sabe»,
+        // que es justo el camino que interesa ejercitar.
+        let sinRed = URLSessionConfiguration.ephemeral
+        sinRed.timeoutIntervalForRequest = 0.001
+        sinRed.timeoutIntervalForResource = 0.001
+        resolvedor = ResolverMetadatos(
+            cliente: cliente,
+            sesion: sesion,
+            sesionHttp: URLSession(configuration: sinRed)
+        )
         for elemento in elementos {
             try almacen.guardar([elemento.id: elemento])
         }
@@ -98,6 +113,53 @@ final class ModeloApp {
         try? almacen.marcarPendiente(elemento.conEtiquetas(etiquetas))
         refrescar()
         Anuncios.importante(Textos.etiquetasGuardadas(etiquetas))
+        Task { await sincronizarEnSilencio() }
+    }
+
+    // MARK: - Añadir un enlace
+
+    /// El enlace ya guardado con esa misma URL, si lo hay. Se consulta
+    /// mientras se escribe, para poder avisar antes de guardar y no después.
+    func repetido(para url: String) -> Elemento? {
+        Duplicados.buscar(en: elementos, url: url)
+    }
+
+    /// Título y descripción de una URL. Nunca lanza: guardar el enlace no
+    /// puede depender de que esto salga bien.
+    func comprobar(url: String) async -> MetadatosExtraidos? {
+        await resolvedor.resolver(url: url)
+    }
+
+    /// Guarda la URL, o actualiza el enlace que ya la tenía.
+    ///
+    /// `metadatos` puede venir vacío, y no pasa nada: se guarda igual, solo
+    /// que sin título, y se dice en voz alta. Comprobar nunca fue lo
+    /// importante; guardar el enlace, sí.
+    func guardarEnlace(url: String, etiquetas: [String], metadatos: MetadatosExtraidos?) {
+        if let repetido = repetido(para: url) {
+            let actualizado = repetido.actualizado(con: metadatos, etiquetasNuevas: etiquetas)
+            try? almacen.marcarPendiente(actualizado)
+            refrescar()
+            Anuncios.importante(Textos.actualizado(titulo: Presentacion.titulo(de: actualizado)))
+        } else {
+            let nuevo = nuevoElementoLocal(
+                DatosElementoNuevo(
+                    url: url,
+                    titulo: metadatos?.titulo,
+                    descripcion: metadatos?.descripcion,
+                    imagenUrl: metadatos?.imagenUrl,
+                    tipo: metadatos?.tipo ?? .enlace,
+                    etiquetas: etiquetas
+                )
+            )
+            try? almacen.marcarPendiente(nuevo)
+            refrescar()
+            Anuncios.importante(
+                metadatos == nil
+                    ? Textos.guardadoSinComprobar
+                    : Textos.guardado(titulo: Presentacion.titulo(de: nuevo))
+            )
+        }
         Task { await sincronizarEnSilencio() }
     }
 

@@ -154,3 +154,30 @@ extension Elemento {
         return copia
     }
 }
+
+extension Elemento {
+    /// Un enlace que ya estaba guardado, refrescado con lo que diga la
+    /// comprobación de ahora y con las etiquetas nuevas sumadas a las suyas.
+    ///
+    /// Es lo que pasa al guardar una URL que ya tienes: no se crea otro
+    /// enlace, se actualiza este. Dos detalles que parecen pequeños y no lo
+    /// son: si la comprobación no trajo título (sin red, sitio caído), se
+    /// conserva el que ya había en vez de vaciarlo; y las etiquetas se suman,
+    /// porque quitar en silencio una etiqueta que pusiste hace un mes sería
+    /// peor que no guardar nada.
+    public func actualizado(
+        con metadatos: MetadatosExtraidos?,
+        etiquetasNuevas: [String] = [],
+        ahora: Reloj = relojDelSistema
+    ) -> Elemento {
+        var copia = self
+        copia.titulo = metadatos?.titulo ?? titulo
+        copia.descripcion = metadatos?.descripcion ?? descripcion
+        copia.imagenUrl = metadatos?.imagenUrl ?? imagenUrl
+        copia.tipo = metadatos?.tipo ?? tipo
+        var vistas = Set<String>()
+        copia.etiquetas = (etiquetas + etiquetasNuevas).filter { vistas.insert($0).inserted }
+        copia.actualizadoEn = ahora()
+        return copia
+    }
+}

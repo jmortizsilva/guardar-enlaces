@@ -57,11 +57,11 @@ dejaba preparada.
    `etiquetasDefinidas` en el pull y en el push, y la pantalla de gestión
    (renombrar y eliminar en todos los enlaces, con recuento).
 
-2. **El mismo botón hace cosas distintas en cada app.** Desde `6942faf`, en
-   Windows guardar un enlace repetido **actualiza el que ya había**; en iOS
-   avisa y ofrece «Guardar de todas formas», que crea un segundo. Hay que
-   decidir cuál de los dos es el bueno al llegar a esa pantalla, con sus
-   textos delante. **Pendiente.**
+2. **El mismo botón hacía cosas distintas en cada app.** Desde `6942faf`, en
+   Windows guardar un enlace repetido actualiza el que ya había; en iOS avisaba
+   y ofrecía «Guardar de todas formas», que creaba un segundo. **Resuelto el
+   2026-09-18:** manda el de Windows, y además guardar deja de esperar a la
+   comprobación. Los dos clientes hacen por fin lo mismo.
 
 ## Fases
 
@@ -90,8 +90,10 @@ dejaba preparada.
       antes de la pantalla.
       - [x] Lista de enlaces, con búsqueda, filtro, acciones y eliminación.
       - [x] Elegir etiquetas de un enlace.
-      - [x] Pruebas de interfaz contra el árbol de accesibilidad (7).
-      - [ ] Añadir enlace.
+      - [x] Pruebas de interfaz contra el árbol de accesibilidad (11).
+      - [x] Añadir enlace, con el comportamiento de Windows: un enlace
+            repetido actualiza el que había en vez de duplicarse, y guardar no
+            espera a la comprobación.
       - [ ] Ajustes y login.
       - [ ] Detalle de un enlace.
       - [ ] Gestionar etiquetas (renombrar y eliminar en todos los enlaces).

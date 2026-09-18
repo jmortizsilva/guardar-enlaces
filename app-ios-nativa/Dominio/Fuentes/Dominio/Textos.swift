@@ -119,3 +119,42 @@ extension Textos {
     public static let nuevaEtiqueta = "Nueva etiqueta"
     public static let anadir = "Añadir"
 }
+
+extension Textos {
+    // MARK: - Pantalla de añadir un enlace
+
+    public static let anadirEnlaceTitulo = "Añadir enlace"
+    public static let campoUrl = "URL del enlace"
+    public static let marcadorUrl = "https://…"
+    public static let comprobando = "Comprobando…"
+    public static let actualizar = "Actualizar"
+
+    public static let urlNoValida = "Escribe una dirección que empiece por http:// o https://"
+
+    /// Se dice en cuanto se detecta, no al guardar: enterarte de que estaba
+    /// repetido cuando ya lo has guardado no sirve de nada.
+    public static let enlaceRepetido =
+        "Ya tienes guardado este enlace. Al guardar se actualiza, y las etiquetas nuevas se "
+        + "suman a las que ya tenía."
+
+    /// Para el botón que abre las etiquetas, que dice cuáles llevas puestas.
+    public static func botonEtiquetas(_ etiquetas: [String]) -> String {
+        etiquetas.isEmpty
+            ? "Etiquetas: ninguna"
+            : "Etiquetas: \(etiquetas.joined(separator: ", "))"
+    }
+
+    public static func guardado(titulo: String) -> String {
+        "Guardado, \(recortado(titulo))"
+    }
+
+    public static func actualizado(titulo: String) -> String {
+        "Actualizado, \(recortado(titulo))"
+    }
+
+    /// Guardar nunca depende de que la comprobación salga bien, pero si no
+    /// salió hay que decirlo: si no, esa fila aparece en la lista con la
+    /// dirección por título y no se sabe por qué.
+    public static let guardadoSinComprobar =
+        "Guardado sin título, no se pudo comprobar la página"
+}

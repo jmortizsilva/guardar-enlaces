@@ -9,10 +9,11 @@ import XCTest
 /// Editar etiquetas y Eliminar sigue siendo una comprobación de oído. Lo que
 /// sí se comprueba es que esas mismas acciones existen al deslizar la fila,
 /// que usan los mismos textos.
+@MainActor
 final class PruebasListaEnlaces: XCTestCase {
     private var app: XCUIApplication!
 
-    override func setUpWithError() throws {
+    override func setUp() async throws {
         continueAfterFailure = false
         app = XCUIApplication()
         app.launchArguments = ["-pruebas-de-interfaz"]
