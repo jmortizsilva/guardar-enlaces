@@ -235,10 +235,10 @@ public struct ClienteApi: Sendable {
         } catch {
             // Los mensajes de URLSession llegan en inglés y contando cosas de
             // red que aquí no ayudan. Esta frase acaba leída en voz alta.
-            throw ErrorApi(
-                mensaje: "no se pudo conectar con el servidor: comprueba la conexión",
-                codigo: nil
-            )
+            // En minúscula y sin verbo: esto se lee solo ("Sin conexión con
+            // el servidor") y también como causa detrás de la acción que
+            // falló ("No se pudo sincronizar: sin conexión con el servidor").
+            throw ErrorApi(mensaje: "sin conexión con el servidor", codigo: nil)
         }
 
         let codigo = (respuesta as? HTTPURLResponse)?.statusCode ?? 0

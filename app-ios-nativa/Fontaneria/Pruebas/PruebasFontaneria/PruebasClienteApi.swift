@@ -123,7 +123,7 @@ struct PruebasClienteApi {
             _ = try await cliente.canjear(codigoCanje: "c")
             Issue.record("tenía que haber fallado")
         } catch let fallo as ErrorApi {
-            #expect(fallo.mensaje == "no se pudo conectar con el servidor: comprueba la conexión")
+            #expect(fallo.mensaje == "sin conexión con el servidor")
             #expect(fallo.codigo == nil)
         }
     }
