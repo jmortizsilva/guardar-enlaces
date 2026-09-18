@@ -1,6 +1,6 @@
 # Pasar la app de iPhone a nativo
 
-Estado: fases 0 y 1 terminadas (2026-09-17).
+Estado: fases 0, 1 y 2 terminadas (2026-09-18).
 
 ## Por qué
 
@@ -77,9 +77,14 @@ dejaba preparada.
       lista se recolocaría sola entre dos aperturas; y la dirección del
       oEmbed de YouTube se escapa a mano, porque `URLComponents` deja pasar
       los dos puntos y las barras.
-- [ ] **2. Fontanería.** Almacén SQLite, cliente HTTP, sesión con Keychain y
-      rotación de token, sincronizador. Decidir aquí si la app nueva adopta la
-      base de datos que ya hay en el teléfono o empieza limpia.
+- [x] **2. Fontanería.** Paquete aparte, con 38 pruebas más: almacén SQLite
+      (mismo esquema que Windows, tabla por tabla), cliente HTTP, sesión con
+      llavero y rotación de token, y el ciclo de sincronización con las
+      etiquetas dentro. El cliente se prueba entero contra un servidor de
+      mentira metido por debajo de `URLSession`, sin red y sin backend.
+      **Decidido:** la app nueva arranca vacía; no se importa la base de datos
+      de la app de Expo, porque con cuenta la trae el servidor y en la fase 5,
+      al recuperar el identificador de siempre, se encontrará la que ya había.
 - [ ] **3. Interfaz.** Lista, detalle, añadir, gestión de etiquetas, ajustes,
       login. Los textos de cada pantalla se escriben y se revisan juntos,
       antes de la pantalla.
@@ -95,6 +100,11 @@ dejaba preparada.
   compararlas. En la fase 5 pasa a ser el de siempre,
   `com.jmortizsilva.guardarenlaces`. El App Group no depende de esto, así que
   puede seguir siendo el mismo.
+- **El llavero de verdad solo se puede comprobar en el simulador o en el
+  teléfono.** `CredencialesKeychain` no se ejercita con `swift test` en el
+  Mac (necesita la autorización de llavero de la app firmada), así que la
+  lógica de sesión se prueba con un llavero de mentira y el de verdad queda
+  pendiente de la fase 3.
 - **No hay firma configurada en este Mac** (`security find-identity` no
   encuentra ninguna identidad). Para el simulador no hace falta; para las
   fases 4 y 5 sí.

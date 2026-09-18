@@ -8,6 +8,7 @@
 
 /* Begin PBXBuildFile section */
 		1A0000000000000000000012 /* Dominio in Frameworks */ = {isa = PBXBuildFile; productRef = 1A0000000000000000000011 /* Dominio */; };
+		1A0000000000000000000015 /* Fontaneria in Frameworks */ = {isa = PBXBuildFile; productRef = 1A0000000000000000000014 /* Fontaneria */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
@@ -24,6 +25,7 @@
 			buildActionMask = 2147483647;
 			files = (
 				1A0000000000000000000012 /* Dominio in Frameworks */,
+				1A0000000000000000000015 /* Fontaneria in Frameworks */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -67,6 +69,7 @@
 			name = Guardalo;
 			packageProductDependencies = (
 				1A0000000000000000000011 /* Dominio */,
+				1A0000000000000000000014 /* Fontaneria */,
 			);
 			productName = Guardalo;
 			productReference = 1A0000000000000000000003 /* Guardalo.app */;
@@ -98,6 +101,7 @@
 			minimizedProjectReferenceProxies = 1;
 			packageReferences = (
 				1A0000000000000000000010 /* XCLocalSwiftPackageReference "Dominio" */,
+				1A0000000000000000000013 /* XCLocalSwiftPackageReference "Fontaneria" */,
 			);
 			preferredProjectObjectVersion = 77;
 			productRefGroup = 1A0000000000000000000005 /* Products */;
@@ -244,12 +248,20 @@
 			isa = XCLocalSwiftPackageReference;
 			relativePath = Dominio;
 		};
+		1A0000000000000000000013 /* XCLocalSwiftPackageReference "Fontaneria" */ = {
+			isa = XCLocalSwiftPackageReference;
+			relativePath = Fontaneria;
+		};
 /* End XCLocalSwiftPackageReference section */
 
 /* Begin XCSwiftPackageProductDependency section */
 		1A0000000000000000000011 /* Dominio */ = {
 			isa = XCSwiftPackageProductDependency;
 			productName = Dominio;
+		};
+		1A0000000000000000000014 /* Fontaneria */ = {
+			isa = XCSwiftPackageProductDependency;
+			productName = Fontaneria;
 		};
 /* End XCSwiftPackageProductDependency section */
 	};

@@ -16,12 +16,18 @@ cd "$(dirname "$0")"
 
 SIMULADOR="${SIMULADOR:-platform=iOS Simulator,name=iPhone 17,OS=27.0}"
 
-echo "== Dominio: pruebas =="
-(cd Dominio && swift test -Xswiftc -warnings-as-errors)
+for paquete in Dominio Fontaneria; do
+    echo "== $paquete: pruebas =="
+    (cd "$paquete" && swift test -Xswiftc -warnings-as-errors)
+    echo
+done
 
 echo
 echo "== Formato =="
-xcrun swift-format lint --strict --recursive Dominio/Fuentes Dominio/Pruebas Guardalo
+xcrun swift-format lint --strict --recursive \
+    Dominio/Fuentes Dominio/Pruebas \
+    Fontaneria/Fuentes Fontaneria/Pruebas \
+    Guardalo
 
 echo
 echo "== App: compila para el simulador =="
