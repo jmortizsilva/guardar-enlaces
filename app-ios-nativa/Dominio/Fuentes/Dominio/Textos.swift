@@ -44,7 +44,6 @@ public enum Textos {
 
     public static let abrirEnModoLector = "Abrir en modo lector"
     public static let copiarUrl = "Copiar URL"
-    public static let abrirEnSafari = "Abrir en Safari"
     public static let editarEtiquetas = "Editar etiquetas"
     public static let eliminar = "Eliminar"
     public static let cancelar = "Cancelar"

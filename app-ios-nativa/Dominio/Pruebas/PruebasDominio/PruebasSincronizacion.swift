@@ -75,7 +75,7 @@ struct PruebasAplicarPush {
 
 @Suite("Qué se ve en la lista")
 struct PruebasElementosVisibles {
-    @Test("oculta los borrados y pone lo más reciente primero")
+    @Test("oculta los borrados y pone lo guardado más recientemente primero")
     func ordenYBorrados() {
         let generar = generadorSecuencial()
         let a = nuevo("https://a.com", en: 100, generarId: generar)
@@ -86,6 +86,22 @@ struct PruebasElementosVisibles {
         let visibles = Sincronizacion.elementosVisibles([a.id: a, b.id: b, c.id: c])
 
         #expect(visibles.map(\.id) == [b.id, a.id])
+    }
+
+    @Test("retocar un enlace viejo no lo manda al principio de la lista")
+    func retocarNoReordena() {
+        let generar = generadorSecuencial()
+        let viejo = nuevo("https://viejo.com", en: 100, generarId: generar)
+        let nuevoEnlace = nuevo("https://nuevo.com", en: 200, generarId: generar)
+        // Se le cambia una etiqueta al viejo: su fecha de modificación pasa a
+        // ser la más alta de las dos, pero se guardó antes y ahí sigue.
+        let viejoRetocado = viejo.conEtiquetas(["ocio"], ahora: relojFijo(900))
+
+        let visibles = Sincronizacion.elementosVisibles([
+            viejoRetocado.id: viejoRetocado, nuevoEnlace.id: nuevoEnlace,
+        ])
+
+        #expect(visibles.map(\.id) == [nuevoEnlace.id, viejoRetocado.id])
     }
 
     @Test("dos guardados en el mismo instante salen siempre en el mismo orden")

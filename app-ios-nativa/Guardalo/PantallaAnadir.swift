@@ -23,6 +23,13 @@ struct PantallaAnadir: View {
     @State private var comprobando = false
     @State private var etiquetasAbiertas = false
     @State private var comprobacion: Task<MetadatosExtraidos?, Never>?
+    /// Desde que se pulsa Guardar hasta que la pantalla se cierra.
+    ///
+    /// Sin esto, guardar un enlace NUEVO avisaba de que ya lo tenías: el
+    /// enlace entra en la lista, la pantalla todavía no se ha cerrado, y al
+    /// recomponerse busca repetidos y se encuentra a sí mismo. El aviso
+    /// llegaba justo cuando ya no era verdad.
+    @State private var guardando = false
     @FocusState private var enElCampo: Bool
 
     private var urlLimpia: String {
@@ -34,7 +41,10 @@ struct PantallaAnadir: View {
     }
 
     private var repetido: Elemento? {
-        urlValida ? modelo.repetido(para: urlLimpia) : nil
+        guard urlValida, !guardando else {
+            return nil
+        }
+        return modelo.repetido(para: urlLimpia)
     }
 
     var body: some View {
@@ -143,7 +153,8 @@ struct PantallaAnadir: View {
     }
 
     private func guardar() async {
-        guard urlValida else { return }
+        guard urlValida, !guardando else { return }
+        guardando = true
         modelo.guardarEnlace(
             url: urlLimpia,
             etiquetas: etiquetas,

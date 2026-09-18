@@ -66,8 +66,7 @@ struct PantallaDetalle: View {
                 }
 
                 Section {
-                    Button(Textos.abrirEnModoLector) { abrir(enModoLector: true) }
-                    Button(Textos.abrirEnSafari) { abrir(enModoLector: false) }
+                    Button(Textos.abrirEnModoLector) { abrir() }
                     Button(Textos.copiarUrl) {
                         UIPasteboard.general.string = actual.url
                         Anuncios.importante(Textos.urlCopiada)
@@ -94,7 +93,7 @@ struct PantallaDetalle: View {
                 }
             }
             .sheet(item: $aAbrir) { enlace in
-                VistaSafari(url: enlace.url, modoLector: enlace.modoLector)
+                VistaSafari(url: enlace.url)
                     .ignoresSafeArea()
             }
             .alert(
@@ -114,10 +113,10 @@ struct PantallaDetalle: View {
         }
     }
 
-    private func abrir(enModoLector: Bool) {
+    private func abrir() {
         guard let url = URL(string: actual.url) else {
             return
         }
-        aAbrir = EnlaceAAbrir(url: url, modoLector: enModoLector)
+        aAbrir = EnlaceAAbrir(url: url)
     }
 }

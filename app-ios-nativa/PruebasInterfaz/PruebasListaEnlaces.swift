@@ -3,12 +3,13 @@ import XCTest
 /// Pruebas contra el árbol de accesibilidad de verdad: lo que estas leen es
 /// lo mismo que lee VoiceOver.
 ///
-/// Lo que NO cubren, y hay que seguir comprobando a mano en un teléfono:
-/// las acciones del rotor. `accessibilityCustomActions` no se puede enumerar
-/// desde aquí, así que que el rotor ofrezca Copiar URL, Abrir en Safari,
-/// Editar etiquetas y Eliminar sigue siendo una comprobación de oído. Lo que
-/// sí se comprueba es que esas mismas acciones existen al deslizar la fila,
-/// que usan los mismos textos.
+/// Lo que NO cubren, y hay que seguir comprobando a mano en un teléfono: las
+/// acciones del rotor. `accessibilityCustomActions` no se puede enumerar desde
+/// aquí, así que el orden en que se oyen —ver detalles y eliminar, que los
+/// pone el gesto de deslizar, y después editar etiquetas y copiar URL— sigue
+/// siendo una comprobación de oído. Lo que sí se comprueba es que todas esas
+/// acciones existen al deslizar la fila y en la pulsación larga, con los
+/// mismos textos.
 @MainActor
 final class PruebasListaEnlaces: XCTestCase {
     private var app: XCUIApplication!
@@ -107,17 +108,34 @@ final class PruebasListaEnlaces: XCTestCase {
         XCTAssertFalse(fila.waitForExistence(timeout: 3))
     }
 
-    func testDeslizarUnaFilaOfreceEditarEtiquetas() {
+    func testDeslizarHaciaLaDerechaAbreElDetalle() {
         let fila = fila(queEmpiezaPor: "Guía de Swift Testing")
         XCTAssertTrue(fila.waitForExistence(timeout: 5))
 
         fila.swipeRight()
-        app.buttons["Editar etiquetas"].firstMatch.tap()
+        app.buttons["Ver detalles"].firstMatch.tap()
 
-        XCTAssertTrue(app.navigationBars["Editar etiquetas"].waitForExistence(timeout: 3))
-        // Las que ya lleva el enlace y las que existen en la biblioteca.
-        XCTAssertTrue(app.buttons["trabajo"].exists)
-        XCTAssertTrue(app.buttons["ocio"].exists)
-        XCTAssertTrue(app.textFields["Nueva etiqueta"].exists)
+        XCTAssertTrue(app.navigationBars["Guía de Swift Testing"].waitForExistence(timeout: 3))
+    }
+
+    func testDeslizarHaciaLaIzquierdaOfreceEliminar() {
+        // A la izquierda es donde todo iPhone pone Eliminar, y ahí se queda.
+        let fila = fila(queEmpiezaPor: "Guía de Swift Testing")
+        XCTAssertTrue(fila.waitForExistence(timeout: 5))
+
+        fila.swipeLeft()
+
+        XCTAssertTrue(app.buttons["Eliminar"].firstMatch.waitForExistence(timeout: 3))
+    }
+
+    func testLaPulsacionLargaTieneTodasLasAccionesParaQuienNoUsaElRotor() {
+        let fila = fila(queEmpiezaPor: "Guía de Swift Testing")
+        XCTAssertTrue(fila.waitForExistence(timeout: 5))
+
+        fila.press(forDuration: 1.2)
+
+        for accion in ["Ver detalles", "Editar etiquetas", "Copiar URL", "Eliminar"] {
+            XCTAssertTrue(app.buttons[accion].exists, "falta «\(accion)» en la pulsación larga")
+        }
     }
 }
