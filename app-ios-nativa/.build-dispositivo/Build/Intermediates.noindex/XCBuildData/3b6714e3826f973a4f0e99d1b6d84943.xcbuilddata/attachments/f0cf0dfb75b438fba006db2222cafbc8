@@ -1,0 +1,149 @@
+{
+  "" : {
+    "diagnostics" : "/Users/jmortizsilva/Desarrollo/Guardar Enlaces/app-ios-nativa/.build-dispositivo/Build/Intermediates.noindex/Guardalo.build/Debug-iphoneos/Guardalo.build/Objects-normal/arm64/Guardalo-primary.dia",
+    "emit-module-dependencies" : "/Users/jmortizsilva/Desarrollo/Guardar Enlaces/app-ios-nativa/.build-dispositivo/Build/Intermediates.noindex/Guardalo.build/Debug-iphoneos/Guardalo.build/Objects-normal/arm64/Guardalo-primary-emit-module.d",
+    "emit-module-diagnostics" : "/Users/jmortizsilva/Desarrollo/Guardar Enlaces/app-ios-nativa/.build-dispositivo/Build/Intermediates.noindex/Guardalo.build/Debug-iphoneos/Guardalo.build/Objects-normal/arm64/Guardalo-primary-emit-module.dia",
+    "pch" : "/Users/jmortizsilva/Desarrollo/Guardar Enlaces/app-ios-nativa/.build-dispositivo/Build/Intermediates.noindex/Guardalo.build/Debug-iphoneos/Guardalo.build/Objects-normal/arm64/Guardalo-primary-Bridging-header.pch",
+    "swift-dependencies" : "/Users/jmortizsilva/Desarrollo/Guardar Enlaces/app-ios-nativa/.build-dispositivo/Build/Intermediates.noindex/Guardalo.build/Debug-iphoneos/Guardalo.build/Objects-normal/arm64/Guardalo-primary.swiftdeps"
+  },
+  "/Users/jmortizsilva/Desarrollo/Guardar Enlaces/app-ios-nativa/.build-dispositivo/Build/Intermediates.noindex/Guardalo.build/Debug-iphoneos/Guardalo.build/DerivedSources/GeneratedAssetSymbols.swift" : {
+    "const-values" : "/Users/jmortizsilva/Desarrollo/Guardar Enlaces/app-ios-nativa/.build-dispositivo/Build/Intermediates.noindex/Guardalo.build/Debug-iphoneos/Guardalo.build/Objects-normal/arm64/GeneratedAssetSymbols.swiftconstvalues",
+    "dependencies" : "/Users/jmortizsilva/Desarrollo/Guardar Enlaces/app-ios-nativa/.build-dispositivo/Build/Intermediates.noindex/Guardalo.build/Debug-iphoneos/Guardalo.build/Objects-normal/arm64/GeneratedAssetSymbols.d",
+    "diagnostics" : "/Users/jmortizsilva/Desarrollo/Guardar Enlaces/app-ios-nativa/.build-dispositivo/Build/Intermediates.noindex/Guardalo.build/Debug-iphoneos/Guardalo.build/Objects-normal/arm64/GeneratedAssetSymbols.dia",
+    "index-unit-output-path" : "/Guardalo.build/Debug-iphoneos/Guardalo.build/Objects-normal/arm64/GeneratedAssetSymbols.o",
+    "llvm-bc" : "/Users/jmortizsilva/Desarrollo/Guardar Enlaces/app-ios-nativa/.build-dispositivo/Build/Intermediates.noindex/Guardalo.build/Debug-iphoneos/Guardalo.build/Objects-normal/arm64/GeneratedAssetSymbols.bc",
+    "object" : "/Users/jmortizsilva/Desarrollo/Guardar Enlaces/app-ios-nativa/.build-dispositivo/Build/Intermediates.noindex/Guardalo.build/Debug-iphoneos/Guardalo.build/Objects-normal/arm64/GeneratedAssetSymbols.o",
+    "swift-dependencies" : "/Users/jmortizsilva/Desarrollo/Guardar Enlaces/app-ios-nativa/.build-dispositivo/Build/Intermediates.noindex/Guardalo.build/Debug-iphoneos/Guardalo.build/Objects-normal/arm64/GeneratedAssetSymbols.swiftdeps",
+    "swiftmodule" : "/Users/jmortizsilva/Desarrollo/Guardar Enlaces/app-ios-nativa/.build-dispositivo/Build/Intermediates.noindex/Guardalo.build/Debug-iphoneos/Guardalo.build/Objects-normal/arm64/GeneratedAssetSymbols~partial.swiftmodule"
+  },
+  "/Users/jmortizsilva/Desarrollo/Guardar Enlaces/app-ios-nativa/Guardalo/Anuncios.swift" : {
+    "const-values" : "/Users/jmortizsilva/Desarrollo/Guardar Enlaces/app-ios-nativa/.build-dispositivo/Build/Intermediates.noindex/Guardalo.build/Debug-iphoneos/Guardalo.build/Objects-normal/arm64/Anuncios.swiftconstvalues",
+    "dependencies" : "/Users/jmortizsilva/Desarrollo/Guardar Enlaces/app-ios-nativa/.build-dispositivo/Build/Intermediates.noindex/Guardalo.build/Debug-iphoneos/Guardalo.build/Objects-normal/arm64/Anuncios.d",
+    "diagnostics" : "/Users/jmortizsilva/Desarrollo/Guardar Enlaces/app-ios-nativa/.build-dispositivo/Build/Intermediates.noindex/Guardalo.build/Debug-iphoneos/Guardalo.build/Objects-normal/arm64/Anuncios.dia",
+    "index-unit-output-path" : "/Guardalo.build/Debug-iphoneos/Guardalo.build/Objects-normal/arm64/Anuncios.o",
+    "llvm-bc" : "/Users/jmortizsilva/Desarrollo/Guardar Enlaces/app-ios-nativa/.build-dispositivo/Build/Intermediates.noindex/Guardalo.build/Debug-iphoneos/Guardalo.build/Objects-normal/arm64/Anuncios.bc",
+    "object" : "/Users/jmortizsilva/Desarrollo/Guardar Enlaces/app-ios-nativa/.build-dispositivo/Build/Intermediates.noindex/Guardalo.build/Debug-iphoneos/Guardalo.build/Objects-normal/arm64/Anuncios.o",
+    "swift-dependencies" : "/Users/jmortizsilva/Desarrollo/Guardar Enlaces/app-ios-nativa/.build-dispositivo/Build/Intermediates.noindex/Guardalo.build/Debug-iphoneos/Guardalo.build/Objects-normal/arm64/Anuncios.swiftdeps",
+    "swiftmodule" : "/Users/jmortizsilva/Desarrollo/Guardar Enlaces/app-ios-nativa/.build-dispositivo/Build/Intermediates.noindex/Guardalo.build/Debug-iphoneos/Guardalo.build/Objects-normal/arm64/Anuncios~partial.swiftmodule"
+  },
+  "/Users/jmortizsilva/Desarrollo/Guardar Enlaces/app-ios-nativa/Guardalo/Configuracion.swift" : {
+    "const-values" : "/Users/jmortizsilva/Desarrollo/Guardar Enlaces/app-ios-nativa/.build-dispositivo/Build/Intermediates.noindex/Guardalo.build/Debug-iphoneos/Guardalo.build/Objects-normal/arm64/Configuracion.swiftconstvalues",
+    "dependencies" : "/Users/jmortizsilva/Desarrollo/Guardar Enlaces/app-ios-nativa/.build-dispositivo/Build/Intermediates.noindex/Guardalo.build/Debug-iphoneos/Guardalo.build/Objects-normal/arm64/Configuracion.d",
+    "diagnostics" : "/Users/jmortizsilva/Desarrollo/Guardar Enlaces/app-ios-nativa/.build-dispositivo/Build/Intermediates.noindex/Guardalo.build/Debug-iphoneos/Guardalo.build/Objects-normal/arm64/Configuracion.dia",
+    "index-unit-output-path" : "/Guardalo.build/Debug-iphoneos/Guardalo.build/Objects-normal/arm64/Configuracion.o",
+    "llvm-bc" : "/Users/jmortizsilva/Desarrollo/Guardar Enlaces/app-ios-nativa/.build-dispositivo/Build/Intermediates.noindex/Guardalo.build/Debug-iphoneos/Guardalo.build/Objects-normal/arm64/Configuracion.bc",
+    "object" : "/Users/jmortizsilva/Desarrollo/Guardar Enlaces/app-ios-nativa/.build-dispositivo/Build/Intermediates.noindex/Guardalo.build/Debug-iphoneos/Guardalo.build/Objects-normal/arm64/Configuracion.o",
+    "swift-dependencies" : "/Users/jmortizsilva/Desarrollo/Guardar Enlaces/app-ios-nativa/.build-dispositivo/Build/Intermediates.noindex/Guardalo.build/Debug-iphoneos/Guardalo.build/Objects-normal/arm64/Configuracion.swiftdeps",
+    "swiftmodule" : "/Users/jmortizsilva/Desarrollo/Guardar Enlaces/app-ios-nativa/.build-dispositivo/Build/Intermediates.noindex/Guardalo.build/Debug-iphoneos/Guardalo.build/Objects-normal/arm64/Configuracion~partial.swiftmodule"
+  },
+  "/Users/jmortizsilva/Desarrollo/Guardar Enlaces/app-ios-nativa/Guardalo/EnlacesDeEjemplo.swift" : {
+    "const-values" : "/Users/jmortizsilva/Desarrollo/Guardar Enlaces/app-ios-nativa/.build-dispositivo/Build/Intermediates.noindex/Guardalo.build/Debug-iphoneos/Guardalo.build/Objects-normal/arm64/EnlacesDeEjemplo.swiftconstvalues",
+    "dependencies" : "/Users/jmortizsilva/Desarrollo/Guardar Enlaces/app-ios-nativa/.build-dispositivo/Build/Intermediates.noindex/Guardalo.build/Debug-iphoneos/Guardalo.build/Objects-normal/arm64/EnlacesDeEjemplo.d",
+    "diagnostics" : "/Users/jmortizsilva/Desarrollo/Guardar Enlaces/app-ios-nativa/.build-dispositivo/Build/Intermediates.noindex/Guardalo.build/Debug-iphoneos/Guardalo.build/Objects-normal/arm64/EnlacesDeEjemplo.dia",
+    "index-unit-output-path" : "/Guardalo.build/Debug-iphoneos/Guardalo.build/Objects-normal/arm64/EnlacesDeEjemplo.o",
+    "llvm-bc" : "/Users/jmortizsilva/Desarrollo/Guardar Enlaces/app-ios-nativa/.build-dispositivo/Build/Intermediates.noindex/Guardalo.build/Debug-iphoneos/Guardalo.build/Objects-normal/arm64/EnlacesDeEjemplo.bc",
+    "object" : "/Users/jmortizsilva/Desarrollo/Guardar Enlaces/app-ios-nativa/.build-dispositivo/Build/Intermediates.noindex/Guardalo.build/Debug-iphoneos/Guardalo.build/Objects-normal/arm64/EnlacesDeEjemplo.o",
+    "swift-dependencies" : "/Users/jmortizsilva/Desarrollo/Guardar Enlaces/app-ios-nativa/.build-dispositivo/Build/Intermediates.noindex/Guardalo.build/Debug-iphoneos/Guardalo.build/Objects-normal/arm64/EnlacesDeEjemplo.swiftdeps",
+    "swiftmodule" : "/Users/jmortizsilva/Desarrollo/Guardar Enlaces/app-ios-nativa/.build-dispositivo/Build/Intermediates.noindex/Guardalo.build/Debug-iphoneos/Guardalo.build/Objects-normal/arm64/EnlacesDeEjemplo~partial.swiftmodule"
+  },
+  "/Users/jmortizsilva/Desarrollo/Guardar Enlaces/app-ios-nativa/Guardalo/GuardaloApp.swift" : {
+    "const-values" : "/Users/jmortizsilva/Desarrollo/Guardar Enlaces/app-ios-nativa/.build-dispositivo/Build/Intermediates.noindex/Guardalo.build/Debug-iphoneos/Guardalo.build/Objects-normal/arm64/GuardaloApp.swiftconstvalues",
+    "dependencies" : "/Users/jmortizsilva/Desarrollo/Guardar Enlaces/app-ios-nativa/.build-dispositivo/Build/Intermediates.noindex/Guardalo.build/Debug-iphoneos/Guardalo.build/Objects-normal/arm64/GuardaloApp.d",
+    "diagnostics" : "/Users/jmortizsilva/Desarrollo/Guardar Enlaces/app-ios-nativa/.build-dispositivo/Build/Intermediates.noindex/Guardalo.build/Debug-iphoneos/Guardalo.build/Objects-normal/arm64/GuardaloApp.dia",
+    "index-unit-output-path" : "/Guardalo.build/Debug-iphoneos/Guardalo.build/Objects-normal/arm64/GuardaloApp.o",
+    "llvm-bc" : "/Users/jmortizsilva/Desarrollo/Guardar Enlaces/app-ios-nativa/.build-dispositivo/Build/Intermediates.noindex/Guardalo.build/Debug-iphoneos/Guardalo.build/Objects-normal/arm64/GuardaloApp.bc",
+    "object" : "/Users/jmortizsilva/Desarrollo/Guardar Enlaces/app-ios-nativa/.build-dispositivo/Build/Intermediates.noindex/Guardalo.build/Debug-iphoneos/Guardalo.build/Objects-normal/arm64/GuardaloApp.o",
+    "swift-dependencies" : "/Users/jmortizsilva/Desarrollo/Guardar Enlaces/app-ios-nativa/.build-dispositivo/Build/Intermediates.noindex/Guardalo.build/Debug-iphoneos/Guardalo.build/Objects-normal/arm64/GuardaloApp.swiftdeps",
+    "swiftmodule" : "/Users/jmortizsilva/Desarrollo/Guardar Enlaces/app-ios-nativa/.build-dispositivo/Build/Intermediates.noindex/Guardalo.build/Debug-iphoneos/Guardalo.build/Objects-normal/arm64/GuardaloApp~partial.swiftmodule"
+  },
+  "/Users/jmortizsilva/Desarrollo/Guardar Enlaces/app-ios-nativa/Guardalo/IniciadorDeSesion.swift" : {
+    "const-values" : "/Users/jmortizsilva/Desarrollo/Guardar Enlaces/app-ios-nativa/.build-dispositivo/Build/Intermediates.noindex/Guardalo.build/Debug-iphoneos/Guardalo.build/Objects-normal/arm64/IniciadorDeSesion.swiftconstvalues",
+    "dependencies" : "/Users/jmortizsilva/Desarrollo/Guardar Enlaces/app-ios-nativa/.build-dispositivo/Build/Intermediates.noindex/Guardalo.build/Debug-iphoneos/Guardalo.build/Objects-normal/arm64/IniciadorDeSesion.d",
+    "diagnostics" : "/Users/jmortizsilva/Desarrollo/Guardar Enlaces/app-ios-nativa/.build-dispositivo/Build/Intermediates.noindex/Guardalo.build/Debug-iphoneos/Guardalo.build/Objects-normal/arm64/IniciadorDeSesion.dia",
+    "index-unit-output-path" : "/Guardalo.build/Debug-iphoneos/Guardalo.build/Objects-normal/arm64/IniciadorDeSesion.o",
+    "llvm-bc" : "/Users/jmortizsilva/Desarrollo/Guardar Enlaces/app-ios-nativa/.build-dispositivo/Build/Intermediates.noindex/Guardalo.build/Debug-iphoneos/Guardalo.build/Objects-normal/arm64/IniciadorDeSesion.bc",
+    "object" : "/Users/jmortizsilva/Desarrollo/Guardar Enlaces/app-ios-nativa/.build-dispositivo/Build/Intermediates.noindex/Guardalo.build/Debug-iphoneos/Guardalo.build/Objects-normal/arm64/IniciadorDeSesion.o",
+    "swift-dependencies" : "/Users/jmortizsilva/Desarrollo/Guardar Enlaces/app-ios-nativa/.build-dispositivo/Build/Intermediates.noindex/Guardalo.build/Debug-iphoneos/Guardalo.build/Objects-normal/arm64/IniciadorDeSesion.swiftdeps",
+    "swiftmodule" : "/Users/jmortizsilva/Desarrollo/Guardar Enlaces/app-ios-nativa/.build-dispositivo/Build/Intermediates.noindex/Guardalo.build/Debug-iphoneos/Guardalo.build/Objects-normal/arm64/IniciadorDeSesion~partial.swiftmodule"
+  },
+  "/Users/jmortizsilva/Desarrollo/Guardar Enlaces/app-ios-nativa/Guardalo/ModeloApp.swift" : {
+    "const-values" : "/Users/jmortizsilva/Desarrollo/Guardar Enlaces/app-ios-nativa/.build-dispositivo/Build/Intermediates.noindex/Guardalo.build/Debug-iphoneos/Guardalo.build/Objects-normal/arm64/ModeloApp.swiftconstvalues",
+    "dependencies" : "/Users/jmortizsilva/Desarrollo/Guardar Enlaces/app-ios-nativa/.build-dispositivo/Build/Intermediates.noindex/Guardalo.build/Debug-iphoneos/Guardalo.build/Objects-normal/arm64/ModeloApp.d",
+    "diagnostics" : "/Users/jmortizsilva/Desarrollo/Guardar Enlaces/app-ios-nativa/.build-dispositivo/Build/Intermediates.noindex/Guardalo.build/Debug-iphoneos/Guardalo.build/Objects-normal/arm64/ModeloApp.dia",
+    "index-unit-output-path" : "/Guardalo.build/Debug-iphoneos/Guardalo.build/Objects-normal/arm64/ModeloApp.o",
+    "llvm-bc" : "/Users/jmortizsilva/Desarrollo/Guardar Enlaces/app-ios-nativa/.build-dispositivo/Build/Intermediates.noindex/Guardalo.build/Debug-iphoneos/Guardalo.build/Objects-normal/arm64/ModeloApp.bc",
+    "object" : "/Users/jmortizsilva/Desarrollo/Guardar Enlaces/app-ios-nativa/.build-dispositivo/Build/Intermediates.noindex/Guardalo.build/Debug-iphoneos/Guardalo.build/Objects-normal/arm64/ModeloApp.o",
+    "swift-dependencies" : "/Users/jmortizsilva/Desarrollo/Guardar Enlaces/app-ios-nativa/.build-dispositivo/Build/Intermediates.noindex/Guardalo.build/Debug-iphoneos/Guardalo.build/Objects-normal/arm64/ModeloApp.swiftdeps",
+    "swiftmodule" : "/Users/jmortizsilva/Desarrollo/Guardar Enlaces/app-ios-nativa/.build-dispositivo/Build/Intermediates.noindex/Guardalo.build/Debug-iphoneos/Guardalo.build/Objects-normal/arm64/ModeloApp~partial.swiftmodule"
+  },
+  "/Users/jmortizsilva/Desarrollo/Guardar Enlaces/app-ios-nativa/Guardalo/PantallaAjustes.swift" : {
+    "const-values" : "/Users/jmortizsilva/Desarrollo/Guardar Enlaces/app-ios-nativa/.build-dispositivo/Build/Intermediates.noindex/Guardalo.build/Debug-iphoneos/Guardalo.build/Objects-normal/arm64/PantallaAjustes.swiftconstvalues",
+    "dependencies" : "/Users/jmortizsilva/Desarrollo/Guardar Enlaces/app-ios-nativa/.build-dispositivo/Build/Intermediates.noindex/Guardalo.build/Debug-iphoneos/Guardalo.build/Objects-normal/arm64/PantallaAjustes.d",
+    "diagnostics" : "/Users/jmortizsilva/Desarrollo/Guardar Enlaces/app-ios-nativa/.build-dispositivo/Build/Intermediates.noindex/Guardalo.build/Debug-iphoneos/Guardalo.build/Objects-normal/arm64/PantallaAjustes.dia",
+    "index-unit-output-path" : "/Guardalo.build/Debug-iphoneos/Guardalo.build/Objects-normal/arm64/PantallaAjustes.o",
+    "llvm-bc" : "/Users/jmortizsilva/Desarrollo/Guardar Enlaces/app-ios-nativa/.build-dispositivo/Build/Intermediates.noindex/Guardalo.build/Debug-iphoneos/Guardalo.build/Objects-normal/arm64/PantallaAjustes.bc",
+    "object" : "/Users/jmortizsilva/Desarrollo/Guardar Enlaces/app-ios-nativa/.build-dispositivo/Build/Intermediates.noindex/Guardalo.build/Debug-iphoneos/Guardalo.build/Objects-normal/arm64/PantallaAjustes.o",
+    "swift-dependencies" : "/Users/jmortizsilva/Desarrollo/Guardar Enlaces/app-ios-nativa/.build-dispositivo/Build/Intermediates.noindex/Guardalo.build/Debug-iphoneos/Guardalo.build/Objects-normal/arm64/PantallaAjustes.swiftdeps",
+    "swiftmodule" : "/Users/jmortizsilva/Desarrollo/Guardar Enlaces/app-ios-nativa/.build-dispositivo/Build/Intermediates.noindex/Guardalo.build/Debug-iphoneos/Guardalo.build/Objects-normal/arm64/PantallaAjustes~partial.swiftmodule"
+  },
+  "/Users/jmortizsilva/Desarrollo/Guardar Enlaces/app-ios-nativa/Guardalo/PantallaAnadir.swift" : {
+    "const-values" : "/Users/jmortizsilva/Desarrollo/Guardar Enlaces/app-ios-nativa/.build-dispositivo/Build/Intermediates.noindex/Guardalo.build/Debug-iphoneos/Guardalo.build/Objects-normal/arm64/PantallaAnadir.swiftconstvalues",
+    "dependencies" : "/Users/jmortizsilva/Desarrollo/Guardar Enlaces/app-ios-nativa/.build-dispositivo/Build/Intermediates.noindex/Guardalo.build/Debug-iphoneos/Guardalo.build/Objects-normal/arm64/PantallaAnadir.d",
+    "diagnostics" : "/Users/jmortizsilva/Desarrollo/Guardar Enlaces/app-ios-nativa/.build-dispositivo/Build/Intermediates.noindex/Guardalo.build/Debug-iphoneos/Guardalo.build/Objects-normal/arm64/PantallaAnadir.dia",
+    "index-unit-output-path" : "/Guardalo.build/Debug-iphoneos/Guardalo.build/Objects-normal/arm64/PantallaAnadir.o",
+    "llvm-bc" : "/Users/jmortizsilva/Desarrollo/Guardar Enlaces/app-ios-nativa/.build-dispositivo/Build/Intermediates.noindex/Guardalo.build/Debug-iphoneos/Guardalo.build/Objects-normal/arm64/PantallaAnadir.bc",
+    "object" : "/Users/jmortizsilva/Desarrollo/Guardar Enlaces/app-ios-nativa/.build-dispositivo/Build/Intermediates.noindex/Guardalo.build/Debug-iphoneos/Guardalo.build/Objects-normal/arm64/PantallaAnadir.o",
+    "swift-dependencies" : "/Users/jmortizsilva/Desarrollo/Guardar Enlaces/app-ios-nativa/.build-dispositivo/Build/Intermediates.noindex/Guardalo.build/Debug-iphoneos/Guardalo.build/Objects-normal/arm64/PantallaAnadir.swiftdeps",
+    "swiftmodule" : "/Users/jmortizsilva/Desarrollo/Guardar Enlaces/app-ios-nativa/.build-dispositivo/Build/Intermediates.noindex/Guardalo.build/Debug-iphoneos/Guardalo.build/Objects-normal/arm64/PantallaAnadir~partial.swiftmodule"
+  },
+  "/Users/jmortizsilva/Desarrollo/Guardar Enlaces/app-ios-nativa/Guardalo/PantallaDetalle.swift" : {
+    "const-values" : "/Users/jmortizsilva/Desarrollo/Guardar Enlaces/app-ios-nativa/.build-dispositivo/Build/Intermediates.noindex/Guardalo.build/Debug-iphoneos/Guardalo.build/Objects-normal/arm64/PantallaDetalle.swiftconstvalues",
+    "dependencies" : "/Users/jmortizsilva/Desarrollo/Guardar Enlaces/app-ios-nativa/.build-dispositivo/Build/Intermediates.noindex/Guardalo.build/Debug-iphoneos/Guardalo.build/Objects-normal/arm64/PantallaDetalle.d",
+    "diagnostics" : "/Users/jmortizsilva/Desarrollo/Guardar Enlaces/app-ios-nativa/.build-dispositivo/Build/Intermediates.noindex/Guardalo.build/Debug-iphoneos/Guardalo.build/Objects-normal/arm64/PantallaDetalle.dia",
+    "index-unit-output-path" : "/Guardalo.build/Debug-iphoneos/Guardalo.build/Objects-normal/arm64/PantallaDetalle.o",
+    "llvm-bc" : "/Users/jmortizsilva/Desarrollo/Guardar Enlaces/app-ios-nativa/.build-dispositivo/Build/Intermediates.noindex/Guardalo.build/Debug-iphoneos/Guardalo.build/Objects-normal/arm64/PantallaDetalle.bc",
+    "object" : "/Users/jmortizsilva/Desarrollo/Guardar Enlaces/app-ios-nativa/.build-dispositivo/Build/Intermediates.noindex/Guardalo.build/Debug-iphoneos/Guardalo.build/Objects-normal/arm64/PantallaDetalle.o",
+    "swift-dependencies" : "/Users/jmortizsilva/Desarrollo/Guardar Enlaces/app-ios-nativa/.build-dispositivo/Build/Intermediates.noindex/Guardalo.build/Debug-iphoneos/Guardalo.build/Objects-normal/arm64/PantallaDetalle.swiftdeps",
+    "swiftmodule" : "/Users/jmortizsilva/Desarrollo/Guardar Enlaces/app-ios-nativa/.build-dispositivo/Build/Intermediates.noindex/Guardalo.build/Debug-iphoneos/Guardalo.build/Objects-normal/arm64/PantallaDetalle~partial.swiftmodule"
+  },
+  "/Users/jmortizsilva/Desarrollo/Guardar Enlaces/app-ios-nativa/Guardalo/PantallaEtiquetas.swift" : {
+    "const-values" : "/Users/jmortizsilva/Desarrollo/Guardar Enlaces/app-ios-nativa/.build-dispositivo/Build/Intermediates.noindex/Guardalo.build/Debug-iphoneos/Guardalo.build/Objects-normal/arm64/PantallaEtiquetas.swiftconstvalues",
+    "dependencies" : "/Users/jmortizsilva/Desarrollo/Guardar Enlaces/app-ios-nativa/.build-dispositivo/Build/Intermediates.noindex/Guardalo.build/Debug-iphoneos/Guardalo.build/Objects-normal/arm64/PantallaEtiquetas.d",
+    "diagnostics" : "/Users/jmortizsilva/Desarrollo/Guardar Enlaces/app-ios-nativa/.build-dispositivo/Build/Intermediates.noindex/Guardalo.build/Debug-iphoneos/Guardalo.build/Objects-normal/arm64/PantallaEtiquetas.dia",
+    "index-unit-output-path" : "/Guardalo.build/Debug-iphoneos/Guardalo.build/Objects-normal/arm64/PantallaEtiquetas.o",
+    "llvm-bc" : "/Users/jmortizsilva/Desarrollo/Guardar Enlaces/app-ios-nativa/.build-dispositivo/Build/Intermediates.noindex/Guardalo.build/Debug-iphoneos/Guardalo.build/Objects-normal/arm64/PantallaEtiquetas.bc",
+    "object" : "/Users/jmortizsilva/Desarrollo/Guardar Enlaces/app-ios-nativa/.build-dispositivo/Build/Intermediates.noindex/Guardalo.build/Debug-iphoneos/Guardalo.build/Objects-normal/arm64/PantallaEtiquetas.o",
+    "swift-dependencies" : "/Users/jmortizsilva/Desarrollo/Guardar Enlaces/app-ios-nativa/.build-dispositivo/Build/Intermediates.noindex/Guardalo.build/Debug-iphoneos/Guardalo.build/Objects-normal/arm64/PantallaEtiquetas.swiftdeps",
+    "swiftmodule" : "/Users/jmortizsilva/Desarrollo/Guardar Enlaces/app-ios-nativa/.build-dispositivo/Build/Intermediates.noindex/Guardalo.build/Debug-iphoneos/Guardalo.build/Objects-normal/arm64/PantallaEtiquetas~partial.swiftmodule"
+  },
+  "/Users/jmortizsilva/Desarrollo/Guardar Enlaces/app-ios-nativa/Guardalo/PantallaGestionEtiquetas.swift" : {
+    "const-values" : "/Users/jmortizsilva/Desarrollo/Guardar Enlaces/app-ios-nativa/.build-dispositivo/Build/Intermediates.noindex/Guardalo.build/Debug-iphoneos/Guardalo.build/Objects-normal/arm64/PantallaGestionEtiquetas.swiftconstvalues",
+    "dependencies" : "/Users/jmortizsilva/Desarrollo/Guardar Enlaces/app-ios-nativa/.build-dispositivo/Build/Intermediates.noindex/Guardalo.build/Debug-iphoneos/Guardalo.build/Objects-normal/arm64/PantallaGestionEtiquetas.d",
+    "diagnostics" : "/Users/jmortizsilva/Desarrollo/Guardar Enlaces/app-ios-nativa/.build-dispositivo/Build/Intermediates.noindex/Guardalo.build/Debug-iphoneos/Guardalo.build/Objects-normal/arm64/PantallaGestionEtiquetas.dia",
+    "index-unit-output-path" : "/Guardalo.build/Debug-iphoneos/Guardalo.build/Objects-normal/arm64/PantallaGestionEtiquetas.o",
+    "llvm-bc" : "/Users/jmortizsilva/Desarrollo/Guardar Enlaces/app-ios-nativa/.build-dispositivo/Build/Intermediates.noindex/Guardalo.build/Debug-iphoneos/Guardalo.build/Objects-normal/arm64/PantallaGestionEtiquetas.bc",
+    "object" : "/Users/jmortizsilva/Desarrollo/Guardar Enlaces/app-ios-nativa/.build-dispositivo/Build/Intermediates.noindex/Guardalo.build/Debug-iphoneos/Guardalo.build/Objects-normal/arm64/PantallaGestionEtiquetas.o",
+    "swift-dependencies" : "/Users/jmortizsilva/Desarrollo/Guardar Enlaces/app-ios-nativa/.build-dispositivo/Build/Intermediates.noindex/Guardalo.build/Debug-iphoneos/Guardalo.build/Objects-normal/arm64/PantallaGestionEtiquetas.swiftdeps",
+    "swiftmodule" : "/Users/jmortizsilva/Desarrollo/Guardar Enlaces/app-ios-nativa/.build-dispositivo/Build/Intermediates.noindex/Guardalo.build/Debug-iphoneos/Guardalo.build/Objects-normal/arm64/PantallaGestionEtiquetas~partial.swiftmodule"
+  },
+  "/Users/jmortizsilva/Desarrollo/Guardar Enlaces/app-ios-nativa/Guardalo/PantallaLista.swift" : {
+    "const-values" : "/Users/jmortizsilva/Desarrollo/Guardar Enlaces/app-ios-nativa/.build-dispositivo/Build/Intermediates.noindex/Guardalo.build/Debug-iphoneos/Guardalo.build/Objects-normal/arm64/PantallaLista.swiftconstvalues",
+    "dependencies" : "/Users/jmortizsilva/Desarrollo/Guardar Enlaces/app-ios-nativa/.build-dispositivo/Build/Intermediates.noindex/Guardalo.build/Debug-iphoneos/Guardalo.build/Objects-normal/arm64/PantallaLista.d",
+    "diagnostics" : "/Users/jmortizsilva/Desarrollo/Guardar Enlaces/app-ios-nativa/.build-dispositivo/Build/Intermediates.noindex/Guardalo.build/Debug-iphoneos/Guardalo.build/Objects-normal/arm64/PantallaLista.dia",
+    "index-unit-output-path" : "/Guardalo.build/Debug-iphoneos/Guardalo.build/Objects-normal/arm64/PantallaLista.o",
+    "llvm-bc" : "/Users/jmortizsilva/Desarrollo/Guardar Enlaces/app-ios-nativa/.build-dispositivo/Build/Intermediates.noindex/Guardalo.build/Debug-iphoneos/Guardalo.build/Objects-normal/arm64/PantallaLista.bc",
+    "object" : "/Users/jmortizsilva/Desarrollo/Guardar Enlaces/app-ios-nativa/.build-dispositivo/Build/Intermediates.noindex/Guardalo.build/Debug-iphoneos/Guardalo.build/Objects-normal/arm64/PantallaLista.o",
+    "swift-dependencies" : "/Users/jmortizsilva/Desarrollo/Guardar Enlaces/app-ios-nativa/.build-dispositivo/Build/Intermediates.noindex/Guardalo.build/Debug-iphoneos/Guardalo.build/Objects-normal/arm64/PantallaLista.swiftdeps",
+    "swiftmodule" : "/Users/jmortizsilva/Desarrollo/Guardar Enlaces/app-ios-nativa/.build-dispositivo/Build/Intermediates.noindex/Guardalo.build/Debug-iphoneos/Guardalo.build/Objects-normal/arm64/PantallaLista~partial.swiftmodule"
+  },
+  "/Users/jmortizsilva/Desarrollo/Guardar Enlaces/app-ios-nativa/Guardalo/VistaSafari.swift" : {
+    "const-values" : "/Users/jmortizsilva/Desarrollo/Guardar Enlaces/app-ios-nativa/.build-dispositivo/Build/Intermediates.noindex/Guardalo.build/Debug-iphoneos/Guardalo.build/Objects-normal/arm64/VistaSafari.swiftconstvalues",
+    "dependencies" : "/Users/jmortizsilva/Desarrollo/Guardar Enlaces/app-ios-nativa/.build-dispositivo/Build/Intermediates.noindex/Guardalo.build/Debug-iphoneos/Guardalo.build/Objects-normal/arm64/VistaSafari.d",
+    "diagnostics" : "/Users/jmortizsilva/Desarrollo/Guardar Enlaces/app-ios-nativa/.build-dispositivo/Build/Intermediates.noindex/Guardalo.build/Debug-iphoneos/Guardalo.build/Objects-normal/arm64/VistaSafari.dia",
+    "index-unit-output-path" : "/Guardalo.build/Debug-iphoneos/Guardalo.build/Objects-normal/arm64/VistaSafari.o",
+    "llvm-bc" : "/Users/jmortizsilva/Desarrollo/Guardar Enlaces/app-ios-nativa/.build-dispositivo/Build/Intermediates.noindex/Guardalo.build/Debug-iphoneos/Guardalo.build/Objects-normal/arm64/VistaSafari.bc",
+    "object" : "/Users/jmortizsilva/Desarrollo/Guardar Enlaces/app-ios-nativa/.build-dispositivo/Build/Intermediates.noindex/Guardalo.build/Debug-iphoneos/Guardalo.build/Objects-normal/arm64/VistaSafari.o",
+    "swift-dependencies" : "/Users/jmortizsilva/Desarrollo/Guardar Enlaces/app-ios-nativa/.build-dispositivo/Build/Intermediates.noindex/Guardalo.build/Debug-iphoneos/Guardalo.build/Objects-normal/arm64/VistaSafari.swiftdeps",
+    "swiftmodule" : "/Users/jmortizsilva/Desarrollo/Guardar Enlaces/app-ios-nativa/.build-dispositivo/Build/Intermediates.noindex/Guardalo.build/Debug-iphoneos/Guardalo.build/Objects-normal/arm64/VistaSafari~partial.swiftmodule"
+  }
+}

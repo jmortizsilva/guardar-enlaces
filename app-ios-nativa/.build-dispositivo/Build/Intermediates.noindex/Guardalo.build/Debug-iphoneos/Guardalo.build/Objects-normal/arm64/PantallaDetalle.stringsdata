@@ -1,0 +1,24 @@
+{
+  "source": "/Users/jmortizsilva/Desarrollo/Guardar Enlaces/app-ios-nativa/Guardalo/PantallaDetalle.swift",
+  "tables": {
+    "Localizable": [
+      {
+        "comment": "",
+        "key": "%@: %@",
+        "location": {
+          "startingColumn": 45,
+          "startingLine": 35
+        }
+      },
+      {
+        "comment": "",
+        "key": "%@: %@",
+        "location": {
+          "startingColumn": 49,
+          "startingLine": 38
+        }
+      }
+    ]
+  },
+  "version": 1
+}

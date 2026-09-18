@@ -1,0 +1,4 @@
+module Dominio {
+header "Dominio-Swift.h"
+export *
+}

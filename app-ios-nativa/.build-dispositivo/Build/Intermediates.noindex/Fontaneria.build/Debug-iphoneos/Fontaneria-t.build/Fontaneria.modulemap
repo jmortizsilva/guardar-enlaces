@@ -1,0 +1,4 @@
+module Fontaneria {
+header "Fontaneria-Swift.h"
+export *
+}
