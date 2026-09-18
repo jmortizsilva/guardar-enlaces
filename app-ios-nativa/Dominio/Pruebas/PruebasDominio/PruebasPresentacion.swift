@@ -12,9 +12,17 @@ private func elemento(
     url: String,
     titulo: String? = nil,
     etiquetas: [String] = [],
-    actualizadoEn: MarcaDeTiempo = mediodiaUtc
+    creadoEn: MarcaDeTiempo = mediodiaUtc
 ) -> Elemento {
-    Elemento(id: "e1", url: url, titulo: titulo, etiquetas: etiquetas, actualizadoEn: actualizadoEn)
+    Elemento(
+        id: "e1",
+        url: url,
+        titulo: titulo,
+        etiquetas: etiquetas,
+        creadoEn: creadoEn,
+        // Muy posterior a la de guardado: la fila no debe enseñar esta.
+        actualizadoEn: creadoEn + 30 * 86_400_000
+    )
 }
 
 private func subtitulo(_ elemento: Elemento) -> String {
@@ -71,7 +79,19 @@ struct PruebasSubtituloFila {
 
     @Test("sin fecha lo dice, en vez de soltar 1970")
     func sinFecha() {
-        #expect(subtitulo(elemento(url: "https://a.com", actualizadoEn: 0)).contains("sin fecha"))
+        #expect(subtitulo(elemento(url: "https://a.com", creadoEn: 0)).contains("sin fecha"))
+    }
+
+    @Test("la fecha es la de cuando se guardó, no la del último cambio")
+    func fechaDeGuardadoNoDeCambio() {
+        // Cambiarle una etiqueta a un enlace de hace un mes movía la fecha que
+        // se lee en la fila, y entonces ya no había forma de saber cuándo se
+        // había guardado de verdad.
+        let guardadoEnMarzo = elemento(url: "https://a.com", titulo: "A")
+        let retocadoHoy = guardadoEnMarzo.conEtiquetas(
+            ["ocio"], ahora: { mediodiaUtc + 99_999_999 })
+
+        #expect(subtitulo(retocadoHoy).contains("15 de marzo de 2024"))
     }
 
     @Test("lo que no es una URL no aporta dominio, pero tampoco rompe la fila")

@@ -72,17 +72,21 @@ public enum Sincronizacion {
         return nueva
     }
 
-    /// Los que no están borrados, más recientes primero. Con el
-    /// identificador como desempate: dos enlaces guardados en el mismo
+    /// Los que no están borrados, los guardados más recientemente primero.
+    ///
+    /// Por fecha de guardado y no de última modificación: si no, cambiarle una
+    /// etiqueta a un enlace de hace un mes lo mandaba al principio de la
+    /// lista, y el orden dejaba de tener que ver con lo que se ve escrito en
+    /// cada fila.
+    ///
+    /// Con el identificador como desempate: dos enlaces guardados en el mismo
     /// milisegundo (importar una biblioteca entera lo hace) saldrían hoy en
     /// un orden y mañana en otro, y la lista se recolocaría sola.
     public static func elementosVisibles(_ cache: Cache) -> [Elemento] {
         cache.values
             .filter { !$0.borrado }
             .sorted {
-                $0.actualizadoEn == $1.actualizadoEn
-                    ? $0.id < $1.id
-                    : $0.actualizadoEn > $1.actualizadoEn
+                $0.creadoEn == $1.creadoEn ? $0.id < $1.id : $0.creadoEn > $1.creadoEn
             }
     }
 

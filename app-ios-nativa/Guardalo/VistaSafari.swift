@@ -10,11 +10,10 @@ import SwiftUI
 /// artículo y recorrer media página buscándolo.
 struct VistaSafari: UIViewControllerRepresentable {
     let url: URL
-    var modoLector = true
 
     func makeUIViewController(context: Context) -> SFSafariViewController {
         let configuracion = SFSafariViewController.Configuration()
-        configuracion.entersReaderIfAvailable = modoLector
+        configuracion.entersReaderIfAvailable = true
         return SFSafariViewController(url: url, configuration: configuracion)
     }
 

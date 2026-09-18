@@ -25,6 +25,7 @@ struct PantallaLista: View {
         NavigationStack {
             contenido
                 .navigationTitle(Textos.tituloApp)
+                .navigationBarTitleDisplayMode(.inline)
                 .searchable(text: $busqueda, prompt: Textos.marcadorBusqueda)
                 .refreshable { await modelo.sincronizarAMano() }
                 .toolbar { barra }
@@ -58,7 +59,7 @@ struct PantallaLista: View {
                     PantallaAnadir(presentada: $anadiendo)
                 }
                 .sheet(item: $aAbrir) { enlace in
-                    VistaSafari(url: enlace.url, modoLector: enlace.modoLector)
+                    VistaSafari(url: enlace.url)
                         .ignoresSafeArea()
                 }
         }
@@ -74,9 +75,8 @@ struct PantallaLista: View {
             List(visibles, id: \.id) { elemento in
                 FilaEnlace(
                     elemento: elemento,
-                    alAbrir: { abrir(elemento, enModoLector: true) },
+                    alAbrir: { abrir(elemento) },
                     alCopiar: { copiar(elemento) },
-                    alAbrirEnSafari: { abrir(elemento, enModoLector: false) },
                     alEtiquetar: { aEtiquetar = elemento },
                     alVerDetalles: { enDetalle = elemento },
                     alEliminar: { aEliminar = elemento }
@@ -87,7 +87,21 @@ struct PantallaLista: View {
 
     @ToolbarContentBuilder
     private var barra: some ToolbarContent {
-        ToolbarItem(placement: .topBarLeading) {
+        // Todo a la derecha y el título en la propia barra: así VoiceOver lee
+        // «Guárdalo», Ajustes, Añadir enlace y el filtro, en ese orden. Con el
+        // título grande, los botones se leían antes que el nombre de la
+        // pantalla.
+        ToolbarItemGroup(placement: .topBarTrailing) {
+            Button {
+                enAjustes = true
+            } label: {
+                Label(Textos.ajustes, systemImage: "gearshape")
+            }
+            Button {
+                anadiendo = true
+            } label: {
+                Label(Textos.anadirEnlace, systemImage: "plus")
+            }
             Menu {
                 Picker(Textos.filtroPorEtiqueta(etiqueta), selection: $etiqueta) {
                     Text(Textos.todasLasEtiquetas).tag(String?.none)
@@ -100,21 +114,9 @@ struct PantallaLista: View {
             } label: {
                 Label(Textos.filtroPorEtiqueta(etiqueta), systemImage: "line.3.horizontal.decrease")
             }
-        }
-        ToolbarItemGroup(placement: .topBarTrailing) {
             if modelo.sincronizando {
                 ProgressView()
                     .accessibilityLabel(Textos.sincronizando)
-            }
-            Button {
-                anadiendo = true
-            } label: {
-                Label(Textos.anadirEnlace, systemImage: "plus")
-            }
-            Button {
-                enAjustes = true
-            } label: {
-                Label(Textos.ajustes, systemImage: "gearshape")
             }
         }
     }
@@ -130,11 +132,14 @@ struct PantallaLista: View {
         )
     }
 
-    private func abrir(_ elemento: Elemento, enModoLector: Bool) {
+    /// Siempre en modo lector y siempre dentro de la app. Quien quiera la
+    /// página en otro navegador, copia la dirección: una acción menos que
+    /// explicar y que recorrer en el rotor.
+    private func abrir(_ elemento: Elemento) {
         guard let url = URL(string: elemento.url) else {
             return
         }
-        aAbrir = EnlaceAAbrir(url: url, modoLector: enModoLector)
+        aAbrir = EnlaceAAbrir(url: url)
     }
 
     private func copiar(_ elemento: Elemento) {
@@ -150,7 +155,6 @@ struct FilaEnlace: View {
     let elemento: Elemento
     let alAbrir: () -> Void
     let alCopiar: () -> Void
-    let alAbrirEnSafari: () -> Void
     let alEtiquetar: () -> Void
     let alVerDetalles: () -> Void
     let alEliminar: () -> Void
@@ -171,25 +175,26 @@ struct FilaEnlace: View {
             "\(Presentacion.titulo(de: elemento)). \(Presentacion.subtitulo(de: elemento))"
         )
         .accessibilityHint(Textos.abrirEnModoLector)
+        // Aquí NO van eliminar ni ver detalles: lo que se pone en el gesto de
+        // deslizar, iOS lo añade solo al rotor, y ponerlo también aquí es lo
+        // que hacía que se oyeran dos veces.
         .accessibilityActions {
-            Button(Textos.copiarUrl, action: alCopiar)
-            Button(Textos.abrirEnSafari, action: alAbrirEnSafari)
             Button(Textos.editarEtiquetas, action: alEtiquetar)
-            Button(Textos.verDetalles, action: alVerDetalles)
-            Button(Textos.eliminar, action: alEliminar)
+            Button(Textos.copiarUrl, action: alCopiar)
         }
+        // Eliminar hacia la izquierda, que es donde lo tiene todo iPhone.
         .swipeActions(edge: .trailing) {
             Button(Textos.eliminar, role: .destructive, action: alEliminar)
         }
         .swipeActions(edge: .leading) {
-            Button(Textos.editarEtiquetas, action: alEtiquetar)
+            Button(Textos.verDetalles, action: alVerDetalles)
                 .tint(.accentColor)
         }
+        // Las cinco, para quien ni desliza ni usa el rotor.
         .contextMenu {
-            Button(Textos.copiarUrl, action: alCopiar)
-            Button(Textos.abrirEnSafari, action: alAbrirEnSafari)
-            Button(Textos.editarEtiquetas, action: alEtiquetar)
             Button(Textos.verDetalles, action: alVerDetalles)
+            Button(Textos.editarEtiquetas, action: alEtiquetar)
+            Button(Textos.copiarUrl, action: alCopiar)
             Button(Textos.eliminar, role: .destructive, action: alEliminar)
         }
     }
@@ -200,9 +205,8 @@ struct FilaEnlace: View {
 /// del rotor y tienen que hacer dos cosas distintas.
 struct EnlaceAAbrir: Identifiable {
     let url: URL
-    let modoLector: Bool
 
-    var id: String { "\(url.absoluteString)|\(modoLector)" }
+    var id: String { url.absoluteString }
 }
 
 /// Para poder usar `Elemento` con `.alert(item:)` y `.sheet(item:)`.

@@ -30,9 +30,11 @@ public enum Presentacion {
         if !elemento.etiquetas.isEmpty {
             partes.append(elemento.etiquetas.joined(separator: ", "))
         }
-        partes.append(
-            fechaLegible(elemento.actualizadoEn, locale: locale, zonaHoraria: zonaHoraria)
-        )
+        // La fecha de guardado, no la de la última modificación: cambiar una
+        // etiqueta movía la fecha que se ve, y eso hacía dudar de cuándo se
+        // había guardado el enlace de verdad. `actualizadoEn` sigue ahí, pero
+        // es cosa de la sincronización, no de lo que se lee.
+        partes.append(fechaLegible(elemento.creadoEn, locale: locale, zonaHoraria: zonaHoraria))
 
         return partes.joined(separator: " — ")
     }
