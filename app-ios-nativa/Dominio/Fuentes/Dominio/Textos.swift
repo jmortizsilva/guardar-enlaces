@@ -158,3 +158,56 @@ extension Textos {
     public static let guardadoSinComprobar =
         "Guardado sin título, no se pudo comprobar la página"
 }
+
+extension Textos {
+    // MARK: - Ajustes
+
+    public static let ajustesTitulo = "Ajustes"
+    public static let cerrar = "Cerrar"
+
+    public static func sesionIniciadaComo(email: String) -> String {
+        "Sesión iniciada como \(email). Tus enlaces se sincronizan con el PC."
+    }
+
+    public static let sinCuenta = "Sin cuenta: los enlaces se guardan solo en este iPhone."
+    public static let entrarConGoogle = "Entrar con Google"
+    public static let pistaEntrar =
+        "Hace falta para tener los mismos enlaces en el iPhone y en el PC"
+    public static let cerrarSesion = "Cerrar sesión"
+    public static let pistaCerrarSesion =
+        "Los enlaces se quedan en este iPhone y la aplicación sigue funcionando sin cuenta"
+
+    public static func version(_ numero: String, compilacion: String) -> String {
+        "Versión \(numero) (\(compilacion))"
+    }
+
+    // MARK: - Entrar con una cuenta
+
+    public static let loginTitulo = "Entrar con una cuenta"
+    public static let loginExplicacion =
+        "La cuenta sirve para tener los mismos enlaces en el iPhone y en el PC. Sin ella la "
+        + "aplicación funciona igual, pero los enlaces se quedan solo en este iPhone."
+    /// Se avisa de que se abre el navegador porque iOS pregunta antes si se
+    /// permite usar google.com para iniciar sesión, y esa pregunta sale de la
+    /// nada si no se ha dicho.
+    public static let pistaLogin =
+        "Se abre Safari para confirmar tu cuenta y vuelves aquí al terminar"
+    public static let ahoraNo = "Ahora no"
+    public static let sesionIniciada = "Sesión iniciada. Tus enlaces se sincronizarán con el PC."
+
+    // MARK: - Qué hacer con lo que ya había en el teléfono
+
+    public static let tituloEnlacesEnElTelefono = "Enlaces en este iPhone"
+
+    /// Se dice cuántos son y qué pasa con cada respuesta: ninguna de las dos
+    /// se puede deshacer.
+    public static func preguntaImportar(cuantos: Int, deOtraCuenta: Bool) -> String {
+        let cuenta = cuantos == 1 ? "1 enlace guardado" : "\(cuantos) enlaces guardados"
+        let origen = deOtraCuenta ? "con otra cuenta" : "sin cuenta"
+        return "Hay \(cuenta) en este iPhone \(origen). ¿Quieres añadirlos a esta cuenta? "
+            + "Si eliges borrarlos, se quitan de este iPhone y no se pueden recuperar."
+    }
+
+    public static let anadirlos = "Añadirlos"
+    public static let borrarlos = "Borrarlos"
+}

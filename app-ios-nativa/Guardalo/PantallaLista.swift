@@ -10,6 +10,7 @@ struct PantallaLista: View {
     @State private var aEtiquetar: Elemento?
     @State private var aAbrir: EnlaceAAbrir?
     @State private var anadiendo = false
+    @State private var enAjustes = false
 
     private var visibles: [Elemento] {
         Biblioteca.buscar(
@@ -35,6 +36,9 @@ struct PantallaLista: View {
                     ) { etiquetas in
                         modelo.cambiarEtiquetas(de: elemento, a: etiquetas)
                     }
+                }
+                .sheet(isPresented: $enAjustes) {
+                    PantallaAjustes(presentada: $enAjustes)
                 }
                 .sheet(isPresented: $anadiendo) {
                     PantallaAnadir(presentada: $anadiendo)
@@ -91,7 +95,7 @@ struct PantallaLista: View {
                 Label(Textos.anadirEnlace, systemImage: "plus")
             }
             Button {
-                // Ajustes llega en el paso siguiente.
+                enAjustes = true
             } label: {
                 Label(Textos.ajustes, systemImage: "gearshape")
             }

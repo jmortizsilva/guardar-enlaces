@@ -24,6 +24,7 @@ final class ModeloApp {
     private let sesion: Sesion
     private let sincronizador: Sincronizador
     private let resolvedor: ResolverMetadatos
+    private let iniciador = IniciadorDeSesion()
     /// Para no sincronizar dos veces seguidas al alternar entre aplicaciones.
     private var ultimaSincronizacion: MarcaDeTiempo = 0
 
@@ -114,6 +115,95 @@ final class ModeloApp {
         refrescar()
         Anuncios.importante(Textos.etiquetasGuardadas(etiquetas))
         Task { await sincronizarEnSilencio() }
+    }
+
+    // MARK: - La cuenta
+
+    /// Abre el inicio de sesión de Google y, si sale bien, resuelve qué hacer
+    /// con los enlaces que ya hubiera en el teléfono.
+    ///
+    /// `decidirImportacion` solo se llama si hay algo que decidir: enlaces de
+    /// otra cuenta, o guardados sin cuenta. Entrar en la cuenta de siempre no
+    /// pregunta nada, que es el caso normal.
+    func iniciarSesionConGoogle(
+        decidirImportacion: (EnlacesEnElTelefono) async -> Bool
+    ) async -> Login.Resultado {
+        guard
+            let url = cliente.urlIniciarLogin(
+                proveedor: "google",
+                estado: Login.generarEstado(),
+                esquema: IniciadorDeSesion.esquema
+            )
+        else {
+            return .error(mensaje: Login.mensajeDeError(motivo: ""))
+        }
+
+        let resultado = await iniciador.pedirCodigoDeCanje(urlAutorizacion: url)
+        guard case .exito(let codigo) = resultado else {
+            return resultado
+        }
+
+        do {
+            try await sesion.entrar(conCodigoDeCanje: codigo)
+        } catch let fallo as ErrorApi {
+            return .error(mensaje: fallo.mensaje)
+        } catch {
+            return .error(mensaje: Login.mensajeDeError(motivo: ""))
+        }
+
+        await asentarLaCuenta(decidirImportacion: decidirImportacion)
+        autenticado = true
+        usuario = await sesion.usuario
+        refrescar()
+        await sincronizarEnSilencio()
+        return resultado
+    }
+
+    /// Sin correo no se toca nada: no habría con qué comparar y, ante la
+    /// duda, ni se tira ni se importa nada.
+    private func asentarLaCuenta(decidirImportacion: (EnlacesEnElTelefono) async -> Bool) async {
+        guard let email = await sesion.usuario?.email else {
+            return
+        }
+        let dueno = AsentarCuenta.identidadDueno(urlServidor: Configuracion.urlApi, email: email)
+        let paso = AsentarCuenta.alEntrar(
+            duenoAnterior: try? almacen.duenoActual(),
+            dueno: dueno,
+            cuantosElementos: (try? almacen.contarElementos()) ?? 0
+        )
+
+        switch paso {
+        case .noHacerNada:
+            return
+        case .asentar(let asiento):
+            aplicar(asiento)
+        case .preguntar(let enlaces):
+            aplicar(AsentarCuenta.asiento(segunRespuesta: await decidirImportacion(enlaces)))
+        }
+        // El cursor era del OTRO servidor: si no se pone a cero, la primera
+        // bajada pide «lo cambiado desde» una fecha que aquí no significa
+        // nada, y se salta todo lo anterior a ella.
+        try? almacen.fijarCursor(0)
+        try? almacen.fijarDueno(dueno)
+    }
+
+    private func aplicar(_ asiento: AsientoDeCuenta) {
+        switch asiento {
+        case .adoptarLoQueHay:
+            try? almacen.adoptarConIdsNuevos()
+        case .empezarDeCero:
+            try? almacen.vaciar()
+        }
+    }
+
+    /// Los enlaces se quedan en el teléfono y la app sigue funcionando en
+    /// local. El dueño NO se borra a propósito: si mañana entra otra cuenta,
+    /// hay que saber que esto era de alguien y preguntar antes de mezclarlo.
+    func cerrarSesion() async {
+        await sesion.cerrar()
+        autenticado = false
+        usuario = nil
+        refrescar()
     }
 
     // MARK: - Añadir un enlace

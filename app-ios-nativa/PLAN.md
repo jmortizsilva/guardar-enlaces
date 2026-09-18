@@ -90,11 +90,15 @@ dejaba preparada.
       antes de la pantalla.
       - [x] Lista de enlaces, con búsqueda, filtro, acciones y eliminación.
       - [x] Elegir etiquetas de un enlace.
-      - [x] Pruebas de interfaz contra el árbol de accesibilidad (11).
+      - [x] Pruebas de interfaz contra el árbol de accesibilidad (15).
       - [x] Añadir enlace, con el comportamiento de Windows: un enlace
             repetido actualiza el que había en vez de duplicarse, y guardar no
             espera a la comprobación.
-      - [ ] Ajustes y login.
+      - [x] Ajustes y login. Sin «Buscar actualizaciones» (no hay
+            actualizaciones por aire) y con la versión instalada en su sitio,
+            para saber qué build llegó por TestFlight. El interruptor de
+            guardado silencioso no aparece hasta que exista su extensión, en
+            la fase 4.
       - [ ] Detalle de un enlace.
       - [ ] Gestionar etiquetas (renombrar y eliminar en todos los enlaces).
 - [ ] **4. Extensión de compartir** y guardado silencioso, compartiendo código
@@ -109,6 +113,10 @@ dejaba preparada.
   compararlas. En la fase 5 pasa a ser el de siempre,
   `com.jmortizsilva.guardarenlaces`. El App Group no depende de esto, así que
   puede seguir siendo el mismo.
+- **El inicio de sesión de verdad y el llavero siguen sin probarse.** Entrar
+  con Google abre la hoja del sistema, que una prueba de interfaz no puede
+  recorrer, y `CredencialesKeychain` solo se ejercita al entrar. Las dos cosas
+  necesitan una pasada a mano en el simulador o en el teléfono.
 - **El llavero de verdad solo se puede comprobar en el simulador o en el
   teléfono.** `CredencialesKeychain` no se ejercita con `swift test` en el
   Mac (necesita la autorización de llavero de la app firmada), así que la
@@ -117,6 +125,11 @@ dejaba preparada.
 - **No hay firma configurada en este Mac** (`security find-identity` no
   encuentra ninguna identidad). Para el simulador no hace falta; para las
   fases 4 y 5 sí.
-- **El login de Google no se puede probar contra `api.jmortiz.es`** mientras
-  siga con `client_id=x`, según dice `PROYECTO.md`. Habrá que probarlo contra
-  el backend local.
+- **El servidor compartido ya sirve para probar el inicio de sesión de
+  verdad**: comprobado el 2026-09-18, `client_id` real de Google y
+  `/auth/dev-login` devolviendo 404. Lo que sigue sin configurar es Apple
+  (`client_id=x`), que hará falta antes de la App Store.
+- **El esquema de enlace es `guardalonativo`, no `guardarenlaces`.** Con el
+  mismo esquema en las dos apps instaladas a la vez, iOS entregaría la vuelta
+  del inicio de sesión a cualquiera de ellas. Vuelve al de siempre en la fase
+  5, junto con el identificador.
