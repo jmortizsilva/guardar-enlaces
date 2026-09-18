@@ -8,9 +8,11 @@ struct PantallaLista: View {
     @State private var etiqueta: String?
     @State private var aEliminar: Elemento?
     @State private var aEtiquetar: Elemento?
+    @State private var enDetalle: Elemento?
     @State private var aAbrir: EnlaceAAbrir?
     @State private var anadiendo = false
     @State private var enAjustes = false
+    @State private var gestionandoEtiquetas = false
 
     private var visibles: [Elemento] {
         Biblioteca.buscar(
@@ -36,6 +38,18 @@ struct PantallaLista: View {
                     ) { etiquetas in
                         modelo.cambiarEtiquetas(de: elemento, a: etiquetas)
                     }
+                }
+                .sheet(item: $enDetalle) { elemento in
+                    PantallaDetalle(
+                        elemento: elemento,
+                        presentada: Binding(
+                            get: { enDetalle != nil },
+                            set: { if !$0 { enDetalle = nil } }
+                        )
+                    )
+                }
+                .sheet(isPresented: $gestionandoEtiquetas) {
+                    PantallaGestionEtiquetas(presentada: $gestionandoEtiquetas)
                 }
                 .sheet(isPresented: $enAjustes) {
                     PantallaAjustes(presentada: $enAjustes)
@@ -64,6 +78,7 @@ struct PantallaLista: View {
                     alCopiar: { copiar(elemento) },
                     alAbrirEnSafari: { abrir(elemento, enModoLector: false) },
                     alEtiquetar: { aEtiquetar = elemento },
+                    alVerDetalles: { enDetalle = elemento },
                     alEliminar: { aEliminar = elemento }
                 )
             }
@@ -80,6 +95,8 @@ struct PantallaLista: View {
                         Text(nombre).tag(String?.some(nombre))
                     }
                 }
+                Divider()
+                Button(Textos.gestionarEtiquetas) { gestionandoEtiquetas = true }
             } label: {
                 Label(Textos.filtroPorEtiqueta(etiqueta), systemImage: "line.3.horizontal.decrease")
             }
@@ -135,6 +152,7 @@ struct FilaEnlace: View {
     let alCopiar: () -> Void
     let alAbrirEnSafari: () -> Void
     let alEtiquetar: () -> Void
+    let alVerDetalles: () -> Void
     let alEliminar: () -> Void
 
     var body: some View {
@@ -157,6 +175,7 @@ struct FilaEnlace: View {
             Button(Textos.copiarUrl, action: alCopiar)
             Button(Textos.abrirEnSafari, action: alAbrirEnSafari)
             Button(Textos.editarEtiquetas, action: alEtiquetar)
+            Button(Textos.verDetalles, action: alVerDetalles)
             Button(Textos.eliminar, action: alEliminar)
         }
         .swipeActions(edge: .trailing) {
@@ -170,6 +189,7 @@ struct FilaEnlace: View {
             Button(Textos.copiarUrl, action: alCopiar)
             Button(Textos.abrirEnSafari, action: alAbrirEnSafari)
             Button(Textos.editarEtiquetas, action: alEtiquetar)
+            Button(Textos.verDetalles, action: alVerDetalles)
             Button(Textos.eliminar, role: .destructive, action: alEliminar)
         }
     }

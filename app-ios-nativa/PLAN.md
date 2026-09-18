@@ -1,6 +1,6 @@
 # Pasar la app de iPhone a nativo
 
-Estado: fases 0, 1 y 2 terminadas (2026-09-18).
+Estado: fases 0, 1, 2 y 3 terminadas (2026-09-18).
 
 ## Por qué
 
@@ -85,12 +85,12 @@ dejaba preparada.
       **Decidido:** la app nueva arranca vacía; no se importa la base de datos
       de la app de Expo, porque con cuenta la trae el servidor y en la fase 5,
       al recuperar el identificador de siempre, se encontrará la que ya había.
-- [ ] **3. Interfaz.** Lista, detalle, añadir, gestión de etiquetas, ajustes,
+- [x] **3. Interfaz.** Lista, detalle, añadir, gestión de etiquetas, ajustes,
       login. Los textos de cada pantalla se escriben y se revisan juntos,
       antes de la pantalla.
       - [x] Lista de enlaces, con búsqueda, filtro, acciones y eliminación.
       - [x] Elegir etiquetas de un enlace.
-      - [x] Pruebas de interfaz contra el árbol de accesibilidad (15).
+      - [x] Pruebas de interfaz contra el árbol de accesibilidad (20).
       - [x] Añadir enlace, con el comportamiento de Windows: un enlace
             repetido actualiza el que había en vez de duplicarse, y guardar no
             espera a la comprobación.
@@ -99,12 +99,24 @@ dejaba preparada.
             para saber qué build llegó por TestFlight. El interruptor de
             guardado silencioso no aparece hasta que exista su extensión, en
             la fase 4.
-      - [ ] Detalle de un enlace.
-      - [ ] Gestionar etiquetas (renombrar y eliminar en todos los enlaces).
+      - [x] Detalle de un enlace. Se llega por una acción nueva del rotor,
+            «Ver detalles»: tocar la fila sigue abriendo en modo lector, que
+            es lo que ya estaba decidido.
+      - [x] Gestionar etiquetas: renombrar y eliminar en todos los enlaces a
+            la vez, crear reservadas, y cada fila diciendo cuántos enlaces
+            lleva.
 - [ ] **4. Extensión de compartir** y guardado silencioso, compartiendo código
       con la app. Mueren el plugin de 94 líneas y las 315 de Swift con
       marcadores de posición.
-- [ ] **5. Firma, TestFlight y prueba en un iPhone real.**
+- [ ] **5. Firma e instalación en el iPhone.** Adelantada: el teléfono se
+      puede conectar a este Mac, así que se puede instalar por cable sin pasar
+      por TestFlight. Hace falta una clave de API de App Store Connect
+      guardada en el Mac (no en el repositorio), y aceptar en el teléfono el
+      aviso de confiar en este ordenador.
+
+      **Es el primer momento en que alguien va a oír esta app.** Nada de lo
+      hecho hasta aquí se ha probado con VoiceOver: el simulador tiene su
+      propio lector dentro de la ventana y, por SSH, no sirve.
 
 ## Cabos sueltos
 

@@ -4,3 +4,8 @@
 DerivedData/
 xcuserdata/
 *.xcuserstate
+
+# Claves de App Store Connect: nunca en el repositorio, ni por descuido.
+# Van en ~/.appstoreconnect/private_keys/, que es donde las busca xcodebuild.
+*.p8
+AuthKey_*

@@ -253,6 +253,70 @@ final class ModeloApp {
         Task { await sincronizarEnSilencio() }
     }
 
+    // MARK: - Gestionar las etiquetas de toda la biblioteca
+
+    /// Las etiquetas con cuántos enlaces lleva cada una. Incluye las
+    /// reservadas, que existen aunque todavía no las lleve ninguno.
+    var etiquetasConRecuento: [(nombre: String, enlaces: Int)] {
+        let recuento = Biblioteca.recuentoPorEtiqueta(elementos)
+        return etiquetasDisponibles.map { ($0, recuento[$0] ?? 0) }
+    }
+
+    /// Crea una etiqueta que todavía no lleva ningún enlace, para tenerla
+    /// lista y poder asignarla luego desde cualquiera de los dos clientes.
+    func crearEtiqueta(_ nombre: String) {
+        let limpio = nombre.trimmingCharacters(in: .whitespacesAndNewlines)
+        guard !limpio.isEmpty, !etiquetasDisponibles.contains(limpio) else {
+            return
+        }
+        try? almacen.marcarEtiquetaPendiente(nuevaEtiquetaDefinida(nombre: limpio))
+        refrescar()
+        Anuncios.importante(Textos.etiquetaAnadida(limpio))
+        Task { await sincronizarEnSilencio() }
+    }
+
+    /// Cambia el nombre en todos los enlaces que la llevan, y también en la
+    /// etiqueta reservada si existía. Las dos cosas, o el nombre viejo
+    /// reaparecería en el otro cliente.
+    func renombrarEtiqueta(_ vieja: String, a nueva: String) {
+        let limpio = nueva.trimmingCharacters(in: .whitespacesAndNewlines)
+        guard !limpio.isEmpty, limpio != vieja else {
+            return
+        }
+        let cambiados = Biblioteca.renombrarEtiqueta(en: elementos, vieja: vieja, nueva: limpio)
+        for elemento in cambiados {
+            try? almacen.marcarPendiente(elemento)
+        }
+        if let reservada = etiquetaReservada(conNombre: vieja) {
+            try? almacen.marcarEtiquetaPendiente(reservada.renombrada(limpio))
+        }
+        refrescar()
+        Anuncios.importante(
+            Textos.etiquetaRenombrada(de: vieja, a: limpio, enlaces: cambiados.count)
+        )
+        Task { await sincronizarEnSilencio() }
+    }
+
+    func eliminarEtiqueta(_ nombre: String) {
+        let cambiados = Biblioteca.quitarEtiqueta(en: elementos, etiqueta: nombre)
+        for elemento in cambiados {
+            try? almacen.marcarPendiente(elemento)
+        }
+        if let reservada = etiquetaReservada(conNombre: nombre) {
+            try? almacen.marcarEtiquetaPendiente(reservada.marcadaComoBorrada())
+        }
+        refrescar()
+        Anuncios.importante(Textos.etiquetaEliminada(nombre, enlaces: cambiados.count))
+        Task { await sincronizarEnSilencio() }
+    }
+
+    private func etiquetaReservada(conNombre nombre: String) -> EtiquetaDefinida? {
+        guard let cache = try? almacen.cargarEtiquetasDefinidas() else {
+            return nil
+        }
+        return Sincronizacion.etiquetasReservadasVisibles(cache).first { $0.nombre == nombre }
+    }
+
     // MARK: - Sincronizar
 
     /// La que pide el usuario arrastrando la lista: dice cómo ha acabado,

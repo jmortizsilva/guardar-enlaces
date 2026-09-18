@@ -81,3 +81,28 @@ struct PruebasSubtituloFila {
         #expect(subtitulo(raro) == "15 de marzo de 2024")
     }
 }
+
+@Suite("Textos del detalle")
+struct PruebasTextosDetalle {
+    @Test("la fecha de guardado se lee, no se descifra")
+    func fechaDeGuardado() {
+        let fecha = Presentacion.fechaLegible(
+            mediodiaUtc,
+            locale: Presentacion.localeDeLaApp,
+            zonaHoraria: TimeZone(identifier: "UTC")!
+        )
+
+        #expect(Textos.guardadoEl(fecha) == "Guardado el 15 de marzo de 2024")
+    }
+
+    @Test("un enlace sin fecha lo dice en vez de soltar 1970")
+    func sinFecha() {
+        let fecha = Presentacion.fechaLegible(
+            0,
+            locale: Presentacion.localeDeLaApp,
+            zonaHoraria: TimeZone(identifier: "UTC")!
+        )
+
+        #expect(fecha == "sin fecha")
+    }
+}

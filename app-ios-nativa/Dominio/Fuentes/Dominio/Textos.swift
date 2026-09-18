@@ -211,3 +211,56 @@ extension Textos {
     public static let anadirlos = "Añadirlos"
     public static let borrarlos = "Borrarlos"
 }
+
+extension Textos {
+    // MARK: - Detalle de un enlace
+
+    public static let verDetalles = "Ver detalles"
+    public static let campoDireccion = "URL"
+    public static let campoDescripcion = "Descripción"
+    public static let campoEtiquetas = "Etiquetas"
+    public static let ningunaEtiqueta = "Ninguna"
+
+    public static func guardadoEl(_ fecha: String) -> String {
+        "Guardado el \(fecha)"
+    }
+}
+
+extension Textos {
+    // MARK: - Gestionar las etiquetas de toda la biblioteca
+
+    public static let gestionarEtiquetas = "Gestionar etiquetas"
+    public static let renombrar = "Renombrar"
+    public static let nuevoNombre = "Nuevo nombre"
+    public static let crearEtiqueta = "Crear etiqueta"
+
+    /// Cuántos enlaces lleva cada etiqueta, dicho en la propia fila: sin esto
+    /// hay que salir a contarlos antes de decidir si renombrarla o tirarla.
+    public static func etiquetaConRecuento(_ nombre: String, enlaces: Int) -> String {
+        switch enlaces {
+        case 0: "\(nombre), ningún enlace"
+        case 1: "\(nombre), 1 enlace"
+        default: "\(nombre), \(enlaces) enlaces"
+        }
+    }
+
+    /// Se avisa antes, porque esto toca todos los enlaces que la llevan y no
+    /// se puede deshacer.
+    public static func preguntaEliminarEtiqueta(_ nombre: String, enlaces: Int) -> String {
+        let cuantos = enlaces == 1 ? "1 enlace" : "\(enlaces) enlaces"
+        return "¿Eliminar la etiqueta «\(nombre)»? Se quitará de \(cuantos) y no se puede deshacer."
+    }
+
+    public static func etiquetaRenombrada(de vieja: String, a nueva: String, enlaces: Int) -> String
+    {
+        "Etiqueta «\(vieja)» renombrada a «\(nueva)» en \(enlaces == 1 ? "1 enlace" : "\(enlaces) enlaces")"
+    }
+
+    public static func etiquetaEliminada(_ nombre: String, enlaces: Int) -> String {
+        "Etiqueta «\(nombre)» eliminada de \(enlaces == 1 ? "1 enlace" : "\(enlaces) enlaces")"
+    }
+
+    public static func etiquetaAnadida(_ nombre: String) -> String {
+        "Etiqueta «\(nombre)» añadida"
+    }
+}

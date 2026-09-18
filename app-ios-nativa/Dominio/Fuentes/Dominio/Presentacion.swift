@@ -46,7 +46,7 @@ public enum Presentacion {
 
     /// El mes en letra a propósito: «15/3/2024» VoiceOver lo lee dígito a
     /// dígito, y hay que descifrarlo en vez de oírlo.
-    private static func fechaLegible(
+    public static func fechaLegible(
         _ instante: MarcaDeTiempo,
         locale: Locale,
         zonaHoraria: TimeZone
