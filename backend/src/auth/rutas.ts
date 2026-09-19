@@ -8,6 +8,7 @@ import {
   resolverLoginPendiente,
   consumirCodigoCanje,
 } from './loginPendientes';
+import { verificarTokenDeApple } from './appleNativo';
 import { crearExigirSesion } from './middleware';
 import {
   intercambiarCodigoApple,
@@ -239,6 +240,50 @@ export async function registrarRutasAuth(app: FastifyInstance): Promise<void> {
         return reply.code(400).send({ error: 'codigo invalido o caducado' });
       }
       return respuestaDeSesion(iniciarSesion(usuarioId, null));
+    },
+  );
+
+  // Inicio de sesion de Apple hecho por la propia app de iOS, sin navegador (ver
+  // CONTRATO-API.md). Aqui NO se confia en nada de lo que manda el cliente: el token viene
+  // firmado por Apple y se comprueba entero antes de mirar quien dice ser.
+  app.post<{ Body: { identityToken?: unknown; nonce?: unknown } }>(
+    '/auth/apple-nativo',
+    { config: { rateLimit: { max: 20, timeWindow: '15 minutes' } } },
+    async (request, reply) => {
+      const identityToken = request.body?.identityToken;
+      const nonce = request.body?.nonce;
+      if (typeof identityToken !== 'string' || identityToken.length === 0) {
+        return reply.code(400).send({ error: 'falta "identityToken"' });
+      }
+      if (typeof nonce !== 'string' || nonce.length === 0) {
+        return reply.code(400).send({ error: 'falta "nonce"' });
+      }
+      if (config.apple.appIds.length === 0) {
+        return reply.code(503).send({ error: 'proveedor no configurado todavia' });
+      }
+
+      const comprobacion = await verificarTokenDeApple(identityToken, nonce, {
+        audienciasValidas: config.apple.appIds,
+      });
+      if (!comprobacion.valido) {
+        return reply.code(400).send({ error: comprobacion.motivo });
+      }
+
+      const usuario = obtenerOCrearUsuario({
+        proveedor: 'apple',
+        idProveedor: comprobacion.identidad.sub,
+        email: comprobacion.identidad.email ?? null,
+        // Apple no manda un campo aparte para esto: el correo que da ya viene comprobado por el,
+        // sea el de verdad o uno de reenvio privado.
+        emailVerificado: true,
+      });
+      // Solo puede pasar la PRIMERA vez y si el usuario oculto su correo del todo: sin correo no
+      // hay cuenta que crear. A partir de la segunda, el usuario ya existe y da igual.
+      if (!usuario) {
+        return reply.code(400).send({ error: 'sin_email' });
+      }
+
+      return respuestaDeSesion(iniciarSesion(usuario.id, null));
     },
   );
 

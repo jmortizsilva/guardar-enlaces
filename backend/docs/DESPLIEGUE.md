@@ -56,11 +56,30 @@ ENLACES_TOKEN_SECRET=...
 PERMITIR_LOGIN_DEV=false
 GOOGLE_CLIENT_ID=...
 GOOGLE_CLIENT_SECRET=...
-APPLE_CLIENT_ID=x
-APPLE_TEAM_ID=x
-APPLE_KEY_ID=x
-APPLE_PRIVATE_KEY=x
+APPLE_CLIENT_ID=com.jmortizsilva.guardarenlaces.web
+APPLE_TEAM_ID=S92QZXCW54
+APPLE_KEY_ID=...
+APPLE_PRIVATE_KEY=-----BEGIN PRIVATE KEY-----\nMIGT...\n-----END PRIVATE KEY-----
+APPLE_APP_ID=com.jmortizsilva.guardarenlaces,com.jmortizsilva.guardarenlaces.nativa
 ```
+
+- `APPLE_CLIENT_ID` es el **Services ID**, no el identificador de la app: es el
+  que hace de `client_id` en el inicio de sesión desde el navegador (Windows).
+- `APPLE_APP_ID` es el identificador de la **app de iOS**, que es a quien va
+  dirigido el token cuando se entra desde el propio iPhone. Admite varios
+  separados por comas, para cuando conviven dos versiones de la app.
+- **`APPLE_PRIVATE_KEY` va en una sola línea, con `\n` escapados** donde el
+  fichero `.p8` tiene saltos: un `.env` no guarda bien un valor de varias
+  líneas. El servidor los deshace al leerlo. Para convertirla:
+
+  ```bash
+  awk 'BEGIN{ORS="\\n"} {print}' AuthKey_XXXX.p8
+  ```
+
+- Para que el iPhone y el PC sean **la misma cuenta de Apple**, el Services ID
+  y el identificador de la app tienen que estar agrupados en el portal de
+  Apple (ver `CONTRATO-API.md`). Está hecho, pero si algún día se crea otro
+  identificador, hay que agruparlo también o entrará como otra persona.
 
 - `URL_PUBLICA` es la que se olvida y rompe el login: con ella se construye la
   dirección de vuelta que se manda a Google (`${URL_PUBLICA}/auth/callback/google`),
