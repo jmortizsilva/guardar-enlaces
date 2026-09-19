@@ -248,7 +248,7 @@ def test_dialogo_login_ofrece_las_dos_cuentas(app):
     cliente = MagicMock()
     dialogo = DialogoLogin(None, MagicMock(), cliente)
     try:
-        assert dialogo.boton_entrar.GetLabel() == "&Entrar con Google"
+        assert dialogo.boton_entrar.GetLabel() == "Entrar con &Google"
         assert dialogo.boton_entrar_apple.GetLabel() == "Entrar con A&pple"
         # Cada boton pide SU proveedor: con los dos pidiendo "google" el de
         # Apple parecia funcionar y entraba por el otro lado.
@@ -259,6 +259,17 @@ def test_dialogo_login_ofrece_las_dos_cuentas(app):
         with patch.object(login_oauth, "abrir_navegador", return_value=False):
             dialogo._al_entrar("google")
         assert cliente.url_iniciar_login.call_args.args[0] == "google"
+    finally:
+        dialogo.Destroy()
+
+
+def test_dialogo_login_no_da_por_hecho_que_el_otro_extremo_es_un_iphone(app):
+    # Hoy el otro cliente es el de iPhone, pero puede haber uno de Android: el
+    # texto no tiene que quedarse viejo por eso.
+    dialogo = DialogoLogin(None, MagicMock(), MagicMock())
+    try:
+        assert "iPhone" not in dialogo.aviso.GetValue()
+        assert "móvil" in dialogo.aviso.GetValue()
     finally:
         dialogo.Destroy()
 

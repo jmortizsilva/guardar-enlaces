@@ -6,7 +6,7 @@ Los dos proveedores hacen exactamente lo mismo aqui; lo unico que cambia es el
 proveedor que se le pide al servidor. En el iPhone, en cambio, Apple entra sin
 navegador, por el sistema: son dos caminos distintos del mismo contrato.
 
-Aqui la cuenta SI es obligatoria, al reves que en el iPhone: esta app existe
+Aqui la cuenta SI es obligatoria, al reves que en el movil: esta app existe
 para sincronizar, y sin cuenta no hay con quien.
 
 Sobre el foco, que es lo que manda en esta pantalla: al abrirse el navegador el
@@ -29,7 +29,7 @@ from ..sesion import Sesion
 from .campos import ESTILO_SOLO_LECTURA, con_etiqueta, mostrar_con_etiqueta
 
 AVISO = (
-    "Para sincronizar tus enlaces con el iPhone necesitas entrar con tu cuenta "
+    "Para sincronizar tus enlaces con el móvil necesitas entrar con tu cuenta "
     "de Google o de Apple.\n"
     "Al pulsar el botón se abre el navegador. Termina ahí y vuelve a esta "
     "ventana: se cerrará sola cuando hayas entrado.\n"
@@ -75,10 +75,11 @@ class DialogoLogin(wx.Dialog):
         # (Aceptar, Cancelar) y aqui hay dos formas de entrar, ninguna de ellas
         # "la aceptacion" del cuadro.
         #
-        # Teclas de acceso: E para Google, P para Apple y C para Cancelar. La A
-        # se deja libre a proposito, que en los demas cuadros es la de Aceptar.
+        # Teclas de acceso: la inicial de cada proveedor, G y P, que es lo que
+        # se busca a ciegas. La A se deja libre a proposito, que en los demas
+        # cuadros es la de Aceptar, y C es siempre Cancelar.
         botones = wx.BoxSizer(wx.HORIZONTAL)
-        self.boton_entrar = wx.Button(self._panel, wx.ID_ANY, "&Entrar con Google")
+        self.boton_entrar = wx.Button(self._panel, wx.ID_ANY, "Entrar con &Google")
         self.boton_entrar_apple = wx.Button(self._panel, wx.ID_ANY, "Entrar con A&pple")
         boton_cancelar = wx.Button(self._panel, wx.ID_CANCEL, "&Cancelar")
         self.boton_entrar.SetDefault()
