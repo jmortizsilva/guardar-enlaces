@@ -308,10 +308,7 @@ extension Textos {
     public static let compartirSinTitulo = "Sin título todavía"
 
     public static let compartirEtiquetas = "Etiquetas"
-    /// Las etiquetas se crean en la aplicación, no aquí: esta hoja dura diez
-    /// segundos y no es sitio para organizar nada.
-    public static let compartirSinEtiquetas =
-        "Todavía no hay etiquetas. Se crean desde la aplicación."
+    public static let compartirSinEtiquetas = "Todavía no tienes etiquetas."
 
     /// Una hoja de compartir acepta más cosas de las que esta aplicación
     /// sabe guardar. Cuando llega una foto o un texto suelto hay que decirlo

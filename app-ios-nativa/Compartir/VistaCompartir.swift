@@ -11,6 +11,8 @@ struct VistaCompartir: View {
     let alGuardar: () -> Void
     let alCancelar: () -> Void
 
+    @State private var nueva = ""
+
     var body: some View {
         NavigationStack {
             Form {
@@ -37,29 +39,40 @@ struct VistaCompartir: View {
                     if modelo.etiquetasDisponibles.isEmpty {
                         Text(Textos.compartirSinEtiquetas)
                             .foregroundStyle(.secondary)
-                    } else {
-                        ForEach(modelo.etiquetasDisponibles, id: \.self) { etiqueta in
-                            Button {
-                                alternar(etiqueta)
-                            } label: {
-                                HStack {
-                                    Text(etiqueta)
-                                    Spacer()
-                                    if modelo.etiquetasPuestas.contains(etiqueta) {
-                                        Image(systemName: "checkmark")
-                                    }
+                    }
+                    ForEach(modelo.etiquetasDisponibles, id: \.self) { etiqueta in
+                        Button {
+                            alternar(etiqueta)
+                        } label: {
+                            HStack {
+                                Text(etiqueta)
+                                Spacer()
+                                if modelo.etiquetasPuestas.contains(etiqueta) {
+                                    Image(systemName: "checkmark")
                                 }
                             }
-                            .tint(.primary)
-                            // Lo que VoiceOver tiene que decir de una etiqueta
-                            // es si está puesta, y eso es un interruptor, no
-                            // un botón con un dibujo dentro.
-                            .accessibilityRemoveTraits(.isButton)
-                            .accessibilityAddTraits(
-                                modelo.etiquetasPuestas.contains(etiqueta)
-                                    ? [.isToggle, .isSelected] : .isToggle
-                            )
                         }
+                        .tint(.primary)
+                        // Lo que VoiceOver tiene que decir de una etiqueta
+                        // es si está puesta, y eso es un interruptor, no
+                        // un botón con un dibujo dentro.
+                        .accessibilityRemoveTraits(.isButton)
+                        .accessibilityAddTraits(
+                            modelo.etiquetasPuestas.contains(etiqueta)
+                                ? [.isToggle, .isSelected] : .isToggle
+                        )
+                    }
+
+                    // La etiqueta que falta se echa de menos justo al
+                    // guardar, igual que en la pantalla de añadir, así que
+                    // aquí se crea igual que allí.
+                    HStack {
+                        TextField(Textos.nuevaEtiqueta, text: $nueva)
+                            .autocorrectionDisabled()
+                            .textInputAutocapitalization(.never)
+                            .onSubmit(crear)
+                        Button(Textos.anadir, action: crear)
+                            .disabled(nueva.trimmingCharacters(in: .whitespaces).isEmpty)
                     }
                 }
             }
@@ -75,6 +88,11 @@ struct VistaCompartir: View {
             }
         }
         .task { await modelo.comprobar() }
+    }
+
+    private func crear() {
+        modelo.crearEtiqueta(nueva)
+        nueva = ""
     }
 
     private func alternar(_ etiqueta: String) {

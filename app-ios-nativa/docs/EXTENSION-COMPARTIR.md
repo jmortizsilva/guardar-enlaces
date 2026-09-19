@@ -89,7 +89,9 @@ Ese camino no se puede probar en el Mac.
 - **No abre la aplicación.** No hay API pública para eso; se hace recorriendo
   la cadena de responders, que Apple ha roto entre versiones. Con hoja propia
   no hace falta.
-- **No crea etiquetas.** Se eligen las que haya; crear es de la aplicación.
+- **No renombra ni borra etiquetas.** Crear una al vuelo sí, porque la
+  etiqueta que falta se echa de menos justo al guardar; organizarlas es de la
+  aplicación.
 - **No aparece al compartir texto suelto**, solo direcciones
   (`NSExtensionActivationSupportsWebURLWithMaxCount`). Si alguna aplicación
   comparte el enlace metido en una frase, se saca con

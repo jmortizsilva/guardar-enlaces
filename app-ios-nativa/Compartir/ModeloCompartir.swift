@@ -62,6 +62,28 @@ final class ModeloCompartir {
         return Set(enUso + reservadas).sorted { $0.localizedCompare($1) == .orderedAscending }
     }
 
+    /// Crea una etiqueta y la deja puesta en este enlace, que es para lo que
+    /// se crea aquí.
+    ///
+    /// Se puede crear desde esta hoja por lo mismo que desde la pantalla de
+    /// añadir: la etiqueta que falta se echa de menos justo al guardar, y
+    /// mandar a abrir la aplicación para eso es perder el enlace de vista.
+    func crearEtiqueta(_ nombre: String) {
+        guard
+            let etiqueta = try? CrearEtiqueta.crear(
+                nombre: nombre,
+                entre: etiquetasDisponibles,
+                en: almacen
+            )
+        else {
+            return
+        }
+        etiquetasDisponibles = (etiquetasDisponibles + [etiqueta.nombre])
+            .sorted { $0.localizedCompare($1) == .orderedAscending }
+        etiquetasPuestas.insert(etiqueta.nombre)
+        Anuncios.importante(Textos.etiquetaAnadida(etiqueta.nombre))
+    }
+
     /// Recupera la sesión y busca el título. Ninguna de las dos cosas hace
     /// falta para guardar.
     func comprobar() async {

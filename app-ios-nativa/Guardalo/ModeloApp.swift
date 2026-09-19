@@ -331,13 +331,17 @@ final class ModeloApp {
     /// Crea una etiqueta que todavía no lleva ningún enlace, para tenerla
     /// lista y poder asignarla luego desde cualquiera de los dos clientes.
     func crearEtiqueta(_ nombre: String) {
-        let limpio = nombre.trimmingCharacters(in: .whitespacesAndNewlines)
-        guard !limpio.isEmpty, !etiquetasDisponibles.contains(limpio) else {
+        guard
+            let etiqueta = try? CrearEtiqueta.crear(
+                nombre: nombre,
+                entre: etiquetasDisponibles,
+                en: almacen
+            )
+        else {
             return
         }
-        try? almacen.marcarEtiquetaPendiente(nuevaEtiquetaDefinida(nombre: limpio))
         refrescar()
-        Anuncios.importante(Textos.etiquetaAnadida(limpio))
+        Anuncios.importante(Textos.etiquetaAnadida(etiqueta.nombre))
         Task { await sincronizarEnSilencio() }
     }
 

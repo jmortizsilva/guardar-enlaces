@@ -1,7 +1,6 @@
 # Pasar la app de iPhone a nativo
 
-Estado: fases 0, 1, 2 y 3 terminadas (2026-09-18); la 4, a falta de
-firmarla y probarla en el teléfono (2026-09-19).
+Estado: fases 0 a 4 terminadas y probadas en el teléfono (2026-09-20).
 
 ## Por qué
 
@@ -106,7 +105,7 @@ dejaba preparada.
       - [x] Gestionar etiquetas: renombrar y eliminar en todos los enlaces a
             la vez, crear reservadas, y cada fila diciendo cuántos enlaces
             lleva.
-- [~] **4. Extensión de compartir** y guardado silencioso, compartiendo código
+- [x] **4. Extensión de compartir** y guardado silencioso, compartiendo código
       con la app. Mueren el plugin de 94 líneas y las 315 de Swift con
       marcadores de posición.
       - [x] La base de datos se muda a la carpeta del App Group, en modo
@@ -121,9 +120,13 @@ dejaba preparada.
       - [ ] Firmar: falta asociar el App Group al identificador en el portal.
             Es lo único de todo esto que no se puede hacer por línea de
             comandos (ver `docs/EXTENSION-COMPARTIR.md`).
-      - [ ] Probarla en el teléfono con VoiceOver. **Nada de la extensión se
-            ha ejecutado todavía**: compila y las pruebas del simulador
-            pasan, pero una extensión no se ejerce desde ahí.
+      - [x] Firmada e instalada en el teléfono. Hizo falta pasar a firma
+            manual: la automática necesita que `xcodebuild` entre en el
+            portal, y eso aquí no funciona.
+      - [x] Probada en el teléfono el 2026-09-20. Salió una sola cosa, y era
+            una incoherencia: en la aplicación se puede crear una etiqueta al
+            vuelo al guardar un enlace, y en la hoja de compartir no se podía.
+            Ahora sí, con el mismo campo y el mismo botón.
 - [ ] **5. Firma e instalación en el iPhone.** Adelantada: el teléfono se
       puede conectar a este Mac, así que se puede instalar por cable sin pasar
       por TestFlight. Hace falta una clave de API de App Store Connect
