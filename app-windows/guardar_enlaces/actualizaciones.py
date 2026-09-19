@@ -131,41 +131,67 @@ def descargar(disponible: VersionDisponible, destino: Path) -> bool:
 # El relevo. Espera a que la aplicacion se cierre (Windows no deja sustituir un
 # .exe en marcha), copia lo nuevo encima y la vuelve a abrir.
 #
-# Dos cosas que parecen detalles y son las que hacen que funcione o no, las dos
-# aprendidas midiendo un relevo que fallaba en silencio:
+# Este .cmd corre SIN CONSOLA, y ahi media linea de comandos de Windows deja de
+# comportarse como uno esperaria. De ahi que no haya ningun bucle de espera: el
+# que esperaba es lo que estaba roto, y quien espera ahora es robocopy.
 #
-# - Se espera por IDENTIFICADOR de proceso, no por nombre. Esperar por nombre
-#   fallaba: el bucle salia antes de que la aplicacion hubiera cerrado, robocopy
-#   se encontraba el .exe todavia bloqueado y no lo sustituia. Como robocopy
-#   escribia en nul, no se enteraba nadie: la aplicacion se cerraba y no volvia.
-# - Se duerme con "ping" y no con "timeout". Este .cmd corre sin consola, y ahi
-#   timeout falla al instante (codigo 125) porque no puede leer del teclado; el
-#   bucle se convertia en una espera activa que ademas lanzaba un tasklist por
-#   vuelta. ping -n 2 contra la direccion local es el segundo de espera clasico
-#   que si funciona sin consola.
+# Lo aprendido, midiendolo, y por lo que cada linea esta como esta:
 #
-# robocopy considera exito cualquier codigo menor que 8, de ahi que no se
-# compruebe con un "if errorlevel" al uso. /R:5 /W:1 reintenta por si algun
-# fichero sigue bloqueado un instante mas.
+# - `tasklist` NO DEVUELVE NADA sin consola: el fichero de salida queda vacio,
+#   asi que esperar a que el proceso desaparezca era esperar a algo que nunca se
+#   veia. Y con `tasklist | find` era peor: find se quedaba colgado PARA SIEMPRE
+#   esperando una entrada que no iba a llegar. El relevo no pasaba de la primera
+#   linea del registro, nunca copiaba nada y nunca relanzaba: desde fuera, la
+#   aplicacion se cerraba al actualizar, no volvia, y la version vieja seguia
+#   entera. Eso es lo que fallaba.
+# - Probar el bloqueo del .exe con el truco de redirigir encima tampoco vale:
+#   responde "libre" aunque el fichero este bloqueado de verdad.
+# - `timeout` falla al instante (codigo 125) porque sin consola no puede leer
+#   del teclado. `ping -n` contra la direccion local es la espera que si
+#   funciona, y por eso es la unica que se usa.
+# - `robocopy` si se porta bien sin consola, y ya sabe esperar: /R reintenta
+#   mientras el fichero siga bloqueado y /W dice cuanto esperar entre intentos.
+#   Un minuto de reintentos cubre de sobra lo que tarda en cerrarse una ventana.
+#   Ademas considera exito cualquier codigo menor que 8, de ahi que no se
+#   compruebe con un "if errorlevel" al uso.
+#
+# El registro es lo unico que queda si algo vuelve a fallar: a partir del cierre
+# ya no hay ninguna ventana donde contarlo.
 _RELEVO = """@echo off
-> "%~dp0registro.txt" echo Relevo iniciado, esperando a que cierre el proceso {pid}
-:esperar
-tasklist /FI "PID eq {pid}" 2>nul | find "{pid}" >nul
-if not errorlevel 1 (
-    ping -n 2 127.0.0.1 >nul
-    goto esperar
-)
->> "%~dp0registro.txt" echo La aplicacion ya se cerro
-robocopy "{origen}" "{destino}" /E /R:5 /W:1 /NFL /NDL /NJH /NJS /NC /NS >> "%~dp0registro.txt"
+> "%~dp0registro.txt" echo Relevo iniciado, dando tiempo a que se cierre la ventana
+ping -n {segundos_de_gracia} 127.0.0.1 >nul
+>> "%~dp0registro.txt" echo Copiando encima (robocopy reintenta si sigue bloqueado)
+robocopy "{origen}" "{destino}" /E /R:{reintentos} /W:1 /NFL /NDL /NJH /NJS /NC /NS >> "%~dp0registro.txt"
 >> "%~dp0registro.txt" echo robocopy devolvio %errorlevel% (menos de 8 es correcto)
 start "" "{destino}\\{exe}"
 >> "%~dp0registro.txt" echo Relanzada
 """
 
+# ping -n 4 son tres segundos: lo que tarda en cerrarse una ventana, con margen.
+SEGUNDOS_DE_GRACIA = 4
+# Con /W:1, esto es aproximadamente un minuto esperando a que suelte el .exe.
+REINTENTOS = 60
+
+
+def guion_de_relevo(
+    carpeta_nueva: Path,
+    destino: Path,
+    reintentos: int = REINTENTOS,
+) -> str:
+    """El .cmd que hara el relevo. Aparte para poder comprobarlo sin lanzarlo."""
+    return _RELEVO.format(
+        exe=NOMBRE_EXE,
+        origen=carpeta_nueva,
+        destino=destino,
+        segundos_de_gracia=SEGUNDOS_DE_GRACIA,
+        reintentos=reintentos,
+    )
+
 
 def aplicar(carpeta_nueva: Path, destino: Path | None = None) -> Path:
     """Lanza el relevo y devuelve el control: quien llama debe cerrar la
-    aplicacion inmediatamente despues, o el .cmd se quedara esperando.
+    aplicacion inmediatamente despues. Si tarda, el relevo aguanta --robocopy
+    reintenta mientras el .exe siga bloqueado--, pero no eternamente.
 
     Devuelve la ruta del registro que va dejando, que es la unica forma de
     saber por donde fallo si la aplicacion no vuelve a abrirse.
@@ -173,21 +199,21 @@ def aplicar(carpeta_nueva: Path, destino: Path | None = None) -> Path:
     destino = destino or carpeta_instalacion()
     carpeta_guion = Path(tempfile.mkdtemp(prefix="guardar-enlaces-relevo-"))
     guion = carpeta_guion / "relevo.cmd"
-    guion.write_text(
-        _RELEVO.format(
-            exe=NOMBRE_EXE,
-            origen=carpeta_nueva,
-            destino=destino,
-            pid=os.getpid(),
-        ),
-        encoding="cp1252",
-    )
+    guion.write_text(guion_de_relevo(carpeta_nueva, destino), encoding="cp1252")
     # DETACHED_PROCESS: el .cmd tiene que sobrevivir a que esta aplicacion muera,
     # que es justo lo que esta esperando. Y sin ventana negra.
+    #
+    # Las tres entradas/salidas a DEVNULL no son adorno: empaquetada, la
+    # aplicacion no tiene consola y sus descriptores no valen nada, asi que lo
+    # que lance el relevo heredaba handles muertos. Con DEVNULL hereda algo
+    # valido, que es la mitad de los cuelgues raros de aqui.
     subprocess.Popen(
         ["cmd", "/c", str(guion)],
         creationflags=subprocess.DETACHED_PROCESS | subprocess.CREATE_NO_WINDOW,
         close_fds=True,
+        stdin=subprocess.DEVNULL,
+        stdout=subprocess.DEVNULL,
+        stderr=subprocess.DEVNULL,
     )
     return carpeta_guion / "registro.txt"
 

@@ -1,8 +1,8 @@
 """Lo comprobable sin red ni ejecutable: la comparacion de versiones, la
 validacion del manifiesto y la verificacion del zip descargado.
 
-Lo que NO cubre ninguna prueba, y hay que probar ejecutando: el relevo (que el
-.cmd espere, copie y vuelva a abrir la aplicacion).
+Del relevo se comprueba aqui el guion que se escribe, no lo que hace: que
+copie de verdad y vuelva a abrir la aplicacion hay que probarlo ejecutandolo.
 """
 
 import hashlib
@@ -18,6 +18,7 @@ from guardar_enlaces.actualizaciones import (
     comprobar,
     descargar,
     descomprimir,
+    guion_de_relevo,
     hay_version_nueva,
     leer_manifiesto,
 )
@@ -163,6 +164,52 @@ class TestDescomprimir:
         falso.write_bytes(b"esto no es un zip")
 
         assert descomprimir(falso) is None
+
+
+class TestGuionDeRelevo:
+    def _guion(self, **cambios) -> str:
+        argumentos = {
+            "carpeta_nueva": Path(r"C:\Temp\nueva"),
+            "destino": Path(r"C:\Programas\GuardarEnlaces"),
+        }
+        argumentos.update(cambios)
+        return guion_de_relevo(**argumentos)
+
+    def test_no_hay_ningun_bucle_de_espera_propio(self):
+        """Esta es LA prueba de este fichero. Sin consola, tasklist no devuelve
+        nada y "tasklist | find" ademas dejaba a find colgado para siempre: el
+        relevo no pasaba de la primera linea del registro, nunca copiaba y nunca
+        relanzaba. Quien espera ahora es robocopy, que ahi si funciona."""
+        guion = self._guion()
+
+        assert "tasklist" not in guion
+        assert "goto" not in guion
+        for linea in guion.splitlines():
+            assert "|" not in linea, f"vuelve a haber una tuberia: {linea}"
+
+    def test_robocopy_reintenta_mientras_el_exe_siga_bloqueado(self):
+        # Es lo unico que hace que la copia ocurra pese al bloqueo de Windows.
+        assert "/R:60 /W:1" in self._guion()
+        assert "/R:3 /W:1" in self._guion(reintentos=3)
+
+    def test_duerme_con_ping_que_es_lo_que_funciona_sin_consola(self):
+        guion = self._guion()
+
+        assert "ping -n 4 127.0.0.1" in guion
+        assert "timeout" not in guion
+
+    def test_copia_lo_nuevo_encima_y_vuelve_a_abrir(self):
+        guion = self._guion()
+
+        assert r'robocopy "C:\Temp\nueva" "C:\Programas\GuardarEnlaces"' in guion
+        assert r'start "" "C:\Programas\GuardarEnlaces\GuardarEnlaces.exe"' in guion
+
+    def test_deja_registro_de_cada_paso(self):
+        # Al fallar no hay ninguna ventana donde contarlo: el registro es lo
+        # unico que queda para saber por donde se quedo.
+        guion = self._guion()
+
+        assert guion.count("registro.txt") >= 4
 
 
 @pytest.fixture(autouse=True)
