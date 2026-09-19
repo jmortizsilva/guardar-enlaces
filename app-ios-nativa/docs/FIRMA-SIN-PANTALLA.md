@@ -81,7 +81,58 @@ xcodebuild -project Guardalo.xcodeproj -scheme Guardalo \
 perfil; los tres parámetros de autenticación son los que le dan permiso para
 hacerlo sin que nadie inicie sesión.
 
-## 5. Instalar en el teléfono
+## 5. `-allowProvisioningUpdates` dice «Authentication failed» con una clave buena
+
+Al añadir el App Group, `xcodebuild` empezó a contestar:
+
+```
+error: Authentication failed: Make sure a bearer token was provided, it is
+properly configured and signed, and it has not expired.
+```
+
+La clave no tiene nada malo: el mismo `.p8` y el mismo Issuer ID firman un JWT
+que la API de App Store Connect acepta con un 200 (`GET /v1/bundleIds`). Lo
+que falla es la autenticación **de Xcode**, y como no puede entrar, se queda
+con el perfil que ya tenía en la caché y los errores de después («doesn't
+include the App Groups capability») son consecuencia de eso, no la causa.
+
+Sin Xcode de por medio se hace todo por la API, que además es más claro
+porque cada paso se ve:
+
+| Qué | Cómo |
+|---|---|
+| Habilitar una capacidad | `POST /v1/bundleIdCapabilities` con `capabilityType` |
+| Crear el identificador de la extensión | `POST /v1/bundleIds` |
+| Crear el perfil | `POST /v1/profiles`, con el certificado y los dispositivos |
+| Instalarlo | escribir el `profileContent` (base64) en `~/Library/MobileDevice/Provisioning Profiles/<uuid>.mobileprovision` |
+
+El JWT se firma con `openssl dgst -sha256 -sign`, que devuelve DER; ES256
+quiere los dos enteros crudos de 32 bytes, así que hay que convertirlo. No
+hace falta instalar nada.
+
+## 6. Asociar un App Group hay que hacerlo en la web
+
+Esto es el único paso de todo el camino que no tiene línea de comandos.
+`POST /v1/bundleIdCapabilities` habilita **la capacidad** App Groups, pero
+decir *qué grupo* es otra cosa, y la API de App Store Connect no tiene
+`appGroups` (404 en todas sus formas). El perfil sale con el permiso presente
+y el array vacío:
+
+```xml
+<key>com.apple.security.application-groups</key>
+<array/>
+```
+
+Con eso, firmar falla. Se arregla en
+`developer.apple.com/account/resources/identifiers/list`: el identificador →
+App Groups → Configure → marcar el grupo → Save. Después hay que **volver a
+crear el perfil**: el contenido se genera al crearlo y el que ya estaba no se
+entera.
+
+El grupo del llavero no da este problema: el perfil trae `S92QZXCW54.*`, que
+cubre cualquiera del equipo.
+
+## 7. Instalar en el teléfono
 
 El primer emparejamiento es **por cable**: el teléfono desbloqueado y
 aceptando «¿Confiar en este ordenador?». Después se puede instalar por red,
