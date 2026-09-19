@@ -25,6 +25,31 @@ if (-not (Test-Path $python)) {
     exit 1
 }
 
+# Si la aplicacion esta abierta, PyInstaller no puede vaciar dist\ y el fallo
+# sale como cuarenta lineas de traza que terminan en "Acceso denegado" sobre un
+# fichero de prism, que no dice nada de lo que pasa de verdad.
+#
+# OJO: tiene icono en la bandeja, asi que cerrar la ventana NO la cierra.
+$enMarcha = Get-Process -Name "GuardarEnlaces" -ErrorAction SilentlyContinue
+if ($enMarcha) {
+    Write-Host "Guardalo esta abierta y bloquea los ficheros que hay que reemplazar." -ForegroundColor Red
+    Write-Host "Cierrala del todo desde su icono de la bandeja: cerrar la ventana no basta." -ForegroundColor Red
+    exit 1
+}
+
+# Lo mismo cuando quien tiene la carpeta cogida es otro: lo mas habitual,
+# OneDrive sincronizandola. Se intenta aqui para poder decirlo en una linea.
+if (Test-Path "dist\GuardarEnlaces") {
+    try {
+        Remove-Item "dist\GuardarEnlaces" -Recurse -Force -ErrorAction Stop
+    }
+    catch {
+        Write-Host "No se puede vaciar dist\GuardarEnlaces: algo tiene abierto un fichero de dentro." -ForegroundColor Red
+        Write-Host "Suele ser la propia aplicacion, OneDrive sincronizando la carpeta, o el antivirus." -ForegroundColor Red
+        exit 1
+    }
+}
+
 function Invoke-Paso {
     param([string]$Descripcion, [scriptblock]$Accion)
 
