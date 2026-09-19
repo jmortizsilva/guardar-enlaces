@@ -26,6 +26,11 @@ public actor Sesion {
         try aplicar(await cliente.canjear(codigoCanje: codigo))
     }
 
+    /// Entra con el token que ha devuelto Apple en el propio teléfono.
+    public func entrarConApple(identityToken: String, nonce: String) async throws {
+        try aplicar(await cliente.entrarConApple(identityToken: identityToken, nonce: nonce))
+    }
+
     /// Solo contra un servidor con `PERMITIR_LOGIN_DEV=true`.
     public func entrarComoDesarrollo(email: String) async throws {
         try aplicar(await cliente.loginDeDesarrollo(email: email))

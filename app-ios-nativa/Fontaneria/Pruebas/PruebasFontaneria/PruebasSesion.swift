@@ -155,3 +155,51 @@ private final class Contador: @unchecked Sendable {
         }
     }
 }
+
+@Suite("Entrar con Apple desde el teléfono")
+struct PruebasEntrarConApple {
+    private let cliente: ClienteApi
+    private let buzon: ServidorFalso.Buzon
+
+    init() {
+        let (sesionHttp, buzon) = ServidorFalso.sesion()
+        self.buzon = buzon
+        cliente = ClienteApi(urlBase: "https://api.ejemplo.com", sesionHttp: sesionHttp)
+    }
+
+    @Test("manda el token y el nonce a la ruta de Apple, y guarda la sesión")
+    func entra() async throws {
+        buzon.respuesta = .json(
+            """
+            {"tokenAcceso": "acceso", "expiraEn": 1, "tokenRefresco": "refresco",
+             "usuario": {"id": 7, "email": "persona@privaterelay.appleid.com", "proveedor": "apple"}}
+            """
+        )
+        let llavero = CredencialesEnMemoria()
+        let sesion = Sesion(cliente: cliente, credenciales: llavero)
+
+        try await sesion.entrarConApple(identityToken: "el-token-de-apple", nonce: "el-nonce")
+
+        #expect(await sesion.autenticado)
+        #expect(await sesion.usuario?.proveedor == "apple")
+        #expect(try llavero.tokenRefresco() == "refresco")
+        #expect(buzon.ultimaPeticion?.url?.path == "/auth/apple-nativo")
+
+        let enviado =
+            (try? JSONSerialization.jsonObject(with: buzon.ultimoCuerpo)) as? [String: Any] ?? [:]
+        #expect(enviado["identityToken"] as? String == "el-token-de-apple")
+        #expect(enviado["nonce"] as? String == "el-nonce")
+    }
+
+    @Test("si el servidor rechaza el token, el fallo llega con su motivo")
+    func tokenRechazado() async throws {
+        buzon.respuesta = .json(
+            #"{"error": "el token no corresponde a esta peticion"}"#, codigo: 400)
+        let sesion = Sesion(cliente: cliente, credenciales: CredencialesEnMemoria())
+
+        await #expect(throws: ErrorApi.self) {
+            try await sesion.entrarConApple(identityToken: "viejo", nonce: "n")
+        }
+        #expect(await sesion.autenticado == false)
+    }
+}

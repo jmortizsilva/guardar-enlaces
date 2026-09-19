@@ -56,10 +56,10 @@ public enum Textos {
     }
 
     /// Lo único que de verdad cambia entre tener cuenta y no tenerla: con
-    /// cuenta, esto se lleva el enlace también del PC.
+    /// cuenta, esto se lleva el enlace también del ordenador.
     public static func consecuenciaEliminar(conCuenta: Bool) -> String {
         conCuenta
-            ? "Se eliminará también en el PC."
+            ? "Se eliminará también en el ordenador."
             : "Está guardado solo en este iPhone."
     }
 
@@ -165,13 +165,13 @@ extension Textos {
     public static let cerrar = "Cerrar"
 
     public static func sesionIniciadaComo(email: String) -> String {
-        "Sesión iniciada como \(email). Tus enlaces se sincronizan con el PC."
+        "Sesión iniciada como \(email). Tus enlaces se sincronizan con el ordenador."
     }
 
     public static let sinCuenta = "Sin cuenta: los enlaces se guardan solo en este iPhone."
     public static let entrarConGoogle = "Entrar con Google"
     public static let pistaEntrar =
-        "Hace falta para tener los mismos enlaces en el iPhone y en el PC"
+        "Hace falta para tener los mismos enlaces en el iPhone y en el ordenador"
     public static let cerrarSesion = "Cerrar sesión"
     public static let pistaCerrarSesion =
         "Los enlaces se quedan en este iPhone y la aplicación sigue funcionando sin cuenta"
@@ -184,7 +184,7 @@ extension Textos {
 
     public static let loginTitulo = "Entrar con una cuenta"
     public static let loginExplicacion =
-        "La cuenta sirve para tener los mismos enlaces en el iPhone y en el PC. Sin ella la "
+        "La cuenta sirve para tener los mismos enlaces en el iPhone y en el ordenador. Sin ella la "
         + "aplicación funciona igual, pero los enlaces se quedan solo en este iPhone."
     /// Se avisa de que se abre el navegador porque iOS pregunta antes si se
     /// permite usar google.com para iniciar sesión, y esa pregunta sale de la
@@ -192,7 +192,8 @@ extension Textos {
     public static let pistaLogin =
         "Se abre Safari para confirmar tu cuenta y vuelves aquí al terminar"
     public static let ahoraNo = "Ahora no"
-    public static let sesionIniciada = "Sesión iniciada. Tus enlaces se sincronizarán con el PC."
+    public static let sesionIniciada =
+        "Sesión iniciada. Tus enlaces se sincronizarán con el ordenador."
 
     // MARK: - Qué hacer con lo que ya había en el teléfono
 
@@ -271,4 +272,21 @@ extension Textos {
     /// aparece y desaparece no lo encuentra quien no mira la pantalla: hay
     /// que contarlo, o es como si no estuviera.
     public static let hayEnlaceCopiado = "Hay un enlace copiado, puedes pegarlo"
+}
+
+extension Textos {
+    // MARK: - La primera vez que se abre la app
+
+    public static let bienvenidaTitulo = "Guárdalo"
+    public static let bienvenidaQueEs =
+        "Guarda enlaces para leerlos cuando quieras, con su título y su descripción, "
+        + "organizados por etiquetas."
+    /// Lo que de verdad hay que decidir aquí, y en qué se nota cada respuesta.
+    public static let bienvenidaCuenta =
+        "Con cuenta, los mismos enlaces están en este iPhone y en el ordenador. Sin cuenta, la "
+        + "aplicación funciona igual, pero los enlaces se quedan solo aquí."
+    public static let entrarConApple = "Entrar con Apple"
+    public static let usarSinCuenta = "Usar sin cuenta"
+    /// Para que «Usar sin cuenta» no parezca una puerta que se cierra.
+    public static let bienvenidaMasTarde = "Puedes crear la cuenta más tarde desde Ajustes."
 }

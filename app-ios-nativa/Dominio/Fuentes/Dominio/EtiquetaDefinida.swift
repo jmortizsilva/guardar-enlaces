@@ -1,7 +1,7 @@
 import Foundation
 
 /// Una etiqueta que existe por sí sola, sin que ningún enlace la lleve
-/// todavía: sirve para crearla en el iPhone y verla en el PC antes de usarla.
+/// todavía: sirve para crearla en el iPhone y verla en el ordenador antes de usarla.
 ///
 /// Se sincroniza igual que un elemento (identificador del cliente, lápida,
 /// gana la fecha más reciente), en la misma llamada y bajo la clave

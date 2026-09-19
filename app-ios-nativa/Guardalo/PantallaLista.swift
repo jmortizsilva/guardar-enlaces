@@ -12,6 +12,7 @@ struct PantallaLista: View {
     @State private var aAbrir: EnlaceAAbrir?
     @State private var anadiendo = false
     @State private var enAjustes = false
+    @State private var enBienvenida = false
     @State private var gestionandoEtiquetas = false
 
     private var visibles: [Elemento] {
@@ -28,6 +29,11 @@ struct PantallaLista: View {
                 .navigationBarTitleDisplayMode(.inline)
                 .searchable(text: $busqueda, prompt: Textos.marcadorBusqueda)
                 .refreshable { await modelo.sincronizarAMano() }
+                .onChange(of: modelo.tocaEnsenarBienvenida, initial: true) { _, toca in
+                    if toca {
+                        enBienvenida = true
+                    }
+                }
                 .toolbar { barra }
                 .alert(item: $aEliminar) { elemento in
                     alertaDeEliminar(elemento)
@@ -51,6 +57,9 @@ struct PantallaLista: View {
                 }
                 .sheet(isPresented: $gestionandoEtiquetas) {
                     PantallaGestionEtiquetas(presentada: $gestionandoEtiquetas)
+                }
+                .sheet(isPresented: $enBienvenida) {
+                    PantallaBienvenida(presentada: $enBienvenida)
                 }
                 .sheet(isPresented: $enAjustes) {
                     PantallaAjustes(presentada: $enAjustes)
