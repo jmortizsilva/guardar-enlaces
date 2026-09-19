@@ -19,13 +19,31 @@ Sin ella, o con un token caducado/inválido: `401 {"error": "..."}`.
 
 ## Autenticación (Google / Apple, sin contraseñas)
 
-Ni la app iOS ni la de Windows hablan directamente con Google o Apple: todo el
-intercambio OAuth lo hace el servidor. **El alta es abierta**: entrar con
-Google o Apple la primera vez crea la cuenta, sin invitación previa.
+Hay dos caminos, y cada cliente usa el que le conviene:
+
+- **Por web** (`/auth/iniciar`): el cliente abre el navegador y **todo el
+  intercambio lo hace el servidor**. Lo usan Windows para Google y para Apple,
+  y iOS para Google.
+- **Nativo de Apple** (`/auth/apple-nativo`): solo iOS. La identidad la pide
+  el propio sistema —con Face ID o huella, sin salir de la app— y la app manda
+  al servidor el token firmado que devuelve Apple. Es el único caso en el que
+  un cliente habla directamente con el proveedor.
+
+**El alta es abierta**: entrar la primera vez crea la cuenta, sin invitación
+previa.
 
 La identidad es el par (proveedor, `sub`), nunca el correo: el `sub` del
 proveedor es estable y el correo no. El mismo correo entrando por Google y por
 Apple son, por tanto, dos cuentas distintas con dos bibliotecas distintas.
+
+**Y para que el iPhone y el PC sean la misma cuenta de Apple, hace falta una
+cosa fuera del código:** Apple da un `sub` distinto por cada identificador, así
+que el **Services ID** que usa el flujo web tiene que estar **agrupado bajo el
+identificador de la app** de iOS en la cuenta de desarrollador (en el portal,
+al habilitar Sign in with Apple, «Enable as a primary App ID» y el Services ID
+asociado a él). Si se crean sueltos, el mismo Apple ID entra como dos personas
+distintas: guardas en el iPhone, abres el PC y no hay nada. No da ningún error
+y cuesta días de entender.
 
 ### 1. `GET /auth/iniciar`
 
@@ -130,7 +148,39 @@ el token de acceso: perder el de refresco ya es suficiente para cerrar sesión).
 → `200 {"ok": true}`. Revoca todas las sesiones del usuario — usar si se
 pierde un dispositivo.
 
-### 8. `POST /auth/dev-login` — SOLO DESARROLLO, no existe salvo `PERMITIR_LOGIN_DEV=true`
+### 8. `POST /auth/apple-nativo` (solo iOS)
+
+Para el inicio de sesión de Apple sin salir de la app. La app pide la
+identidad con `ASAuthorizationAppleIDProvider`, Apple le devuelve un token
+firmado, y ese token se canjea aquí por una sesión.
+
+```json
+{ "identityToken": "<el JWT que devuelve Apple>", "nonce": "<el nonce en claro>" }
+```
+
+→ `200` con el mismo formato que `/auth/canjear`, `usuario` incluido.
+
+El servidor comprueba, y si algo falla responde `400`:
+
+| Qué | Contra qué |
+|---|---|
+| La firma del token | Las claves públicas de Apple (`https://appleid.apple.com/auth/keys`) |
+| `iss` | `https://appleid.apple.com` |
+| `aud` | El identificador de la app iOS, que el servidor conoce por configuración |
+| `exp` | Que no haya caducado |
+| `nonce` | Que sea el SHA-256 del `nonce` que manda la app |
+
+**Lo del `nonce` no es opcional.** La app genera un valor aleatorio, le pasa a
+Apple solo su SHA-256, y manda aquí el valor en claro. Así el servidor sabe que
+ese token se pidió para esta petición y no es uno de antes reutilizado. Sin esa
+comprobación, un token robado de otra sesión valdría para entrar.
+
+El correo puede venir de reenvío privado (`@privaterelay.appleid.com`) si el
+usuario eligió ocultarlo, y puede no venir en absoluto a partir del segundo
+inicio de sesión: Apple solo lo manda la primera vez. No importa, porque la
+identidad es el `sub`.
+
+### 9. `POST /auth/dev-login` — SOLO DESARROLLO, no existe salvo `PERMITIR_LOGIN_DEV=true`
 
 ```json
 { "email": "persona@ejemplo.com" }
