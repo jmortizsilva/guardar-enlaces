@@ -1,10 +1,18 @@
 import Dominio
+import Fontaneria
 import SwiftUI
 
 struct PantallaAjustes: View {
     @Environment(ModeloApp.self) private var modelo
     @Binding var presentada: Bool
     @State private var entrando = false
+    /// En los ajustes del grupo y no en los de la aplicación: quien lo lee es
+    /// la extensión de compartir, que no ve los de aquí.
+    @AppStorage(
+        Configuracion.claveGuardadoSilencioso,
+        store: Configuracion.ajustesCompartidos()
+    )
+    private var guardadoSilencioso = false
 
     var body: some View {
         NavigationStack {
@@ -23,6 +31,11 @@ struct PantallaAjustes: View {
                         Button(Textos.entrarConApple) { Task { await entrarConApple() } }
                             .accessibilityHint(Textos.pistaEntrar)
                     }
+                }
+
+                Section {
+                    Toggle(Textos.guardadoSilencioso, isOn: $guardadoSilencioso)
+                        .accessibilityHint(Textos.pistaGuardadoSilencioso)
                 }
 
                 Section {

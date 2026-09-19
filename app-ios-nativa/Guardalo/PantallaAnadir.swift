@@ -1,4 +1,5 @@
 import Dominio
+import Fontaneria
 import SwiftUI
 
 /// Pegar una URL y guardarla.
@@ -40,7 +41,7 @@ struct PantallaAnadir: View {
     }
 
     private var urlValida: Bool {
-        urlLimpia.hasPrefix("http://") || urlLimpia.hasPrefix("https://")
+        Enlaces.esDireccion(urlLimpia)
     }
 
     private var repetido: Elemento? {

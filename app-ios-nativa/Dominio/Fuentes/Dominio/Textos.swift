@@ -290,3 +290,43 @@ extension Textos {
     /// Para que «Usar sin cuenta» no parezca una puerta que se cierra.
     public static let bienvenidaMasTarde = "Puedes crear la cuenta más tarde desde Ajustes."
 }
+
+extension Textos {
+    // MARK: - Compartir un enlace desde otra aplicación
+
+    /// La hoja que sale al compartir es la única pantalla de la aplicación
+    /// que se ve desde dentro de Safari, así que dice su nombre: quien la ve
+    /// acaba de tocar un icono en una lista de doce.
+    /// «Cancelar» y «Guardar» son los mismos de la pantalla de añadir, y se
+    /// reutilizan a propósito: el mismo botón no se llama distinto según por
+    /// dónde se haya llegado.
+    public static let compartirTitulo = "Guárdalo"
+
+    /// El título de la página todavía no se sabe al abrirse la hoja, y el
+    /// hueco vacío deja a VoiceOver sin nada que leer. Se pone la dirección
+    /// mientras tanto, que es lo que hay.
+    public static let compartirSinTitulo = "Sin título todavía"
+
+    public static let compartirEtiquetas = "Etiquetas"
+    /// Las etiquetas se crean en la aplicación, no aquí: esta hoja dura diez
+    /// segundos y no es sitio para organizar nada.
+    public static let compartirSinEtiquetas =
+        "Todavía no hay etiquetas. Se crean desde la aplicación."
+
+    /// Una hoja de compartir acepta más cosas de las que esta aplicación
+    /// sabe guardar. Cuando llega una foto o un texto suelto hay que decirlo
+    /// y no quedarse en blanco.
+    public static let compartirNoEsEnlace = "Esto no es un enlace, y solo se guardan enlaces."
+
+    /// Si falla el guardado no se puede ofrecer «reintentar»: la hoja se
+    /// cierra y el enlace se va con ella. Lo único útil es decir dónde
+    /// hacerlo a mano.
+    public static let compartirNoSePudo =
+        "No se pudo guardar. Copia la dirección y añádela desde la aplicación."
+
+    // MARK: - Guardar sin abrir la aplicación
+
+    public static let guardadoSilencioso = "Guardar sin preguntar"
+    public static let pistaGuardadoSilencioso =
+        "Al compartir un enlace se guarda al momento, sin enseñar esta pantalla"
+}

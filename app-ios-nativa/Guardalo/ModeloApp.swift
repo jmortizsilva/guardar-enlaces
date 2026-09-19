@@ -40,11 +40,32 @@ final class ModeloApp {
     private var ultimaSincronizacion: MarcaDeTiempo = 0
 
     init() throws {
-        almacen = try AlmacenLocal(ruta: try AlmacenLocal.rutaPorDefecto())
+        let ruta = try Self.prepararBaseDatos()
+        almacen = try AlmacenLocal(ruta: ruta.path)
+        // Después de abrirla y no antes: los ficheros del diario los crea
+        // SQLite al abrir, y hasta entonces no hay nada que aflojar.
+        try? AlmacenLocal.aflojarProteccion(de: ruta)
         cliente = ClienteApi(urlBase: Configuracion.urlApi)
         sesion = Sesion(cliente: cliente, credenciales: CredencialesKeychain())
         sincronizador = Sincronizador(almacen: almacen, cliente: cliente, sesion: sesion)
         resolvedor = ResolverMetadatos(cliente: cliente, sesion: sesion)
+    }
+
+    /// Deja la base de datos donde la extensión de compartir también la ve, y
+    /// devuelve su ruta.
+    ///
+    /// La mudanza es de una vez por instalación: quien venía usando la
+    /// aplicación antes de que existiera la extensión tenía los enlaces en la
+    /// carpeta privada, donde la extensión no puede entrar.
+    private static func prepararBaseDatos() throws -> URL {
+        let compartida = try Configuracion.rutaBaseDatos()
+        let privada = URL(
+            fileURLWithPath: try AlmacenLocal.rutaPorDefecto(
+                nombre: Configuracion.nombreBaseDatos
+            )
+        )
+        try AlmacenLocal.mudarACompartida(de: privada, a: compartida)
+        return compartida
     }
 
     /// Solo para las vistas previas de Xcode y las pruebas de interfaz.
@@ -96,6 +117,12 @@ final class ModeloApp {
     /// Sin esto solo se enteraba al arrastrar la lista, y «lo guardé en el
     /// otro sitio y aquí no está» es de las cosas que más desconfianza dan.
     func alVolverAPrimerPlano() async {
+        // Antes que nada, releer la base: mientras la aplicación estaba
+        // detrás, la extensión de compartir ha podido guardar enlaces en
+        // ella. Sin esto, un enlace compartido desde Safari no aparecía en la
+        // lista hasta cerrar y abrir la aplicación, y sin cuenta no aparecía
+        // nunca, porque la sincronización no tiene nada que traer.
+        refrescar()
         guard Sincronizacion.tocaSincronizar(ultima: ultimaSincronizacion, ahora: relojDelSistema())
         else {
             return
@@ -277,30 +304,18 @@ final class ModeloApp {
     /// que sin título, y se dice en voz alta. Comprobar nunca fue lo
     /// importante; guardar el enlace, sí.
     func guardarEnlace(url: String, etiquetas: [String], metadatos: MetadatosExtraidos?) {
-        if let repetido = repetido(para: url) {
-            let actualizado = repetido.actualizado(con: metadatos, etiquetasNuevas: etiquetas)
-            try? almacen.marcarPendiente(actualizado)
-            refrescar()
-            Anuncios.importante(Textos.actualizado(titulo: Presentacion.titulo(de: actualizado)))
-        } else {
-            let nuevo = nuevoElementoLocal(
-                DatosElementoNuevo(
-                    url: url,
-                    titulo: metadatos?.titulo,
-                    descripcion: metadatos?.descripcion,
-                    imagenUrl: metadatos?.imagenUrl,
-                    tipo: metadatos?.tipo ?? .enlace,
-                    etiquetas: etiquetas
-                )
+        guard
+            let resultado = try? GuardarEnlace.guardar(
+                url: url,
+                etiquetas: etiquetas,
+                metadatos: metadatos,
+                en: almacen
             )
-            try? almacen.marcarPendiente(nuevo)
-            refrescar()
-            Anuncios.importante(
-                metadatos == nil
-                    ? Textos.guardadoSinComprobar
-                    : Textos.guardado(titulo: Presentacion.titulo(de: nuevo))
-            )
+        else {
+            return
         }
+        refrescar()
+        Anuncios.importante(resultado.anuncio(seComprobo: metadatos != nil))
         Task { await sincronizarEnSilencio() }
     }
 

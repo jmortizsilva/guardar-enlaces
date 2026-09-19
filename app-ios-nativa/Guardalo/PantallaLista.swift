@@ -1,4 +1,5 @@
 import Dominio
+import Fontaneria
 import SwiftUI
 
 struct PantallaLista: View {

@@ -1,4 +1,5 @@
 import Dominio
+import Fontaneria
 import SwiftUI
 
 /// Todo lo que se sabe de un enlace, con sus acciones en botones.

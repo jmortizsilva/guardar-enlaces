@@ -27,7 +27,7 @@ echo "== Formato =="
 xcrun swift-format lint --strict --recursive \
     Dominio/Fuentes Dominio/Pruebas \
     Fontaneria/Fuentes Fontaneria/Pruebas \
-    Guardalo PruebasInterfaz
+    Guardalo Compartir PruebasInterfaz
 
 echo
 echo "== App: compila para el simulador =="

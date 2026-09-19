@@ -23,7 +23,25 @@ public final class AlmacenLocal {
     /// mientras dure el objeto (lo que usan las pruebas).
     public init(ruta: String) throws {
         bd = try BaseDatos(ruta: ruta)
+        try prepararParaDosProcesos()
         try crearEsquema()
+    }
+
+    /// La app y la extensión de compartir abren el mismo fichero desde
+    /// procesos distintos, y sin esto se pisan.
+    ///
+    /// Con el diario de siempre, quien escribe bloquea la base entera y el
+    /// otro recibe «database is locked» en el acto: el enlace compartido se
+    /// perdería justo cuando la app está delante. `WAL` deja que uno escriba
+    /// mientras el otro lee, y la espera convierte el choque que queda en
+    /// unos milisegundos de cola en vez de un fallo.
+    private func prepararParaDosProcesos() throws {
+        try bd.ejecutar(
+            """
+            PRAGMA journal_mode = WAL;
+            PRAGMA busy_timeout = 5000;
+            """
+        )
     }
 
     private func crearEsquema() throws {
@@ -352,5 +370,88 @@ extension AlmacenLocal {
         // qué.
         try gestor.createDirectory(at: carpeta, withIntermediateDirectories: true)
         return carpeta.appendingPathComponent(nombre).path
+    }
+
+    public enum FalloDeCarpeta: Error, CustomStringConvertible {
+        case grupoNoDisponible(String)
+
+        public var description: String {
+            switch self {
+            case .grupoNoDisponible(let grupo):
+                "el grupo \(grupo) no está en los permisos de este objetivo"
+            }
+        }
+    }
+
+    /// Los ficheros que SQLite puede tener junto a la base de datos. Con
+    /// `WAL` son dos más, y mudar la base sin ellos deja fuera lo último
+    /// escrito.
+    private static let sufijosSqlite = ["", "-wal", "-shm", "-journal"]
+
+    /// La carpeta que comparten la app y la extensión de compartir.
+    ///
+    /// Una extensión es otro proceso con su propio sandbox: la carpeta de la
+    /// app no la ve, así que la base de datos tiene que vivir aquí o no hay
+    /// nada que compartir.
+    public static func carpetaCompartida(
+        grupo: String,
+        gestor: FileManager = .default
+    ) throws -> URL {
+        guard let carpeta = gestor.containerURL(forSecurityApplicationGroupIdentifier: grupo)
+        else {
+            throw FalloDeCarpeta.grupoNoDisponible(grupo)
+        }
+        return carpeta
+    }
+
+    /// Trae la base de datos de la carpeta privada de la app a la compartida.
+    /// Dice si movió algo.
+    ///
+    /// Se llama al arrancar la app, una sola vez en la vida de cada
+    /// instalación: quien ya tenía enlaces guardados no los pierde al
+    /// aparecer la extensión.
+    ///
+    /// No pisa nada: si en el destino ya hay una base de datos, esa manda. La
+    /// de origen es la vieja por definición, y machacar la compartida
+    /// borraría lo que la extensión hubiera guardado entretanto.
+    @discardableResult
+    public static func mudarACompartida(
+        de origen: URL,
+        a destino: URL,
+        gestor: FileManager = .default
+    ) throws -> Bool {
+        guard gestor.fileExists(atPath: origen.path) else { return false }
+        guard !gestor.fileExists(atPath: destino.path) else { return false }
+
+        try gestor.createDirectory(
+            at: destino.deletingLastPathComponent(),
+            withIntermediateDirectories: true
+        )
+        for sufijo in sufijosSqlite {
+            let desde = URL(fileURLWithPath: origen.path + sufijo)
+            guard gestor.fileExists(atPath: desde.path) else { continue }
+            try gestor.moveItem(at: desde, to: URL(fileURLWithPath: destino.path + sufijo))
+        }
+        return true
+    }
+
+    /// Deja la base de datos legible aunque el teléfono esté bloqueado, a
+    /// partir del primer desbloqueo tras encenderlo.
+    ///
+    /// Con la protección que iOS pone por defecto, compartir un enlace con la
+    /// pantalla bloqueada falla al abrir la base: la extensión arranca, no
+    /// puede leer el fichero y el enlace se pierde sin que nadie se entere.
+    public static func aflojarProteccion(
+        de fichero: URL,
+        gestor: FileManager = .default
+    ) throws {
+        for sufijo in sufijosSqlite {
+            let ruta = fichero.path + sufijo
+            guard gestor.fileExists(atPath: ruta) else { continue }
+            try gestor.setAttributes(
+                [.protectionKey: FileProtectionType.completeUntilFirstUserAuthentication],
+                ofItemAtPath: ruta
+            )
+        }
     }
 }
