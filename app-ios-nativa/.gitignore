@@ -9,3 +9,7 @@ xcuserdata/
 # Van en ~/.appstoreconnect/private_keys/, que es donde las busca xcodebuild.
 *.p8
 AuthKey_*
+
+# Carpeta de compilación para firmar e instalar en el teléfono. Son 128 MB de
+# artefactos que se rehacen solos: nunca deben acabar en el repositorio.
+.build-dispositivo/
