@@ -49,9 +49,10 @@ struct PruebasTextosAnuncios {
                 == "¿Eliminar «Alternativas a Pocket»?")
     }
 
-    @Test("con cuenta avisa de que también se va del PC")
+    @Test("con cuenta avisa de que también se va del ordenador")
     func consecuenciaEliminar() {
-        #expect(Textos.consecuenciaEliminar(conCuenta: true) == "Se eliminará también en el PC.")
+        #expect(
+            Textos.consecuenciaEliminar(conCuenta: true) == "Se eliminará también en el ordenador.")
         #expect(
             Textos.consecuenciaEliminar(conCuenta: false) == "Está guardado solo en este iPhone."
         )

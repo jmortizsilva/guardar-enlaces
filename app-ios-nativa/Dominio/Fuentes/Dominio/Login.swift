@@ -1,3 +1,4 @@
+import CryptoKit
 import Foundation
 
 /// Entrar con un proveedor (Google o Apple), según el contrato del backend.
@@ -60,5 +61,29 @@ public enum Login {
             return .exito(codigoDeCanje: codigo)
         }
         return .error(mensaje: mensajeDeError(motivo: porNombre["error"] ?? ""))
+    }
+}
+
+extension Login {
+    /// El par de valores que pide el inicio de sesión de Apple desde la app.
+    ///
+    /// A Apple se le manda solo el `resumen`, y al servidor el valor `enClaro`. El servidor
+    /// comprueba que uno es el resumen del otro, y así sabe que el token se pidió para esta
+    /// petición y no es uno de antes reutilizado.
+    public struct NonceDeApple: Equatable, Sendable {
+        public let enClaro: String
+        public let resumen: String
+    }
+
+    public static func nonceParaApple(
+        aleatorio: (Int) -> [UInt8] = { cuantos in
+            (0..<cuantos).map { _ in UInt8.random(in: 0...255) }
+        }
+    ) -> NonceDeApple {
+        let enClaro = aleatorio(32).map { String(format: "%02x", $0) }.joined()
+        let resumen = SHA256.hash(data: Data(enClaro.utf8))
+            .map { String(format: "%02x", $0) }
+            .joined()
+        return NonceDeApple(enClaro: enClaro, resumen: resumen)
     }
 }

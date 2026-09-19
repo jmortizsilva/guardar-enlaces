@@ -10,6 +10,16 @@ import SwiftUI
 @MainActor
 @Observable
 final class ModeloApp {
+    /// Si ya se ha visto la pantalla de bienvenida alguna vez.
+    static let claveBienvenidaVista = "bienvenidaVista"
+
+    /// La bienvenida solo se enseña al estrenar la app, y nunca si ya hay
+    /// sesión: quien vuelve a entrar no necesita que le expliquen la app.
+    var tocaEnsenarBienvenida: Bool {
+        !arrancando && !autenticado
+            && !UserDefaults.standard.bool(forKey: Self.claveBienvenidaVista)
+    }
+
     /// Los enlaces no borrados, más recientes primero.
     private(set) var elementos: [Elemento] = []
     private(set) var sincronizando = false
@@ -25,6 +35,7 @@ final class ModeloApp {
     private let sincronizador: Sincronizador
     private let resolvedor: ResolverMetadatos
     private let iniciador = IniciadorDeSesion()
+    private let iniciadorApple = IniciadorDeSesionApple()
     /// Para no sincronizar dos veces seguidas al alternar entre aplicaciones.
     private var ultimaSincronizacion: MarcaDeTiempo = 0
 
@@ -58,6 +69,12 @@ final class ModeloApp {
         for elemento in elementos {
             try almacen.guardar([elemento.id: elemento])
         }
+        // Las pruebas de interfaz empiezan en la lista, no en la bienvenida: sin
+        // esto, la hoja de bienvenida tapaba la app entera y no encontraban nada.
+        // Para probar la bienvenida se lanza con `-ensenar-bienvenida`.
+        if !ProcessInfo.processInfo.arguments.contains("-ensenar-bienvenida") {
+            UserDefaults.standard.set(true, forKey: Self.claveBienvenidaVista)
+        }
         arrancando = false
         refrescar()
     }
@@ -75,7 +92,7 @@ final class ModeloApp {
         }
     }
 
-    /// Volver a la app trae lo que se haya guardado en el PC mientras tanto.
+    /// Volver a la app trae lo que se haya guardado en el ordenador mientras tanto.
     /// Sin esto solo se enteraba al arrastrar la lista, y «lo guardé en el
     /// otro sitio y aquí no está» es de las cosas que más desconfianza dan.
     func alVolverAPrimerPlano() async {
@@ -157,6 +174,40 @@ final class ModeloApp {
         refrescar()
         await sincronizarEnSilencio()
         return resultado
+    }
+
+    /// Entra con Apple sin salir de la app: el sistema pide la identidad y el
+    /// token que devuelve se canjea en el servidor.
+    func iniciarSesionConApple(
+        decidirImportacion: (EnlacesEnElTelefono) async -> Bool
+    ) async -> Login.Resultado {
+        let nonce = Login.nonceParaApple()
+        let respuesta = await iniciadorApple.pedirIdentidad(resumenDelNonce: nonce.resumen)
+
+        let token: String
+        switch respuesta {
+        case .exito(let identityToken):
+            token = identityToken
+        case .cancelado:
+            return .cancelado
+        case .error(let mensaje):
+            return .error(mensaje: mensaje)
+        }
+
+        do {
+            try await sesion.entrarConApple(identityToken: token, nonce: nonce.enClaro)
+        } catch let fallo as ErrorApi {
+            return .error(mensaje: fallo.mensaje)
+        } catch {
+            return .error(mensaje: Login.mensajeDeError(motivo: ""))
+        }
+
+        await asentarLaCuenta(decidirImportacion: decidirImportacion)
+        autenticado = true
+        usuario = await sesion.usuario
+        refrescar()
+        await sincronizarEnSilencio()
+        return .exito(codigoDeCanje: "")
     }
 
     /// Sin correo no se toca nada: no habría con qué comparar y, ante la

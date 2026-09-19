@@ -134,6 +134,15 @@ public struct ClienteApi: Sendable {
         try await pedir("/auth/canjear", cuerpo: ["codigoCanje": codigoCanje])
     }
 
+    /// Canjea por una sesión el token que devuelve Apple cuando se entra desde
+    /// la propia app, sin navegador. El `nonce` va en claro: el servidor
+    /// comprueba que su resumen es el que Apple metió en el token.
+    public func entrarConApple(identityToken: String, nonce: String) async throws -> RespuestaCanje
+    {
+        try await pedir(
+            "/auth/apple-nativo", cuerpo: ["identityToken": identityToken, "nonce": nonce])
+    }
+
     /// Solo sirve contra un servidor con `PERMITIR_LOGIN_DEV=true`. Queda
     /// como la única forma de entrar en el backend de pruebas local, que
     /// arranca con credenciales de Google falsas.

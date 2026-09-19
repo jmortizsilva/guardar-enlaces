@@ -106,7 +106,7 @@ struct PruebasTextosAjustes {
     func conCuenta() {
         #expect(
             Textos.sesionIniciadaComo(email: "persona@ejemplo.com")
-                == "Sesión iniciada como persona@ejemplo.com. Tus enlaces se sincronizan con el PC."
+                == "Sesión iniciada como persona@ejemplo.com. Tus enlaces se sincronizan con el ordenador."
         )
     }
 }

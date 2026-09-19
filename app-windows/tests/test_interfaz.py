@@ -9,7 +9,7 @@ from __future__ import annotations
 
 import re
 from pathlib import Path
-from unittest.mock import MagicMock
+from unittest.mock import MagicMock, patch
 
 import pytest
 import wx
@@ -24,6 +24,7 @@ from guardar_enlaces.ui.dialogo_anadir import DialogoAnadir
 from guardar_enlaces.ui.dialogo_detalle import DialogoDetalle
 from guardar_enlaces.ui.dialogo_gestion_etiquetas import DialogoGestionEtiquetas
 from guardar_enlaces.ui.dialogo_login import DialogoLogin
+from guardar_enlaces import login_oauth
 from guardar_enlaces.ui.ventana_principal import VentanaPrincipal
 from guardar_enlaces.voz import SinScreenReader, Voz
 
@@ -241,6 +242,35 @@ def test_la_lista_tiene_siempre_una_fila_activa_y_sigue_al_mismo_enlace(app, alm
         assert rehechas == []
     finally:
         ventana.Destroy()
+
+
+def test_dialogo_login_ofrece_las_dos_cuentas(app):
+    cliente = MagicMock()
+    dialogo = DialogoLogin(None, MagicMock(), cliente)
+    try:
+        assert dialogo.boton_entrar.GetLabel() == "&Entrar con Google"
+        assert dialogo.boton_entrar_apple.GetLabel() == "Entrar con A&pple"
+        # Cada boton pide SU proveedor: con los dos pidiendo "google" el de
+        # Apple parecia funcionar y entraba por el otro lado.
+        with patch.object(login_oauth, "abrir_navegador", return_value=False):
+            dialogo._al_entrar("apple")
+        assert cliente.url_iniciar_login.call_args.args[0] == "apple"
+
+        with patch.object(login_oauth, "abrir_navegador", return_value=False):
+            dialogo._al_entrar("google")
+        assert cliente.url_iniciar_login.call_args.args[0] == "google"
+    finally:
+        dialogo.Destroy()
+
+
+def test_dialogo_login_avisa_de_que_google_y_apple_son_cuentas_distintas(app):
+    dialogo = DialogoLogin(None, MagicMock(), MagicMock())
+    try:
+        # Entrar con la otra y encontrarse la biblioteca vacia asusta; decirlo
+        # antes cuesta una linea.
+        assert "cuentas distintas" in dialogo.aviso.GetValue()
+    finally:
+        dialogo.Destroy()
 
 
 def test_dialogo_login_se_puede_leer_y_el_estado_no_esta_hasta_que_dice_algo(app):

@@ -20,6 +20,8 @@ struct PantallaAjustes: View {
                         Text(Textos.sinCuenta)
                         Button(Textos.entrarConGoogle) { entrando = true }
                             .accessibilityHint(Textos.pistaEntrar)
+                        Button(Textos.entrarConApple) { Task { await entrarConApple() } }
+                            .accessibilityHint(Textos.pistaEntrar)
                     }
                 }
 
@@ -41,6 +43,18 @@ struct PantallaAjustes: View {
         }
     }
 
+    /// Desde Ajustes no hay enlaces de otra cuenta que decidir en la práctica,
+    /// pero si los hubiera se pregunta igual que en la bienvenida.
+    private func entrarConApple() async {
+        let resultado = await modelo.iniciarSesionConApple(decidirImportacion: { _ in true })
+        if case .exito = resultado {
+            Anuncios.importante(Textos.sesionIniciada)
+            presentada = false
+        } else if case .error(let mensaje) = resultado {
+            Anuncios.importante(mensaje)
+        }
+    }
+
     /// Para saber qué versión tienes instalada cuando llegan varias seguidas
     /// por TestFlight. Ocupa el sitio del antiguo «Buscar actualizaciones»,
     /// que sin actualizaciones por aire ya no busca nada.
@@ -55,7 +69,7 @@ struct PantallaAjustes: View {
 
 /// Entrar con una cuenta. No es un portón: aquí se llega desde Ajustes y la
 /// app funciona entera sin pasar por aquí. Lo único que da la cuenta es
-/// sincronizar con el PC, y por eso lo dice el texto en vez de pedir el
+/// sincronizar con el ordenador, y por eso lo dice el texto en vez de pedir el
 /// inicio de sesión a secas.
 struct PantallaLogin: View {
     @Environment(ModeloApp.self) private var modelo
