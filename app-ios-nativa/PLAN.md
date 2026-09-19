@@ -1,6 +1,7 @@
 # Pasar la app de iPhone a nativo
 
-Estado: fases 0 a 4 terminadas y probadas en el teléfono (2026-09-20).
+Estado: terminada. La app nativa sustituye a la de Expo desde el
+2026-09-20.
 
 ## Por qué
 
@@ -47,7 +48,7 @@ dejaba preparada.
 | Código compartido | Paquete Swift local | La app y la extensión dependen del mismo paquete. Sin framework aparte |
 | Formato y lint | `swift-format`, el que trae Xcode | Sin instalar nada. SwiftLint se descarta mientras esto baste |
 | Alcance | Paridad + lo que iOS no tiene y Windows sí | Ver más abajo |
-| Convivencia | Carpeta y rama aparte | `app-ios/` sigue funcionando hasta que esta esté probada en un iPhone |
+| Convivencia | Carpeta y rama aparte | La de Expo siguió funcionando hasta que esta estuvo probada en un iPhone. Retirada el 2026-09-20 |
 
 ## Dos divergencias, que no son solo traducir
 
@@ -127,50 +128,31 @@ dejaba preparada.
             una incoherencia: en la aplicación se puede crear una etiqueta al
             vuelo al guardar un enlace, y en la hoja de compartir no se podía.
             Ahora sí, con el mismo campo y el mismo botón.
-- [ ] **5. Firma e instalación en el iPhone.** Adelantada: el teléfono se
-      puede conectar a este Mac, así que se puede instalar por cable sin pasar
-      por TestFlight. Hace falta una clave de API de App Store Connect
-      guardada en el Mac (no en el repositorio), y aceptar en el teléfono el
-      aviso de confiar en este ordenador.
+- [x] **5. Firma e instalación en el iPhone.** Se adelantó a la fase 3,
+      porque el teléfono se puede conectar a este Mac y así cada cambio de
+      interfaz se oía el mismo día en vez de al final. Todo lo que costó está
+      en `docs/FIRMA-SIN-PANTALLA.md`.
+- [x] **6. Sustituir a la de Expo** (2026-09-20). El identificador, el
+      esquema, el nombre visible y la clave del guardado silencioso vuelven a
+      ser los de siempre, y la carpeta `app-ios/` sale del repositorio: dos
+      clientes de iOS conviviendo es la forma segura de que dentro de tres
+      meses nadie sepa cuál manda. Sigue entera en el historial.
 
-      **Es el primer momento en que alguien va a oír esta app.** Nada de lo
-      hecho hasta aquí se ha probado con VoiceOver: el simulador tiene su
-      propio lector dentro de la ventana y, por SSH, no sirve.
+      Lo que esto cuesta, y se sabía: al cambiar el identificador cambia el
+      grupo de llavero, así que **la sesión guardada no se lee y hay que
+      volver a entrar una vez**. Los enlaces no se pierden, están en el
+      servidor y en la carpeta del App Group, que es la misma.
 
 ## Cabos sueltos
 
-- **El nombre visible también es temporal.** En la pantalla de inicio pone
-  «Guárdalo nativo», para no tener dos iconos llamados igual mientras se
-  comparan las dos apps. Dentro, el título de la pantalla sigue siendo
-  «Guárdalo», que es el nombre de verdad y lo que dicen sus pruebas. En la
-  fase 5 vuelve a ser «Guárdalo» a secas.
-- **El identificador es temporal.** `com.jmortizsilva.guardarenlaces.nativa`,
-  para poder tener las dos apps instaladas a la vez en el mismo iPhone y
-  compararlas. En la fase 5 pasa a ser el de siempre,
-  `com.jmortizsilva.guardarenlaces`. El App Group no depende de esto, así que
-  puede seguir siendo el mismo.
-- **El inicio de sesión de verdad y el llavero siguen sin probarse.** Entrar
-  con Google abre la hoja del sistema, que una prueba de interfaz no puede
-  recorrer, y `CredencialesKeychain` solo se ejercita al entrar. Las dos cosas
-  necesitan una pasada a mano en el simulador o en el teléfono.
-- **El llavero de verdad solo se puede comprobar en el simulador o en el
-  teléfono.** `CredencialesKeychain` no se ejercita con `swift test` en el
-  Mac (necesita la autorización de llavero de la app firmada), así que la
-  lógica de sesión se prueba con un llavero de mentira y el de verdad queda
-  pendiente de la fase 3.
-- **No hay firma configurada en este Mac** (`security find-identity` no
-  encuentra ninguna identidad). Para el simulador no hace falta; para las
-  fases 4 y 5 sí.
-- **El servidor compartido ya sirve para probar el inicio de sesión de
-  verdad**: comprobado el 2026-09-18, `client_id` real de Google y
-  `/auth/dev-login` devolviendo 404. Lo que sigue sin configurar es Apple
-  (`client_id=x`), que hará falta antes de la App Store.
-- **El interruptor de guardado silencioso usa una clave propia**,
-  `guardadoSilenciosoNativa`, porque el App Group es el mismo que el de la app
-  de Expo y con la clave de siempre (`modoSilencioso`) el interruptor de una
-  cambiaría el comportamiento de la extensión de la otra. Vuelve a ser la de
-  siempre en la fase 5.
-- **El esquema de enlace es `guardalonativo`, no `guardarenlaces`.** Con el
-  mismo esquema en las dos apps instaladas a la vez, iOS entregaría la vuelta
-  del inicio de sesión a cualquiera de ellas. Vuelve al de siempre en la fase
-  5, junto con el identificador.
+- **El llavero nunca se prueba solo.** `CredencialesKeychain` no se ejercita
+  con `swift test` en el Mac (necesita la autorización de llavero de una app
+  firmada), y entrar con Google o con Apple abre una hoja del sistema que una
+  prueba de interfaz no puede recorrer. La lógica de sesión se prueba con un
+  llavero de mentira, y el de verdad solo se comprueba a mano en el teléfono.
+  Se hizo el 2026-09-18 con las dos cuentas, incluidas la persistencia y el
+  cambio de una a otra.
+- **La App Store no se ha pisado todavía.** Todo esto se instala por cable con
+  un perfil de desarrollo. Subir a TestFlight necesita certificado de
+  distribución, perfil de App Store y una ficha en App Store Connect, y nada
+  de eso está hecho.

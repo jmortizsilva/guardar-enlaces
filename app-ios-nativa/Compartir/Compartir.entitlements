@@ -8,7 +8,7 @@
 	</array>
 	<key>keychain-access-groups</key>
 	<array>
-		<string>$(AppIdentifierPrefix)com.jmortizsilva.guardarenlaces.nativa</string>
+		<string>$(AppIdentifierPrefix)com.jmortizsilva.guardarenlaces</string>
 	</array>
 </dict>
 </plist>

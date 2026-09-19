@@ -10,13 +10,11 @@
 	<array>
 		<string>group.com.jmortizsilva.guardarenlaces</string>
 	</array>
-	<!-- El primero de la lista es el grupo por defecto, y este es
-	     exactamente el que la aplicacion venia usando sin declarar nada: asi
-	     la sesion ya iniciada se sigue leyendo y no hay que volver a entrar.
-	     La extension declara el mismo y por eso ve el mismo token. -->
+	<!-- El primero de la lista es el grupo por defecto. La extension declara
+	     este mismo y por eso ve el mismo token que la aplicacion. -->
 	<key>keychain-access-groups</key>
 	<array>
-		<string>$(AppIdentifierPrefix)com.jmortizsilva.guardarenlaces.nativa</string>
+		<string>$(AppIdentifierPrefix)com.jmortizsilva.guardarenlaces</string>
 	</array>
 </dict>
 </plist>

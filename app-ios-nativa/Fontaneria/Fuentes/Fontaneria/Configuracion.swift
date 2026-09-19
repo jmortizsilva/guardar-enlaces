@@ -21,18 +21,16 @@ public enum Configuracion {
         #endif
     }
 
-    /// La carpeta que ven los dos programas. El nombre es el que ya usaba la
-    /// app de Expo: es un grupo por cuenta de desarrollador, no por
-    /// aplicación, y crear otro solo para esto no aporta nada.
+    /// La carpeta que ven los dos programas. Es el mismo grupo que usaba la
+    /// app de Expo, así que la extensión de compartir de aquella y esta
+    /// hablan del mismo sitio.
     public static let grupoApp = "group.com.jmortizsilva.guardarenlaces"
 
     public static let nombreBaseDatos = "guardalo.db"
 
-    /// Deliberadamente distinta de la `modoSilencioso` que usa la app de
-    /// Expo: mientras las dos estén instaladas comparten grupo, y con la
-    /// misma clave el interruptor de una cambiaría el comportamiento de la
-    /// otra. Vuelve a ser la de siempre cuando la de Expo desaparezca.
-    public static let claveGuardadoSilencioso = "guardadoSilenciosoNativa"
+    /// La misma que usaba la app de Expo, a propósito: quien la tuviera
+    /// puesta allí se encuentra el interruptor como lo dejó.
+    public static let claveGuardadoSilencioso = "modoSilencioso"
 
     /// Los ajustes que la aplicación escribe y la extensión lee.
     ///

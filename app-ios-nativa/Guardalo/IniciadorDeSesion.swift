@@ -18,7 +18,7 @@ final class IniciadorDeSesion: NSObject, ASWebAuthenticationPresentationContextP
     /// mismo esquema en las dos apps instaladas a la vez, iOS entregaría la
     /// vuelta del inicio de sesión a cualquiera de ellas. Vuelve a ser el de
     /// siempre en la fase 5, cuando esta sustituya a aquella.
-    static let esquema = "guardalonativo"
+    static let esquema = "guardarenlaces"
 
     func pedirCodigoDeCanje(urlAutorizacion: URL) async -> Login.Resultado {
         await withCheckedContinuation { continuacion in

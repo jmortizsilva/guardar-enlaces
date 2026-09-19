@@ -1,8 +1,8 @@
 # Guárdalo — iOS nativo
 
-Cliente iOS en Swift y SwiftUI. Sustituye a `app-ios/` (Expo/React Native),
-que sigue en el repositorio y funcionando hasta que esta esté probada en un
-iPhone de verdad. El motivo del cambio y lo que se decidió está en
+Cliente iOS en Swift y SwiftUI. Sustituyó a la app de Expo/React Native en
+septiembre de 2026; aquella sigue en el historial del repositorio, hasta el
+commit que la retira. El motivo del cambio y lo que se decidió está en
 [`PLAN.md`](PLAN.md).
 
 El contrato de API no cambia: `../backend/docs/CONTRATO-API.md` sigue siendo

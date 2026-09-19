@@ -77,9 +77,17 @@ xcodebuild -project Guardalo.xcodeproj -scheme Guardalo \
     build
 ```
 
-`-allowProvisioningUpdates` se encarga del identificador de la app y del
-perfil; los tres parámetros de autenticación son los que le dan permiso para
-hacerlo sin que nadie inicie sesión.
+Así era mientras la firma automática funcionó. **Ya no se usa**: desde que
+hay extensión, `xcodebuild` no consigue autenticarse (punto 5) y la firma va
+en manual, con el perfil de cada objetivo puesto en el proyecto. La orden se
+queda en:
+
+```bash
+xcodebuild -project Guardalo.xcodeproj -scheme Guardalo \
+    -destination 'generic/platform=iOS' \
+    -derivedDataPath .build-dispositivo \
+    build
+```
 
 ## 5. `-allowProvisioningUpdates` dice «Authentication failed» con una clave buena
 
@@ -143,12 +151,15 @@ xcrun devicectl list devices                                   # ver el identifi
 xcrun devicectl device install app --device <id> .build-dispositivo/.../Guardalo.app
 ```
 
-## Lo que es temporal
+## Los identificadores
 
-Mientras convivan las dos apps en el mismo teléfono:
+| Qué | Identificador |
+|---|---|
+| La aplicación | `com.jmortizsilva.guardarenlaces` |
+| La extensión de compartir | `com.jmortizsilva.guardarenlaces.Compartir` |
+| Las pruebas de interfaz | `com.jmortizsilva.guardarenlaces.PruebasInterfaz` |
 
-- Identificador `com.jmortizsilva.guardarenlaces.nativa`
-- Esquema de enlace `guardalonativo`
-- Nombre visible «Guárdalo nativo»
-
-Las tres cosas vuelven a las de siempre cuando esta sustituya a la de Expo.
+Mientras las dos apps convivieron en el mismo teléfono, esta llevó
+`…guardarenlaces.nativa`, el esquema `guardalonativo` y el nombre «Guárdalo
+nativo», para poder compararlas sin que iOS las confundiera. Los tres se
+retiraron al sustituir a la de Expo, el 2026-09-20.
