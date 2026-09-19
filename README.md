@@ -15,7 +15,9 @@ gestor de paquetes y su propio ciclo de vida:
   dónde vive el código. Su `docs/CONTRATO-API.md` es la fuente de la verdad
   del API para los dos clientes.
 - `app-windows/` — cliente de escritorio, Python + wxPython.
-- `app-ios/` — cliente iOS, Expo/React Native.
+- `app-ios-nativa/` — cliente iOS, Swift y SwiftUI.
 
-Ver `CLAUDE.md` (raíz del repo padre `desarrollo-ios-rn`) para las
-convenciones generales de desarrollo iOS/RN sin Mac.
+El cliente de iOS fue una app de Expo hasta septiembre de 2026. Por qué se
+reescribió en nativo, qué cambió y qué se descartó por el camino está en
+[`app-ios-nativa/PLAN.md`](app-ios-nativa/PLAN.md); el código de la de Expo
+sigue en el historial, hasta el commit que la retira.

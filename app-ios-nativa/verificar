@@ -1,0 +1,59 @@
+#!/bin/bash
+# Tipos + formato + pruebas, igual que `npm run verificar` en app-ios/ o
+# `pytest` en app-windows/. Si esto no pasa, no está terminado.
+#
+# Los avisos del compilador cuentan como error aquí, y solo aquí (no en el
+# proyecto de Xcode, para no estorbar mientras se escribe). Sin esto,
+# xcodebuild -quiet imprime el aviso, devuelve cero, y el script acaba
+# diciendo "Todo en verde" con un aviso a la vista.
+#
+# El simulador se fija por nombre Y versión a propósito: hay un "iPhone 16
+# Pro" por cada runtime instalado, y sin la versión xcodebuild no sabe cuál
+# es y falla listando los cuarenta destinos que no valen.
+set -euo pipefail
+
+cd "$(dirname "$0")"
+
+SIMULADOR="${SIMULADOR:-platform=iOS Simulator,name=iPhone 17,OS=27.0}"
+
+for paquete in Dominio Fontaneria; do
+    echo "== $paquete: pruebas =="
+    (cd "$paquete" && swift test -Xswiftc -warnings-as-errors)
+    echo
+done
+
+echo
+echo "== Formato =="
+xcrun swift-format lint --strict --recursive \
+    Dominio/Fuentes Dominio/Pruebas \
+    Fontaneria/Fuentes Fontaneria/Pruebas \
+    Guardalo Compartir PruebasInterfaz
+
+echo
+echo "== App: compila para el simulador =="
+xcodebuild -project Guardalo.xcodeproj \
+    -scheme Guardalo \
+    -destination "$SIMULADOR" \
+    -derivedDataPath .build-xcode \
+    -quiet \
+    SWIFT_TREAT_WARNINGS_AS_ERRORS=YES \
+    build
+
+echo
+echo "== App: pruebas de interfaz =="
+# Aparte de las demás porque tardan un minuto largo: cada una arranca la app
+# en el simulador. Leen el árbol de accesibilidad de verdad, que es lo mismo
+# que lee VoiceOver.
+xcodebuild test -project Guardalo.xcodeproj \
+    -scheme Guardalo \
+    -destination "$SIMULADOR" \
+    -derivedDataPath .build-xcode \
+    -quiet \
+    SWIFT_TREAT_WARNINGS_AS_ERRORS=YES 2>&1 |
+    # xcodebuild escupe líneas suyas sobre el depurador y los tiempos que no
+    # dicen nada de si las pruebas pasan. Con pipefail, si xcodebuild falla el
+    # script falla igual, aunque el filtro se quede sin líneas que enseñar.
+    { grep -vE "IDELaunchParametersSnapshot|IDETestOperationsObserverDebug|^$" || true; }
+
+echo
+echo "Todo en verde."

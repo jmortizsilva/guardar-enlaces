@@ -1,7 +1,7 @@
 # Contrato de API — backend de Guárdalo
 
 Fuente de la verdad del API entre el backend (`backend/`) y los dos clientes
-(`app-ios/` y `app-windows/`), que no comparten código entre sí. Cualquier
+(`app-ios-nativa/` y `app-windows/`), que no comparten código entre sí. Cualquier
 cambio de este contrato se hace aquí primero.
 
 Base: `${URL_PUBLICA}` (variable de entorno del servidor). Todas las rutas son
@@ -54,7 +54,7 @@ Query params:
 | `proveedor` | sí | `google` \| `apple` |
 | `modo` | sí | `deeplink` \| `polling` |
 | `estado` | sí | cadena opaca generada por el cliente (aleatoria, un solo uso) |
-| `esquema` | solo si `modo=deeplink` | nombre del esquema de deep link, SIN `://` (ej. `guardarenlaces`, como el campo `scheme` de `app.json` en Expo) |
+| `esquema` | solo si `modo=deeplink` | nombre del esquema de deep link, SIN `://` (ej. `guardarenlaces`) |
 
 Responde `302` redirigiendo al consentimiento del proveedor. El cliente debe
 generar `estado` con suficiente entropía (ej. 16 bytes aleatorios en base64url).

@@ -30,7 +30,7 @@ de vida. Cuando cambies algo en uno, no asumas que el otro se entera.
 | Carpeta | Qué es | Stack |
 |---|---|---|
 | [`backend/`](backend/README.md) | Servidor: auth (Google/Apple, sin contraseñas), metadatos de URLs, sincronización | Node + Fastify + SQLite |
-| [`app-ios/`](app-ios/) | Cliente iOS | Expo / React Native (SDK 56) |
+| [`app-ios-nativa/`](app-ios-nativa/README.md) | Cliente iOS | Swift 6 + SwiftUI (mínimo iOS 18) |
 | [`app-windows/`](app-windows/README.md) | Cliente de escritorio | Python + wxPython |
 
 El **contrato de API** entre el backend y los dos clientes está en
@@ -53,41 +53,35 @@ npm install
 `prueba@local.test` y deja el servidor escuchando en `0.0.0.0:8090` (para que
 el móvil, en la misma red, pueda llegar a él). El puerto real de despliegue
 es el 8081 por defecto (`backend/README.md`); el script de pruebas locales lo
-cambia a 8090 a propósito, para no chocar con el puerto por defecto de Metro
-(el bundler de Expo, también 8081) cuando se prueba `app-ios/` en la misma
-máquina.
+cambia a 8090 a propósito, que era para no chocar con Metro, el bundler de
+Expo, que también usaba el 8081. Ya no hay Expo, pero el 8090 se queda: está
+escrito en sitios que no se enteran de este cambio.
 
 No hay secretos reales en este repositorio: en local, `PERMITIR_LOGIN_DEV`
 salta el login de Google/Apple con solo un correo. Ninguno de los dos clientes
 lo usa ya en su interfaz —los dos entran con Google—, así que solo sirve para
 probar contra un servidor sin credenciales OAuth reales.
 
-### app-ios
+### app-ios-nativa
+
+Hace falta un Mac con Xcode 27. Las pruebas de lógica no necesitan simulador
+y tardan milisegundos:
 
 ```
-cd app-ios
-npm install
-npx expo start --dev-client
+cd app-ios-nativa
+./verificar          # tipos, formato, pruebas de los paquetes y de interfaz
 ```
 
-Requiere una **development build de EAS** instalada en el iPhone — Expo Go
-del App Store no sirve aquí (a fecha de este documento su versión pública va
-por detrás del SDK de Expo que usa el proyecto; puede que ya se haya
-puesto al día). Para instalarla en un iPhone nuevo:
+Para instalarla en un iPhone hay que firmar, y eso tiene su propia
+documentación porque aquí se hace **sin abrir Xcode y por SSH**:
+[`docs/FIRMA-SIN-PANTALLA.md`](app-ios-nativa/docs/FIRMA-SIN-PANTALLA.md).
+Los identificadores, las capacidades y los perfiles se manejan por la API de
+App Store Connect con `herramientas/token-appstore.py`.
 
-```
-npx eas-cli device:create      # registra el dispositivo (pide cuenta de Apple Developer)
-npx eas-cli build --platform ios --profile development
-```
-
-La cuenta de Expo (`jmortizsilva`) y el proyecto EAS ya existen
-(`app-ios/eas.json`, `app-ios/app.json`); pide acceso al proyecto EAS en
-[expo.dev](https://expo.dev/accounts/jmortizsilva/projects/guardar-enlaces)
-si vas a compilar tú mismo.
-
-Antes de escribir código nuevo aquí, mira `app-ios/AGENTS.md` (versión
-exacta del SDK) y, si tienes acceso, la documentación de accesibilidad
-compartida — ver aviso más abajo.
+Antes de tocar la interfaz, lee
+[`docs/ACCESIBILIDAD.md`](app-ios-nativa/docs/ACCESIBILIDAD.md): lo que hay
+ahí está medido en un iPhone de verdad con VoiceOver, no deducido de la
+documentación de Apple.
 
 ### app-windows
 
@@ -137,7 +131,7 @@ Cada proyecto tiene su propio `verificar` (tipos + lint + tests):
 
 ```
 cd backend    && npm run verificar
-cd app-ios    && npm run verificar
+cd app-ios-nativa && ./verificar
 cd app-windows && pytest
 ```
 
@@ -152,5 +146,5 @@ Las convenciones generales de desarrollo iOS/RN sin Mac y la guía de
 accesibilidad (`GUIA-ACCESIBILIDAD-RN.md`, componentes reutilizables en
 `comun/`) **viven en el repositorio padre `desarrollo-ios-rn`, no en este
 repositorio**. Si no tienes acceso a ese repo, pide que te lo compartan
-también — bastante de lo que hay en `app-ios/` da por hecho haber leído esa
+también — bastante de lo que hay en `app-ios-nativa/` da por hecho haber leído esa
 guía antes de tocar interfaz.
