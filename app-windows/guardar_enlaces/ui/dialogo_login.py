@@ -1,5 +1,10 @@
-"""Inicio de sesion con Google: abre el navegador del sistema y espera a que
-termines, sondeando el servidor (ver login_oauth.py y docs/CONTRATO-API.md).
+"""Inicio de sesion con Google o con Apple: abre el navegador del sistema y
+espera a que termines, sondeando el servidor (ver login_oauth.py y
+docs/CONTRATO-API.md).
+
+Los dos proveedores hacen exactamente lo mismo aqui; lo unico que cambia es el
+proveedor que se le pide al servidor. En el iPhone, en cambio, Apple entra sin
+navegador, por el sistema: son dos caminos distintos del mismo contrato.
 
 Aqui la cuenta SI es obligatoria, al reves que en el iPhone: esta app existe
 para sincronizar, y sin cuenta no hay con quien.
@@ -25,9 +30,10 @@ from .campos import ESTILO_SOLO_LECTURA, con_etiqueta, mostrar_con_etiqueta
 
 AVISO = (
     "Para sincronizar tus enlaces con el iPhone necesitas entrar con tu cuenta "
-    "de Google.\n"
-    "Al pulsar Entrar se abre el navegador. Termina ahí y vuelve a esta "
-    "ventana: se cerrará sola cuando hayas entrado."
+    "de Google o de Apple.\n"
+    "Al pulsar el botón se abre el navegador. Termina ahí y vuelve a esta "
+    "ventana: se cerrará sola cuando hayas entrado.\n"
+    "Google y Apple son cuentas distintas, cada una con sus propios enlaces."
 )
 
 
@@ -65,13 +71,20 @@ class DialogoLogin(wx.Dialog):
         sizer.Add(self.estado, 0, wx.EXPAND | wx.ALL, 12)
         mostrar_con_etiqueta(self.estado, False)
 
-        botones = wx.StdDialogButtonSizer()
-        self.boton_entrar = wx.Button(self._panel, wx.ID_OK, "&Entrar con Google")
+        # Un BoxSizer y no StdDialogButtonSizer: aquel coloca botones estandar
+        # (Aceptar, Cancelar) y aqui hay dos formas de entrar, ninguna de ellas
+        # "la aceptacion" del cuadro.
+        #
+        # Teclas de acceso: E para Google, P para Apple y C para Cancelar. La A
+        # se deja libre a proposito, que en los demas cuadros es la de Aceptar.
+        botones = wx.BoxSizer(wx.HORIZONTAL)
+        self.boton_entrar = wx.Button(self._panel, wx.ID_ANY, "&Entrar con Google")
+        self.boton_entrar_apple = wx.Button(self._panel, wx.ID_ANY, "Entrar con A&pple")
         boton_cancelar = wx.Button(self._panel, wx.ID_CANCEL, "&Cancelar")
         self.boton_entrar.SetDefault()
-        botones.AddButton(self.boton_entrar)
-        botones.AddButton(boton_cancelar)
-        botones.Realize()
+        botones.Add(self.boton_entrar, 0, wx.RIGHT, 8)
+        botones.Add(self.boton_entrar_apple, 0, wx.RIGHT, 8)
+        botones.Add(boton_cancelar, 0)
         sizer.Add(botones, 0, wx.ALIGN_RIGHT | wx.ALL, 12)
 
         self._panel.SetSizer(sizer)
@@ -79,7 +92,8 @@ class DialogoLogin(wx.Dialog):
         marco.Add(self._panel, 1, wx.EXPAND)
         self.SetSizerAndFit(marco)
 
-        self.boton_entrar.Bind(wx.EVT_BUTTON, self._al_entrar)
+        self.boton_entrar.Bind(wx.EVT_BUTTON, lambda evento: self._al_entrar("google"))
+        self.boton_entrar_apple.Bind(wx.EVT_BUTTON, lambda evento: self._al_entrar("apple"))
         boton_cancelar.Bind(wx.EVT_BUTTON, self._al_cancelar)
         self.Bind(wx.EVT_CLOSE, self._al_cancelar)
 
@@ -91,9 +105,9 @@ class DialogoLogin(wx.Dialog):
 
     # --- hilo de la interfaz ---
 
-    def _al_entrar(self, evento: wx.CommandEvent) -> None:
+    def _al_entrar(self, proveedor: str) -> None:
         estado = login_oauth.generar_estado()
-        url = self._cliente.url_iniciar_login("google", estado)
+        url = self._cliente.url_iniciar_login(proveedor, estado)
 
         if not login_oauth.abrir_navegador(url):
             self._decir(
@@ -103,6 +117,7 @@ class DialogoLogin(wx.Dialog):
             return
 
         self.boton_entrar.Disable()
+        self.boton_entrar_apple.Disable()
         self._decir(
             "Esperando a que termines en el navegador. Puedes volver aquí "
             "cuando hayas entrado."
@@ -145,6 +160,7 @@ class DialogoLogin(wx.Dialog):
         if self._cerrado:
             return
         self.boton_entrar.Enable()
+        self.boton_entrar_apple.Enable()
         self._decir(mensaje)
 
     def _decir(self, mensaje: str) -> None:
