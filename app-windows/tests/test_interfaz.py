@@ -33,18 +33,6 @@ from guardar_enlaces.voz import SinScreenReader, Voz
 TOMAN_NOMBRE_DE_ETIQUETA = (wx.TextCtrl, wx.Choice, wx.ComboBox, wx.ListCtrl)
 
 
-@pytest.fixture(scope="module")
-def app():
-    return wx.App()
-
-
-@pytest.fixture
-def almacen():
-    a = AlmacenLocal(":memory:")
-    yield a
-    a.cerrar()
-
-
 def _ventana(almacen: AlmacenLocal, voz: Voz | None = None) -> VentanaPrincipal:
     # El constructor lanza una sincronizacion en segundo plano; con una sesion mock que no
     # simula una respuesta real, que falle limpio con ErrorApi (evita ruido de una excepcion
