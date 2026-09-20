@@ -1,0 +1,567 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Guárdalo</title>
+<meta name="description" content="Guarda un enlace en el móvil y lo tienes en el ordenador. Una aplicación para leer más tarde, hecha para funcionar con lector de pantalla en iPhone y en Windows.">
+<meta name="color-scheme" content="light dark">
+
+<meta property="og:title" content="Guárdalo">
+<meta property="og:description" content="Guarda un enlace en el móvil y lo tienes en el ordenador. Hecha para funcionar con lector de pantalla.">
+<meta property="og:type" content="website">
+
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Atkinson+Hyperlegible:ital,wght@0,400;0,700;1,400&family=Bricolage+Grotesque:opsz,wght@12..96,600;12..96,800&display=swap">
+
+<style>
+/* ---- Fichas ------------------------------------------------------------
+   El azul sale del icono de la aplicacion: un marcador de libro blanco
+   sobre azul. El ambar es color semantico, solo para el aviso de Windows;
+   no se usa como acento en ningun otro sitio.
+
+   Contrastes medidos (WCAG 2.2, minimo 4.5:1 para texto y 3:1 para el
+   borde de un control):
+     gris sobre papel  5.40:1     azul sobre papel     7.33:1
+     tinta sobre papel 16.70:1    blanco sobre boton   7.85:1
+     borde-control     3.47:1 en claro, 4.99:1 en oscuro
+   El token --borde es decorativo (separadores y tarjetas, que ya se
+   distinguen por el fondo y la sombra) y por eso no llega a 3:1.        */
+
+:root {
+  --papel:      #f6f7fb;
+  --superficie: #ffffff;
+  --tinta:      #111726;
+  --gris:       #5c6679;
+  --azul:       #2b4ba8;
+  --azul-hover: #1f3a87;
+  --azul-suave: #e7ecfa;
+  --borde:      #c3cbdb;
+  --borde-control: #7b8598;
+  --aviso:      #8a5300;
+  --aviso-piel: #fdf4e3;
+  --aviso-borde:#e8d2a4;
+
+  --sombra: 0 1px 2px rgba(17, 23, 38, .06), 0 8px 24px -12px rgba(17, 23, 38, .18);
+
+  --display: "Bricolage Grotesque", "Trebuchet MS", system-ui, sans-serif;
+  --texto: "Atkinson Hyperlegible", "Verdana", system-ui, sans-serif;
+
+  --medida: 62ch;
+}
+
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --papel:      #0e1320;
+    --superficie: #161d2e;
+    --tinta:      #e9edf6;
+    --gris:       #a3adc2;
+    --azul:       #8fb0f7;
+    --azul-hover: #b0c7fa;
+    --azul-suave: #1c2740;
+    --borde:      #2a3348;
+    --borde-control: #7b8598;
+    --aviso:      #e8b464;
+    --aviso-piel: #241d10;
+    --aviso-borde:#4a3a1c;
+    --sombra: 0 1px 2px rgba(0, 0, 0, .4), 0 8px 24px -12px rgba(0, 0, 0, .7);
+  }
+}
+
+:root[data-theme="dark"] {
+  --papel:      #0e1320;
+  --superficie: #161d2e;
+  --tinta:      #e9edf6;
+  --gris:       #a3adc2;
+  --azul:       #8fb0f7;
+  --azul-hover: #b0c7fa;
+  --azul-suave: #1c2740;
+  --borde:      #2a3348;
+  --borde-control: #7b8598;
+  --aviso:      #e8b464;
+  --aviso-piel: #241d10;
+  --aviso-borde:#4a3a1c;
+  --sombra: 0 1px 2px rgba(0, 0, 0, .4), 0 8px 24px -12px rgba(0, 0, 0, .7);
+}
+
+*, *::before, *::after { box-sizing: border-box; }
+
+html { -webkit-text-size-adjust: 100%; }
+
+body {
+  margin: 0;
+  background: var(--papel);
+  color: var(--tinta);
+  font-family: var(--texto);
+  font-size: 1.0625rem;
+  line-height: 1.65;
+}
+
+/* Enlace de salto: invisible hasta que recibe el foco del teclado. */
+.saltar {
+  position: absolute;
+  left: 1rem;
+  top: -4rem;
+  z-index: 10;
+  padding: .7rem 1.1rem;
+  background: var(--azul);
+  color: #fff;
+  font-weight: 700;
+  border-radius: 6px;
+  transition: top .15s ease;
+}
+.saltar:focus { top: 1rem; }
+
+a { color: var(--azul); text-underline-offset: .18em; }
+a:hover { color: var(--azul-hover); }
+
+:focus-visible {
+  outline: 3px solid var(--azul);
+  outline-offset: 3px;
+  border-radius: 3px;
+}
+
+h1, h2, h3 {
+  font-family: var(--display);
+  font-weight: 800;
+  line-height: 1.12;
+  text-wrap: balance;
+  margin: 0;
+  letter-spacing: -0.015em;
+}
+
+p, ul, ol, dl { margin: 0; }
+
+/* ---- Rejilla de pagina --------------------------------------------- */
+
+.envoltorio {
+  width: min(100% - 2.5rem, 68rem);
+  margin-inline: auto;
+}
+
+.cinta {
+  display: flex;
+  flex-direction: column;
+  gap: 1.1rem;
+  max-width: var(--medida);
+}
+
+section { padding-block: clamp(3rem, 7vw, 5.25rem); }
+
+section + section { border-top: 1px solid var(--borde); }
+
+/* Frase de arranque de cada seccion: parrafo, no encabezado. El encabezado
+   es el nombre de la seccion y coincide con el enlace del menu. */
+.arranque {
+  font-size: clamp(1.15rem, 2.2vw, 1.375rem);
+  line-height: 1.4;
+  color: var(--gris);
+  text-wrap: pretty;
+}
+
+/* ---- Cabecera ------------------------------------------------------ */
+
+.cabecera {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem 2rem;
+  padding-block: 1.5rem;
+  border-bottom: 1px solid var(--borde);
+}
+
+.marca {
+  font-family: var(--display);
+  font-weight: 800;
+  font-size: 1.35rem;
+  letter-spacing: -0.02em;
+  color: var(--tinta);
+  display: inline-flex;
+  align-items: center;
+  gap: .55rem;
+}
+.marca svg { flex: none; }
+
+.menu ul {
+  display: flex;
+  flex-wrap: wrap;
+  gap: .4rem 1.5rem;
+  list-style: none;
+  padding: 0;
+}
+.menu a { color: var(--gris); text-decoration: none; font-size: .9375rem; }
+.menu a:hover { color: var(--azul); text-decoration: underline; }
+
+/* ---- Portada ------------------------------------------------------- */
+
+.portada { padding-block: clamp(3.25rem, 9vw, 6rem); }
+
+.portada h1 {
+  font-size: clamp(2.75rem, 7vw, 4.5rem);
+  letter-spacing: -0.035em;
+}
+
+.entradilla {
+  font-size: clamp(1.25rem, 2.6vw, 1.6rem);
+  line-height: 1.35;
+  font-weight: 700;
+  max-width: 24ch;
+  text-wrap: balance;
+}
+
+.portada p:not(.entradilla) { color: var(--gris); }
+
+.acciones { display: flex; flex-wrap: wrap; gap: .75rem; margin-top: .6rem; }
+
+/* ---- Botones ------------------------------------------------------- */
+
+.boton {
+  display: inline-flex;
+  align-items: center;
+  gap: .5rem;
+  padding: .8rem 1.4rem;
+  background: var(--azul);
+  color: #fff;
+  font-weight: 700;
+  font-size: 1.0625rem;
+  text-decoration: none;
+  border-radius: 8px;
+  border: 1px solid transparent;
+}
+.boton:hover { background: var(--azul-hover); color: #fff; }
+
+:root[data-theme="dark"] .boton,
+:root[data-theme="dark"] .boton:hover { color: #0e1320; }
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) .boton,
+  :root:not([data-theme="light"]) .boton:hover { color: #0e1320; }
+}
+
+/* El borde ES lo que identifica este boton, asi que cumple 1.4.11. */
+.boton--calado {
+  background: transparent;
+  color: var(--azul);
+  border-color: var(--borde-control);
+}
+.boton--calado:hover { background: var(--azul-suave); color: var(--azul); }
+:root[data-theme="dark"] .boton--calado,
+:root[data-theme="dark"] .boton--calado:hover { color: var(--azul); }
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) .boton--calado,
+  :root:not([data-theme="light"]) .boton--calado:hover { color: var(--azul); }
+}
+
+/* ---- Lista de lo que hace ------------------------------------------ */
+
+.detalles {
+  display: grid;
+  gap: 1.5rem;
+  margin-top: 1.75rem;
+  max-width: var(--medida);
+}
+
+.detalles dt {
+  font-family: var(--display);
+  font-weight: 600;
+  font-size: 1.0625rem;
+  letter-spacing: -0.01em;
+}
+.detalles dd { margin: .15rem 0 0; color: var(--gris); }
+
+/* ---- Fichas de descarga -------------------------------------------- */
+
+.descargas {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(19rem, 1fr));
+  gap: 1.25rem;
+  margin-top: 2rem;
+  align-items: start;
+}
+
+.ficha {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+  padding: 1.75rem;
+  background: var(--superficie);
+  border: 1px solid var(--borde);
+  border-radius: 12px;
+  box-shadow: var(--sombra);
+}
+
+.ficha h3 { font-size: 1.5rem; }
+
+.ficha__datos {
+  color: var(--gris);
+  font-size: .9375rem;
+  font-variant-numeric: tabular-nums;
+}
+
+.ficha__notas {
+  display: flex;
+  flex-direction: column;
+  gap: .85rem;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  font-size: .9688rem;
+  color: var(--gris);
+}
+.ficha__notas strong { color: var(--tinta); }
+
+.aviso {
+  padding: .9rem 1.1rem;
+  background: var(--aviso-piel);
+  border: 1px solid var(--aviso-borde);
+  border-radius: 8px;
+  color: var(--tinta);
+  font-size: .9688rem;
+}
+.aviso b { color: var(--aviso); }
+
+/* Marcador temporal: se quita al pegar el enlace de TestFlight. */
+.pendiente {
+  padding: .9rem 1.1rem;
+  border: 2px dashed var(--aviso-borde);
+  border-radius: 8px;
+  color: var(--aviso);
+  font-weight: 700;
+  font-size: .9375rem;
+}
+
+/* ---- Bloques con subapartado --------------------------------------- */
+
+.bloque { display: flex; flex-direction: column; gap: 1.1rem; max-width: var(--medida); }
+.bloque + .bloque { margin-top: 2.75rem; }
+.bloque h3 { font-size: 1.375rem; }
+.bloque p { color: var(--gris); }
+.bloque p strong { color: var(--tinta); }
+
+/* ---- Pie ------------------------------------------------------------ */
+
+.pie {
+  padding-block: 2.5rem 3.5rem;
+  border-top: 1px solid var(--borde);
+  color: var(--gris);
+  font-size: .9375rem;
+  display: flex;
+  flex-wrap: wrap;
+  gap: .5rem 2rem;
+  justify-content: space-between;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after {
+    animation-duration: .001ms !important;
+    transition-duration: .001ms !important;
+  }
+}
+</style>
+</head>
+<body>
+
+<a class="saltar" href="#contenido">Saltar al contenido</a>
+
+<div class="envoltorio">
+  <header class="cabecera">
+    <p class="marca">
+      <svg width="20" height="26" viewBox="0 0 20 26" aria-hidden="true" focusable="false">
+        <path d="M1 1h18v23l-9-6.5L1 24z" fill="#2b4ba8" stroke="#2b4ba8" stroke-width="2" stroke-linejoin="round"></path>
+        <path d="M6.5 8.5h7M6.5 12.5h4" stroke="#fff" stroke-width="1.8" stroke-linecap="round"></path>
+      </svg>
+      Guárdalo
+    </p>
+    <nav class="menu" aria-label="Secciones de la página">
+      <ul>
+        <li><a href="#que-hace">Qué hace</a></li>
+        <li><a href="#la-cuenta">La cuenta</a></li>
+        <li><a href="#descargas">Descargas</a></li>
+        <li><a href="#las-pantallas">Las pantallas</a></li>
+        <li><a href="#el-codigo">El código</a></li>
+      </ul>
+    </nav>
+  </header>
+</div>
+
+<main id="contenido">
+
+  <div class="envoltorio">
+    <section class="portada" aria-labelledby="titulo-portada">
+      <div class="cinta">
+        <h1 id="titulo-portada">Guárdalo</h1>
+        <p class="entradilla">Guarda un enlace en el móvil y lo tienes en el ordenador. Y al revés.</p>
+        <p>Un artículo que quieres leer con calma, un vídeo que no puedes ver ahora. Lo apuntas donde estés y lo encuentras después en el otro aparato.</p>
+        <p>Está hecha para funcionar con lector de pantalla desde la primera línea de código: VoiceOver en el iPhone, NVDA, JAWS o el Narrador en Windows. No es un repaso del final.</p>
+        <p class="acciones">
+          <a class="boton" href="#descargas">Ir a las descargas</a>
+        </p>
+      </div>
+    </section>
+  </div>
+
+  <div class="envoltorio">
+    <section id="que-hace" aria-labelledby="titulo-que-hace">
+      <div class="cinta">
+        <h2 id="titulo-que-hace">Qué hace</h2>
+        <p class="arranque">Apuntas un enlace y te olvidas de él hasta que lo necesitas.</p>
+        <p>Pegas una dirección en el ordenador, o la mandas desde la hoja de compartir del iPhone sin salir de donde estabas. Lo demás lo pone la aplicación.</p>
+      </div>
+
+      <dl class="detalles">
+        <div>
+          <dt>El título y la descripción los busca él</dt>
+          <dd>No tienes que teclear de qué va cada enlace para reconocerlo después.</dd>
+        </div>
+        <div>
+          <dt>Etiquetas para encontrarlo luego</dt>
+          <dd>Y puedes crear una etiqueta nueva sin salir de la hoja de compartir del iPhone.</dd>
+        </div>
+        <div>
+          <dt>Te avisa si ya lo tenías</dt>
+          <dd>Reconoce la misma página aunque llegue con «www» o sin él, con http en vez de https, con una barra de más al final o arrastrando los parámetros que añaden las redes sociales.</dd>
+        </div>
+        <div>
+          <dt>Lo que guardas en uno aparece en el otro</dt>
+          <dd>Sin exportar nada ni mandarte enlaces a ti mismo por correo.</dd>
+        </div>
+      </dl>
+    </section>
+  </div>
+
+  <div class="envoltorio">
+    <section id="la-cuenta" aria-labelledby="titulo-la-cuenta">
+      <div class="cinta">
+        <h2 id="titulo-la-cuenta">La cuenta</h2>
+        <p class="arranque">Solo si la quieres, en los dos sitios.</p>
+        <p>La aplicación del móvil se abre sin pedirte nada y funciona entera dentro del propio teléfono: los enlaces se guardan ahí y los datos de cada página los resuelve él solo. <strong>Sin cuenta, sin correo, sin registro.</strong></p>
+        <p>La cuenta hace falta únicamente para que lo que guardas aparezca también en el ordenador. La primera vez que entres te pregunta qué hacer con los enlaces que ya tenías en el teléfono; no decide por ti.</p>
+        <p>En Windows es igual: se abre sin pedirte nada y guarda en el propio ordenador. La cuenta solo entra en juego cuando quieres que lo guardado aparezca también en el móvil, y entonces entras con tu cuenta de Google, sin ninguna contraseña nueva que recordar.</p>
+      </div>
+    </section>
+  </div>
+
+  <div class="envoltorio">
+    <section id="descargas" aria-labelledby="titulo-descargas">
+      <div class="cinta">
+        <h2 id="titulo-descargas">Descargas</h2>
+        <p class="arranque">Cógela para tu aparato.</p>
+      </div>
+
+      <div class="descargas">
+
+        <article class="ficha">
+          <h3>Para Windows</h3>
+          <p class="ficha__datos" id="datos-windows">Versión 1.1.1 · ZIP de unos 21 MB · Windows 10 u 11</p>
+          <p>
+            <a class="boton" href="https://github.com/jmortizsilva/guardar-enlaces/releases/latest">
+              Descargar para Windows
+            </a>
+          </p>
+          <ul class="ficha__notas">
+            <li><strong>Descomprime la carpeta donde quieras, menos en Archivos de programa.</strong> La aplicación se actualiza sola y necesita poder escribir donde está, sin pedirte permisos de administrador.</li>
+            <li>A partir de ahí se encarga ella: comprueba si hay versión nueva, se la descarga y verifica su firma SHA-256 antes de tocar nada.</li>
+          </ul>
+          <p class="aviso">
+            <b>La primera vez Windows dirá «Windows protegió su PC».</b>
+            Es porque la aplicación no está firmada, no porque haya nada raro dentro.
+            Pulsa <b>Más información</b> y luego <b>Ejecutar de todas formas</b>.
+          </p>
+        </article>
+
+        <article class="ficha">
+          <h3>Para iPhone</h3>
+          <p class="ficha__datos">Versión de pruebas en TestFlight · iOS 18 o posterior</p>
+          <p>
+            <!-- PENDIENTE: sustituir por el enlace de invitacion de TestFlight
+                 (https://testflight.apple.com/join/XXXXXXXX) y borrar el
+                 parrafo con clase "pendiente" que hay debajo. -->
+            <a class="boton" href="PEGAR-AQUI-EL-ENLACE-DE-TESTFLIGHT" aria-describedby="falta-testflight">
+              Probar en TestFlight
+            </a>
+          </p>
+          <p class="pendiente" id="falta-testflight">Pendiente: este botón todavía no lleva a ningún sitio. Falta pegar el enlace de invitación de TestFlight.</p>
+          <ul class="ficha__notas">
+            <li>Necesitas la aplicación <strong>TestFlight</strong> de Apple, que es gratuita y está en la App Store.</li>
+            <li>Es una versión de pruebas. Si algo no funciona como debería, cuéntalo: para eso está.</li>
+          </ul>
+        </article>
+
+      </div>
+    </section>
+  </div>
+
+  <div class="envoltorio">
+    <section id="las-pantallas" aria-labelledby="titulo-las-pantallas">
+      <div class="cinta">
+        <h2 id="titulo-las-pantallas">Las pantallas</h2>
+        <p class="arranque">Pocas, y cada una hace una cosa.</p>
+      </div>
+
+      <div class="bloque">
+        <h3>En Windows</h3>
+        <p>Una sola ventana: arriba el campo de búsqueda y un desplegable para filtrar por etiqueta, y debajo la lista de todo lo que tienes guardado. Cada fila lleva en una línea lo que hace falta para reconocer el enlace.</p>
+        <p>Las acciones sobre el enlace elegido —<strong>abrir en el navegador, copiar la URL, editar etiquetas y eliminar</strong>— están en su menú contextual, que se abre con el clic derecho, con la tecla Menú o con Mayús+F10.</p>
+        <p>Lo que más se usa tiene atajo: <strong>Ctrl+N</strong> para añadir un enlace, <strong>F5</strong> para sincronizar, <strong>Supr</strong> para eliminar. Y hay un icono en la bandeja del sistema para abrir la ventana, sincronizar o salir sin tener que buscarla.</p>
+        <p>El resto son tres diálogos pequeños y de un solo asunto: añadir un enlace, ver su detalle y gestionar la lista de etiquetas.</p>
+      </div>
+
+      <div class="bloque">
+        <h3>En el iPhone</h3>
+        <p>Lo primero al estrenarla es una pantalla de bienvenida con las opciones al mismo nivel: entrar con cuenta, o empezar sin ella. Usarla sin cuenta no está puesto como salida de emergencia.</p>
+        <p>Después, la lista. El buscador de arriba mira a la vez en el <strong>título, la dirección y las etiquetas</strong>, y un menú al lado filtra por etiqueta o te lleva a gestionarlas. Cada enlace ofrece las mismas cuatro acciones que en el ordenador.</p>
+        <p>Para añadir uno, pegas la dirección y ya está guardado. El título y la descripción se rellenan solos por detrás, pero nunca hay que esperar a que lleguen: si no llegan, el enlace se guarda igual y se te dice.</p>
+        <p>La pantalla de detalle pone cada dato en su sitio y se recorre de uno en uno, en vez de soltarte toda la información de golpe como hace la fila de la lista.</p>
+        <p>Y para guardar algo que estás viendo en otra aplicación no hace falta abrir Guárdalo: está en la hoja de compartir, donde también puedes ponerle etiquetas. Si activas <strong>«Guardar sin preguntar»</strong> en los ajustes, ni eso: se guarda y sigues a lo tuyo.</p>
+      </div>
+    </section>
+  </div>
+
+  <div class="envoltorio">
+    <section id="el-codigo" aria-labelledby="titulo-el-codigo">
+      <div class="cinta">
+        <h2 id="titulo-el-codigo">El código</h2>
+        <p class="arranque">Está todo a la vista.</p>
+        <p>Las dos aplicaciones y el servidor que las sincroniza están en GitHub, con la documentación de cómo se hizo cada cosa y de lo que se aprendió por el camino.</p>
+        <p class="acciones">
+          <a class="boton boton--calado" href="https://github.com/jmortizsilva/guardar-enlaces">Ver el repositorio</a>
+        </p>
+      </div>
+    </section>
+  </div>
+
+</main>
+
+<div class="envoltorio">
+  <footer class="pie">
+    <p>Guárdalo — guardar enlaces en el iPhone y en Windows.</p>
+    <p><a href="https://github.com/jmortizsilva/guardar-enlaces">Código en GitHub</a></p>
+  </footer>
+</div>
+
+<script>
+// La aplicacion de Windows se actualiza leyendo este mismo manifiesto, que
+// vive en una URL fija. Si responde, la ficha deja de envejecer sola; si no
+// (sin red, o CORS), se queda el texto escrito arriba y no pasa nada.
+(async () => {
+  const ficha = document.getElementById("datos-windows");
+  if (!ficha) return;
+  try {
+    const r = await fetch(
+      "https://github.com/jmortizsilva/guardar-enlaces/releases/latest/download/ultima.json",
+      { cache: "no-store" }
+    );
+    if (!r.ok) return;
+    const { version } = await r.json();
+    if (typeof version === "string" && /^[\d.]+$/.test(version)) {
+      ficha.textContent = `Versión ${version} · ZIP de unos 21 MB · Windows 10 u 11`;
+    }
+  } catch {
+    /* Se queda la version escrita en el HTML. */
+  }
+})();
+</script>
+
+</body>
+</html>
