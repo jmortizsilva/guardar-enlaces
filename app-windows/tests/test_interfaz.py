@@ -293,7 +293,8 @@ def test_dialogo_anadir_los_campos_se_pueden_leer(app):
     dialogo = DialogoAnadir(None, MagicMock(), MagicMock())
     try:
         assert etiqueta_de(dialogo.campo_url) == "URL:"
-        assert etiqueta_de(dialogo.campo_etiquetas) == "Etiquetas, separadas por comas:"
+        assert etiqueta_de(dialogo.etiquetas.lista) == "Etiquetas:"
+        assert etiqueta_de(dialogo.etiquetas.campo_nueva) == "Etiqueta nueva:"
         assert etiqueta_de(dialogo.estado) == "Estado:"
         assert not dialogo.estado.IsShown()
         _comprobar_pantalla(dialogo)
@@ -422,7 +423,8 @@ def test_dialogo_detalle_se_pueden_leer_los_datos_del_enlace(app):
     dialogo = DialogoDetalle(None, elemento, lambda e: None, lambda e: None)
     try:
         assert etiqueta_de(dialogo.campo_enlace) == "Enlace:"
-        assert etiqueta_de(dialogo.campo_etiquetas) == "Etiquetas, separadas por comas:"
+        assert etiqueta_de(dialogo.etiquetas.lista) == "Etiquetas:"
+        assert etiqueta_de(dialogo.etiquetas.campo_nueva) == "Etiqueta nueva:"
         assert dialogo.campo_enlace.GetValue() == "A\nhttps://a.com"
         _comprobar_pantalla(dialogo)
     finally:

@@ -12,6 +12,7 @@ from ..modelo import Elemento, editar
 from ..presentacion import texto_detalle
 from .campos import ESTILO_SOLO_LECTURA, con_etiqueta
 from .preguntas import confirmar_eliminacion
+from .selector_etiquetas import SelectorEtiquetas
 
 
 class DialogoDetalle(wx.Dialog):
@@ -21,6 +22,7 @@ class DialogoDetalle(wx.Dialog):
         elemento: Elemento,
         al_actualizar: Callable[[Elemento], None],
         al_eliminar: Callable[[Elemento], None],
+        etiquetas_disponibles: list[str] | tuple[str, ...] = (),
     ):
         super().__init__(padre, title=elemento.titulo or elemento.url)
         self.elemento = elemento
@@ -45,13 +47,10 @@ class DialogoDetalle(wx.Dialog):
         sizer.Add(etiqueta_enlace, 0, wx.LEFT | wx.RIGHT | wx.TOP, 12)
         sizer.Add(self.campo_enlace, 0, wx.EXPAND | wx.ALL, 12)
 
-        etiqueta_etiquetas, self.campo_etiquetas = con_etiqueta(
-            panel,
-            "E&tiquetas, separadas por comas:",
-            lambda padre: wx.TextCtrl(padre, value=", ".join(elemento.etiquetas)),
+        self.etiquetas = SelectorEtiquetas(
+            panel, etiquetas_disponibles, elemento.etiquetas
         )
-        sizer.Add(etiqueta_etiquetas, 0, wx.LEFT | wx.RIGHT | wx.TOP, 12)
-        sizer.Add(self.campo_etiquetas, 0, wx.EXPAND | wx.ALL, 12)
+        sizer.Add(self.etiquetas, 0, wx.EXPAND)
 
         botones = wx.BoxSizer(wx.HORIZONTAL)
         boton_abrir = wx.Button(panel, label="&Abrir en el navegador")
@@ -81,9 +80,7 @@ class DialogoDetalle(wx.Dialog):
         webbrowser.open(self.elemento.url)
 
     def _al_guardar_etiquetas(self, evento: wx.CommandEvent) -> None:
-        etiquetas = tuple(
-            e.strip() for e in self.campo_etiquetas.GetValue().split(",") if e.strip()
-        )
+        etiquetas = self.etiquetas.etiquetas_elegidas()
         self.elemento = editar(self.elemento, etiquetas=etiquetas)
         self._avisar_actualizado(self.elemento)
         self.EndModal(wx.ID_OK)

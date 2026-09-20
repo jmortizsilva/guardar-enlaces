@@ -218,6 +218,17 @@ class VentanaPrincipal(wx.Frame):
         indice = opciones.index(seleccionada) if seleccionada in opciones else 0
         self.selector_etiqueta.SetSelection(indice)
 
+    def _todas_las_etiquetas(self) -> list[str]:
+        """Las que lleva algun enlace mas las definidas a mano, que existen
+        aunque todavia no las use nadie. Es lo que se ofrece al etiquetar: si
+        una etiqueta se puede gestionar, se tiene que poder elegir."""
+        en_uso = etiquetas_disponibles(elementos_visibles(self._almacen.cargar_todos()))
+        definidas = [
+            e.nombre
+            for e in etiquetas_reservadas_visibles(self._almacen.cargar_etiquetas_definidas())
+        ]
+        return sorted(set(en_uso) | set(definidas), key=str.casefold)
+
     def _etiqueta_seleccionada(self) -> str | None:
         texto = self.selector_etiqueta.GetStringSelection()
         return None if not texto or texto == _TODAS_LAS_ETIQUETAS else texto
@@ -287,7 +298,9 @@ class VentanaPrincipal(wx.Frame):
     def _al_anadir(self, evento: wx.CommandEvent) -> None:
         # Los ya guardados van al dialogo para poder avisar de repetidos.
         guardados = elementos_visibles(self._almacen.cargar_todos())
-        dialogo = DialogoAnadir(self, self._cliente, self._sesion, guardados)
+        dialogo = DialogoAnadir(
+            self, self._cliente, self._sesion, guardados, self._todas_las_etiquetas()
+        )
         if dialogo.ShowModal() == wx.ID_OK and dialogo.elemento_creado:
             elemento = dialogo.elemento_creado
             self._almacen.marcar_pendiente(elemento)
@@ -305,7 +318,13 @@ class VentanaPrincipal(wx.Frame):
             self._mostrar_detalle(elemento)
 
     def _mostrar_detalle(self, elemento: Elemento) -> None:
-        dialogo = DialogoDetalle(self, elemento, self._al_elemento_editado, self._al_elemento_eliminado)
+        dialogo = DialogoDetalle(
+            self,
+            elemento,
+            self._al_elemento_editado,
+            self._al_elemento_eliminado,
+            self._todas_las_etiquetas(),
+        )
         dialogo.ShowModal()
         dialogo.Destroy()
 

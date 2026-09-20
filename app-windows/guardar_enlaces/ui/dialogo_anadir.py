@@ -21,6 +21,7 @@ from ..resolver_metadatos import resolver_en_este_equipo
 from ..sesion import Sesion
 from .campos import ESTILO_SOLO_LECTURA, con_etiqueta, mostrar_con_etiqueta
 from .preguntas import confirmar_guardar_duplicado
+from .selector_etiquetas import SelectorEtiquetas
 
 
 class DialogoAnadir(wx.Dialog):
@@ -30,6 +31,7 @@ class DialogoAnadir(wx.Dialog):
         cliente: ClienteApi,
         sesion: Sesion,
         guardados: list[Elemento] | None = None,
+        etiquetas_disponibles: list[str] | tuple[str, ...] = (),
     ):
         super().__init__(padre, title="Añadir enlace")
         self._cliente = cliente
@@ -50,11 +52,8 @@ class DialogoAnadir(wx.Dialog):
         sizer.Add(etiqueta_url, 0, wx.LEFT | wx.RIGHT | wx.TOP, 12)
         sizer.Add(self.campo_url, 0, wx.EXPAND | wx.ALL, 12)
 
-        etiqueta_etiquetas, self.campo_etiquetas = con_etiqueta(
-            self._panel, "Eti&quetas, separadas por comas:", wx.TextCtrl
-        )
-        sizer.Add(etiqueta_etiquetas, 0, wx.LEFT | wx.RIGHT | wx.TOP, 12)
-        sizer.Add(self.campo_etiquetas, 0, wx.EXPAND | wx.ALL, 12)
+        self.etiquetas = SelectorEtiquetas(self._panel, etiquetas_disponibles)
+        sizer.Add(self.etiquetas, 0, wx.EXPAND)
 
         # Cuadro de solo lectura y no StaticText, para poder leerlo con las
         # flechas. Oculto mientras no haya nada que contar (ver "Guardando..."
@@ -111,9 +110,7 @@ class DialogoAnadir(wx.Dialog):
         ):
             return
 
-        etiquetas = tuple(
-            e.strip() for e in self.campo_etiquetas.GetValue().split(",") if e.strip()
-        )
+        etiquetas = self.etiquetas.etiquetas_elegidas()
 
         self.boton_guardar.Disable()
         self._decir("Guardando…")
