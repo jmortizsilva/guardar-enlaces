@@ -13,3 +13,12 @@ AuthKey_*
 # Carpeta de compilación para firmar e instalar en el teléfono. Son 128 MB de
 # artefactos que se rehacen solos: nunca deben acabar en el repositorio.
 .build-dispositivo/
+
+# Lo mismo para archivar y subir a TestFlight, mas el .ipa firmado.
+.build-publicar/
+
+# Lo que baja `eas credentials`: el certificado de distribucion con su clave
+# privada, y un JSON con la contrasena en claro al lado. Ni de broma.
+credentials/
+credentials.json
+*.p12

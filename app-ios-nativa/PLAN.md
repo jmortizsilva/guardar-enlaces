@@ -152,7 +152,7 @@ dejaba preparada.
   llavero de mentira, y el de verdad solo se comprueba a mano en el teléfono.
   Se hizo el 2026-09-18 con las dos cuentas, incluidas la persistencia y el
   cambio de una a otra.
-- **La App Store no se ha pisado todavía.** Todo esto se instala por cable con
-  un perfil de desarrollo. Subir a TestFlight necesita certificado de
-  distribución, perfil de App Store y una ficha en App Store Connect, y nada
-  de eso está hecho.
+- **En TestFlight desde el 2026-09-20**, compilación 1 de la versión 1.0. Lo
+  que costó está en `docs/TESTFLIGHT.md`. Falta lo que pasa por revisión de
+  Apple: probadores externos y publicación de verdad, que piden la ficha
+  entera (capturas, descripción, política de privacidad y categoría).

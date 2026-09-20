@@ -1,0 +1,87 @@
+#!/bin/bash
+# Archiva, exporta y sube la app a TestFlight, sin abrir Xcode.
+#
+#    ./publicar            # sube la compilacion siguiente
+#    ./publicar --solo-ipa # se queda en el .ipa, sin subir
+#
+# Antes de lanzarlo hay que tener:
+#   - El llavero de firma con el certificado de distribucion dentro
+#     (ver docs/FIRMA-SIN-PANTALLA.md).
+#   - La ficha de la app creada en App Store Connect. No se puede crear por
+#     API; si falta, la subida termina con "no app with bundle id".
+#
+# El numero de compilacion sube solo, y no se commitea: lo unico que Apple
+# exige es que no se repita. La version visible (MARKETING_VERSION) si se
+# cambia a mano, en el proyecto, porque esa si es una decision.
+set -euo pipefail
+
+cd "$(dirname "$0")"
+
+SOLO_IPA=0
+[[ "${1:-}" == "--solo-ipa" ]] && SOLO_IPA=1
+
+CLAVE_API=2V5QGQLFXK
+EMISOR_API=f313d445-9ae7-4b5d-a10f-65aa272f36f1
+SALIDA=.build-publicar
+
+# El llavero de firma se vuelve a bloquear solo, asi que se abre aqui cada vez.
+CLAVE=$(cat ~/.appstoreconnect/llavero-firma.txt)
+security unlock-keychain -p "$CLAVE" guardalo-firma.keychain
+security list-keychains -d user -s guardalo-firma.keychain login.keychain-db
+
+# Que no se suba nada que no pase las pruebas.
+echo "== Verificando =="
+./verificar > /tmp/guardalo-verificar.log 2>&1 || {
+    echo "Las pruebas no pasan. Mira /tmp/guardalo-verificar.log" >&2
+    exit 1
+}
+echo "   todo en verde"
+
+# Apple rechaza una compilacion con un numero que ya subio. Se pregunta cual
+# fue el ultimo y se suma uno, en vez de llevar la cuenta a mano.
+echo
+echo "== Numero de compilacion =="
+ULTIMO=$(herramientas/ultima-compilacion.py "$CLAVE_API" "$EMISOR_API" com.jmortizsilva.guardarenlaces)
+SIGUIENTE=$((ULTIMO + 1))
+echo "   la ultima que hay en App Store Connect es la $ULTIMO, sube la $SIGUIENTE"
+
+echo
+echo "== Archivando =="
+rm -rf "$SALIDA"
+xcodebuild -project Guardalo.xcodeproj \
+    -scheme Guardalo \
+    -destination 'generic/platform=iOS' \
+    -archivePath "$SALIDA/Guardalo.xcarchive" \
+    -derivedDataPath "$SALIDA/datos" \
+    CURRENT_PROJECT_VERSION="$SIGUIENTE" \
+    -quiet \
+    archive
+
+echo
+echo "== Exportando el .ipa =="
+xcodebuild -exportArchive \
+    -archivePath "$SALIDA/Guardalo.xcarchive" \
+    -exportPath "$SALIDA/ipa" \
+    -exportOptionsPlist herramientas/opciones-exportar.plist \
+    -quiet
+
+IPA=$(find "$SALIDA/ipa" -name "*.ipa" | head -1)
+echo "   $IPA"
+
+if [[ $SOLO_IPA -eq 1 ]]; then
+    echo
+    echo "Hecho. Sin subir, como se pidio."
+    exit 0
+fi
+
+echo
+echo "== Subiendo a App Store Connect =="
+xcrun altool --upload-app \
+    --type ios \
+    --file "$IPA" \
+    --apiKey "$CLAVE_API" \
+    --apiIssuer "$EMISOR_API"
+
+echo
+echo "Subida la compilacion $SIGUIENTE."
+echo "Tarda unos minutos en aparecer en TestFlight: Apple la procesa antes."

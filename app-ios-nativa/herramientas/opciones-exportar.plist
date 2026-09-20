@@ -1,0 +1,30 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+	<key>method</key>
+	<string>app-store-connect</string>
+	<key>teamID</key>
+	<string>S92QZXCW54</string>
+	<!-- Manual, y los perfiles dichos uno por uno, por lo mismo que al
+	     compilar para el telefono: la firma automatica necesita que xcodebuild
+	     entre en el portal, y aqui eso no funciona. -->
+	<key>signingStyle</key>
+	<string>manual</string>
+	<key>signingCertificate</key>
+	<string>iPhone Distribution: Jose María Ortiz Silva (S92QZXCW54)</string>
+	<key>provisioningProfiles</key>
+	<dict>
+		<key>com.jmortizsilva.guardarenlaces</key>
+		<string>Guardalo AppStore</string>
+		<key>com.jmortizsilva.guardarenlaces.Compartir</key>
+		<string>Guardalo Compartir AppStore</string>
+	</dict>
+	<!-- Que Apple no recompile el binario por su cuenta: lo que se prueba es
+	     lo que se sube. -->
+	<key>uploadSymbols</key>
+	<true/>
+	<key>manageAppVersionAndBuildNumber</key>
+	<false/>
+</dict>
+</plist>
