@@ -38,11 +38,13 @@ class AplicacionGuardarEnlaces(wx.App):
 
         restaurada = sesion.restaurar()
         if not restaurada:
+            # Se entre o no, la aplicacion se abre. Sin cuenta funciona entera
+            # contra este equipo y lo unico que no hace es sincronizar; entrar
+            # mas tarde esta en el menu Archivo. Antes, no entrar aqui cerraba
+            # la aplicacion.
             dialogo = DialogoLogin(None, sesion, cliente)
-            resultado = dialogo.ShowModal()
+            dialogo.ShowModal()
             dialogo.Destroy()
-            if resultado != wx.ID_OK:
-                return False
 
         correo = (sesion.usuario or {}).get("email")
         if correo:

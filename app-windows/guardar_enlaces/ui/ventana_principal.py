@@ -63,6 +63,13 @@ _TODAS_LAS_ETIQUETAS = "(todas las etiquetas)"
 # fallo al sincronizar) sale sin esperar.
 _RETRASO_TRAS_CERRAR_VENTANA_MS = 500
 
+# El mismo elemento del menu Archivo sirve para las dos cosas, porque nunca
+# tienen sentido las dos a la vez. Dos elementos, uno siempre deshabilitado,
+# obligaria a pasar por encima de algo inservible cada vez que se recorre el
+# menu con las flechas.
+_ETIQUETA_CERRAR_SESION = "&Cerrar sesión..."
+_ETIQUETA_ENTRAR = "&Entrar con una cuenta..."
+
 
 def _titulo_con_cuenta(sesion: Sesion) -> str:
     """La cuenta va en el TITULO, no en la barra de estado: el titulo lo
@@ -103,7 +110,7 @@ class VentanaPrincipal(wx.Frame):
     def _construir_menu(self) -> None:
         id_anadir = wx.NewIdRef()
         id_sincronizar = wx.NewIdRef()
-        id_cerrar_sesion = wx.NewIdRef()
+        id_cuenta = wx.NewIdRef()
         id_actualizar = wx.NewIdRef()
         id_gestionar_etiquetas = wx.NewIdRef()
 
@@ -113,9 +120,14 @@ class VentanaPrincipal(wx.Frame):
         menu_archivo.Append(id_sincronizar, "Si&ncronizar ahora\tF5")
         menu_archivo.AppendSeparator()
         menu_archivo.Append(id_actualizar, "Buscar act&ualizaciones...")
-        menu_archivo.Append(id_cerrar_sesion, "&Cerrar sesión...")
+        menu_archivo.Append(id_cuenta, _ETIQUETA_CERRAR_SESION)
         menu_archivo.Append(wx.ID_EXIT, "&Salir\tCtrl+Q")
         barra.Append(menu_archivo, "&Archivo")
+
+        # Se guardan para poder cambiarle la etiqueta a ese elemento; ver
+        # _actualizar_menu_cuenta.
+        self._menu_archivo = menu_archivo
+        self._id_cuenta = id_cuenta
 
         menu_etiquetas = wx.Menu()
         menu_etiquetas.Append(id_gestionar_etiquetas, "&Gestionar etiquetas...")
@@ -128,9 +140,11 @@ class VentanaPrincipal(wx.Frame):
             wx.EVT_MENU, lambda e: self.sincronizar_en_segundo_plano(manual=True), id=id_sincronizar
         )
         self.Bind(wx.EVT_MENU, self._al_buscar_actualizaciones, id=id_actualizar)
-        self.Bind(wx.EVT_MENU, self._al_cerrar_sesion, id=id_cerrar_sesion)
+        self.Bind(wx.EVT_MENU, self._al_menu_cuenta, id=id_cuenta)
         self.Bind(wx.EVT_MENU, lambda e: self.Close(), id=wx.ID_EXIT)
         self.Bind(wx.EVT_MENU, self._al_gestionar_etiquetas, id=id_gestionar_etiquetas)
+
+        self._actualizar_menu_cuenta()
 
     def _construir_controles(self) -> None:
         panel = wx.Panel(self)
@@ -437,6 +451,19 @@ class VentanaPrincipal(wx.Frame):
     def sincronizar_en_segundo_plano(self, manual: bool = False) -> None:
         """`manual` si la ha pedido el usuario (F5, menu, bandeja): entonces se
         confirma al terminar. Ver aviso_tras_sincronizar."""
+        # Un solo guardian para los ocho sitios que llaman aqui, en vez de
+        # ocho comprobaciones. Sin cuenta no hay con quien sincronizar, pero
+        # la aplicacion funciona igual: los enlaces se quedan en este equipo.
+        if not self._sesion.autenticado:
+            if manual:
+                # Solo si la pidio el usuario: callarse ante F5 parece averia.
+                # Lo automatico se calla, que si no avisaria a cada cambio.
+                self._decir_estado(
+                    "Sin cuenta no se sincroniza. Entra con una cuenta desde "
+                    "el menú Archivo para tener tus enlaces también en el móvil."
+                )
+            return
+
         self._ultima_sincronizacion = time.monotonic()
 
         def trabajo() -> None:
@@ -541,6 +568,42 @@ class VentanaPrincipal(wx.Frame):
 
     # --- cuenta ---
 
+    def _actualizar_menu_cuenta(self) -> None:
+        self._menu_archivo.SetLabel(
+            self._id_cuenta,
+            _ETIQUETA_CERRAR_SESION if self._sesion.autenticado else _ETIQUETA_ENTRAR,
+        )
+
+    def _al_menu_cuenta(self, evento: wx.CommandEvent) -> None:
+        if self._sesion.autenticado:
+            self._al_cerrar_sesion(evento)
+        else:
+            self._al_entrar_con_cuenta()
+
+    def _al_entrar_con_cuenta(self) -> None:
+        """Entrar estando ya en marcha sin cuenta. Lo que hubiera guardado en
+        este equipo no se pierde: de eso se encarga asentar_cuenta, que
+        pregunta antes de mezclar nada."""
+        dialogo = DialogoLogin(self, self._sesion, self._cliente)
+        entro = dialogo.ShowModal() == wx.ID_OK
+        dialogo.Destroy()
+        if entro:
+            self._tras_entrar()
+
+    def _tras_entrar(self) -> None:
+        correo = (self._sesion.usuario or {}).get("email")
+        if correo:
+            asentar_cuenta(
+                self._almacen,
+                identidad_dueno(self._cliente.url_base, correo),
+                lambda enlaces: preguntar_importacion(enlaces, self),
+            )
+        self.SetTitle(_titulo_con_cuenta(self._sesion))
+        self._actualizar_menu_cuenta()
+        self._cargar_desde_cache()
+        self._ultima_sincronizacion = 0.0  # cuenta nueva: sincronizar ya, sin esperar al freno
+        self.sincronizar_en_segundo_plano()
+
     def _al_cerrar_sesion(self, evento: wx.CommandEvent) -> None:
         """Cerrar sesion y ofrecer entrar con otra cuenta sin reiniciar.
 
@@ -574,29 +637,13 @@ class VentanaPrincipal(wx.Frame):
         threading.Thread(target=trabajo, daemon=True).start()
 
     def _tras_cerrar_sesion(self) -> None:
-        """Sin cuenta esta aplicacion no tiene nada que hacer --existe para
-        sincronizar--, asi que o entra alguien o se cierra."""
+        """La aplicacion se queda abierta y usable, sin cuenta. Antes se
+        cerraba si no entraba nadie, porque sin cuenta no habia nada que
+        hacer aqui; ahora los enlaces se quedan en este equipo y se puede
+        seguir guardando. Para volver a entrar, el menu Archivo."""
         self.SetTitle(_titulo_con_cuenta(self._sesion))
-        self.SetStatusText("Sesión cerrada")
-
-        dialogo = DialogoLogin(self, self._sesion, self._cliente)
-        entro = dialogo.ShowModal() == wx.ID_OK
-        dialogo.Destroy()
-        if not entro:
-            self.Close()
-            return
-
-        correo = (self._sesion.usuario or {}).get("email")
-        if correo:
-            asentar_cuenta(
-                self._almacen,
-                identidad_dueno(self._cliente.url_base, correo),
-                lambda enlaces: preguntar_importacion(enlaces, self),
-            )
-        self.SetTitle(_titulo_con_cuenta(self._sesion))
-        self._cargar_desde_cache()
-        self._ultima_sincronizacion = 0.0  # cuenta nueva: sincronizar ya, sin esperar al freno
-        self.sincronizar_en_segundo_plano()
+        self._actualizar_menu_cuenta()
+        self.SetStatusText("Sesión cerrada. Tus enlaces siguen en este equipo.")
 
     # --- cierre ---
 

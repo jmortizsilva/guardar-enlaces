@@ -18,7 +18,9 @@ funciona entera en local: los enlaces se guardan en el propio teléfono y los
 metadatos los resuelve él mismo. La cuenta (Google o Apple, sin contraseñas)
 solo hace falta para sincronizar con el PC; al entrar por primera vez se
 pregunta si se quieren subir a la cuenta los enlaces que ya hubiera en el
-teléfono. La app de Windows sí necesita cuenta: es la que sincroniza.
+teléfono. En Windows es igual desde septiembre de 2026: la app se abre sin
+pedir nada y guarda en el propio equipo, y la cuenta solo hace falta para
+sincronizar. Antes allí era obligatoria, y no entrar cerraba la aplicación.
 
 ## Estructura
 

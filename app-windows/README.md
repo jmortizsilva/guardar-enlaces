@@ -77,9 +77,20 @@ La app apunta al backend por la variable de entorno `GUARDAR_ENLACES_API`
 (por defecto `http://localhost:8081`). El inicio de sesión abre el navegador
 del sistema para entrar con Google y, mientras tanto, la app sondea
 `/auth/estado` hasta que terminas (modo `polling` del contrato — ver
-`docs/CONTRATO-API.md` en `../backend/`). La cuenta es obligatoria aquí: esta
-app existe para sincronizar. El alta es abierta, así que entrar la primera vez
-crea la cuenta.
+`docs/CONTRATO-API.md` en `../backend/`). El alta es abierta, así que entrar
+la primera vez crea la cuenta.
+
+**La cuenta no es obligatoria**, igual que en el iPhone: sin ella la app se
+abre y funciona entera contra este equipo, y lo único que no hace es
+sincronizar. El diálogo de arranque ofrece «Seguir sin cuenta», y para entrar
+después está el menú Archivo. Hasta septiembre de 2026 sí era obligatoria, y
+no entrar cerraba la aplicación.
+
+Eso cambia de dónde salen el título y la descripción de un enlace: con cuenta
+los resuelve el servidor, que es quien los guarda para los dos clientes; sin
+ella los resuelve este mismo equipo (`resolver_metadatos.py`), con las mismas
+reglas que el servidor y que el iPhone. Ver `metadatos.py`, que avisa de que
+son tres copias de lo mismo.
 
 - `.\usar-servidor.ps1` — apunta al backend compartido en
   `https://api.jmortiz.es`, sin necesidad de tener nada corriendo en este

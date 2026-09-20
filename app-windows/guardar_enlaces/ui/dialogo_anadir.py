@@ -17,6 +17,7 @@ import wx
 from ..api_cliente import ClienteApi, ErrorApi
 from ..duplicados import buscar_duplicado
 from ..modelo import Elemento, editar, nuevo_elemento_local
+from ..resolver_metadatos import resolver_en_este_equipo
 from ..sesion import Sesion
 from .campos import ESTILO_SOLO_LECTURA, con_etiqueta, mostrar_con_etiqueta
 from .preguntas import confirmar_guardar_duplicado
@@ -120,12 +121,21 @@ class DialogoAnadir(wx.Dialog):
         def trabajo() -> None:
             # La comprobacion es lo de menos: si falla (sin red, sitio caido),
             # el enlace se guarda igual, solo que sin titulo ni descripcion.
-            try:
-                metadatos = self._sesion.con_reintento(
-                    lambda token: self._cliente.metadatos(url, token)
-                )
-            except ErrorApi:
-                metadatos = {}
+            if self._sesion.autenticado:
+                # Con cuenta los resuelve el servidor, que es quien los guarda
+                # para los dos clientes.
+                try:
+                    metadatos = self._sesion.con_reintento(
+                        lambda token: self._cliente.metadatos(url, token)
+                    )
+                except ErrorApi:
+                    metadatos = {}
+            else:
+                # Sin cuenta los resuelve este mismo equipo, como hace el
+                # telefono. Mismas reglas y misma forma de diccionario, para
+                # que el enlace no dependa de quien lo resolvio: ver
+                # metadatos.py.
+                metadatos = resolver_en_este_equipo(url)
             wx.CallAfter(self._al_completar_guardado, url, metadatos, etiquetas, duplicado)
 
         threading.Thread(target=trabajo, daemon=True).start()

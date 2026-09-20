@@ -6,8 +6,14 @@ Los dos proveedores hacen exactamente lo mismo aqui; lo unico que cambia es el
 proveedor que se le pide al servidor. En el iPhone, en cambio, Apple entra sin
 navegador, por el sistema: son dos caminos distintos del mismo contrato.
 
-Aqui la cuenta SI es obligatoria, al reves que en el movil: esta app existe
-para sincronizar, y sin cuenta no hay con quien.
+La cuenta NO es obligatoria, igual que en el movil: sin ella la aplicacion
+funciona entera contra este equipo, y lo unico que se pierde es tener los
+enlaces tambien en el telefono. Por eso "Seguir sin cuenta" es un boton mas y
+no una salida de emergencia, como en la pantalla de bienvenida del iPhone.
+
+Cerrar el cuadro con Esc o con la X lleva al mismo sitio que ese boton: la
+aplicacion se abre igual. No hay forma de "cancelar" el arranque, porque ya
+no hace falta entrar para usarla.
 
 Sobre el foco, que es lo que manda en esta pantalla: al abrirse el navegador el
 foco se va de la aplicacion entera, asi que durante la espera no hay a quien
@@ -29,10 +35,10 @@ from ..sesion import Sesion
 from .campos import ESTILO_SOLO_LECTURA, con_etiqueta, mostrar_con_etiqueta
 
 AVISO = (
-    "Para sincronizar tus enlaces con el móvil necesitas entrar con tu cuenta "
-    "de Google o de Apple.\n"
-    "Al pulsar el botón se abre el navegador. Termina ahí y vuelve a esta "
-    "ventana: se cerrará sola cuando hayas entrado.\n"
+    "Puedes usar Guárdalo sin cuenta: los enlaces se guardan en este equipo.\n"
+    "La cuenta solo hace falta para tenerlos también en el móvil. Al pulsar "
+    "uno de los botones de entrar se abre el navegador; termina ahí y vuelve "
+    "a esta ventana, que se cerrará sola cuando hayas entrado.\n"
     "Google y Apple son cuentas distintas, cada una con sus propios enlaces."
 )
 
@@ -72,20 +78,22 @@ class DialogoLogin(wx.Dialog):
         mostrar_con_etiqueta(self.estado, False)
 
         # Un BoxSizer y no StdDialogButtonSizer: aquel coloca botones estandar
-        # (Aceptar, Cancelar) y aqui hay dos formas de entrar, ninguna de ellas
-        # "la aceptacion" del cuadro.
+        # (Aceptar, Cancelar) y aqui hay tres salidas, ninguna de ellas "la
+        # aceptacion" del cuadro.
         #
         # Teclas de acceso: la inicial de cada proveedor, G y P, que es lo que
         # se busca a ciegas. La A se deja libre a proposito, que en los demas
-        # cuadros es la de Aceptar, y C es siempre Cancelar.
+        # cuadros es la de Aceptar. El tercer boton se queda con la C y con el
+        # wx.ID_CANCEL del que habia antes: asi Esc sigue llegando a el y la
+        # mano lo encuentra donde ya lo buscaba.
         botones = wx.BoxSizer(wx.HORIZONTAL)
         self.boton_entrar = wx.Button(self._panel, wx.ID_ANY, "Entrar con &Google")
         self.boton_entrar_apple = wx.Button(self._panel, wx.ID_ANY, "Entrar con A&pple")
-        boton_cancelar = wx.Button(self._panel, wx.ID_CANCEL, "&Cancelar")
+        boton_sin_cuenta = wx.Button(self._panel, wx.ID_CANCEL, "Seguir sin &cuenta")
         self.boton_entrar.SetDefault()
         botones.Add(self.boton_entrar, 0, wx.RIGHT, 8)
         botones.Add(self.boton_entrar_apple, 0, wx.RIGHT, 8)
-        botones.Add(boton_cancelar, 0)
+        botones.Add(boton_sin_cuenta, 0)
         sizer.Add(botones, 0, wx.ALIGN_RIGHT | wx.ALL, 12)
 
         self._panel.SetSizer(sizer)
@@ -95,8 +103,8 @@ class DialogoLogin(wx.Dialog):
 
         self.boton_entrar.Bind(wx.EVT_BUTTON, lambda evento: self._al_entrar("google"))
         self.boton_entrar_apple.Bind(wx.EVT_BUTTON, lambda evento: self._al_entrar("apple"))
-        boton_cancelar.Bind(wx.EVT_BUTTON, self._al_cancelar)
-        self.Bind(wx.EVT_CLOSE, self._al_cancelar)
+        boton_sin_cuenta.Bind(wx.EVT_BUTTON, self._al_seguir_sin_cuenta)
+        self.Bind(wx.EVT_CLOSE, self._al_seguir_sin_cuenta)
 
     def ShowModal(self) -> int:
         # El foco se pone con el cuadro ya a la vista. Puesto en el constructor,
@@ -125,7 +133,10 @@ class DialogoLogin(wx.Dialog):
         )
         threading.Thread(target=self._sondear, args=(estado,), daemon=True).start()
 
-    def _al_cancelar(self, evento: wx.Event) -> None:
+    def _al_seguir_sin_cuenta(self, evento: wx.Event) -> None:
+        """Devuelve wx.ID_CANCEL, que aqui ya no significa "cancelar el
+        arranque" sino "usar la aplicacion sin cuenta". Llegan a este mismo
+        sitio el boton, Esc y la X."""
         self._cancelar.set()
         self._cerrado = True
         self.EndModal(wx.ID_CANCEL)
