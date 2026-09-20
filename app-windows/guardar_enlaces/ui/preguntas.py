@@ -10,7 +10,8 @@ from __future__ import annotations
 
 import wx
 
-from ..asentar_cuenta import EnlacesEnElEquipo
+from ..almacen_local import AlmacenLocal
+from ..asentar_cuenta import EnlacesEnElEquipo, asentar_cuenta, identidad_dueno
 
 
 def preguntar_importacion(enlaces: EnlacesEnElEquipo, padre: wx.Window | None = None) -> bool:
@@ -33,6 +34,53 @@ def preguntar_importacion(enlaces: EnlacesEnElEquipo, padre: wx.Window | None = 
     respuesta = dialogo.ShowModal()
     dialogo.Destroy()
     return respuesta == wx.ID_YES
+
+
+def asentar_cuenta_contandolo(
+    almacen: AlmacenLocal,
+    url_servidor: str,
+    email: str,
+    padre: wx.Window | None = None,
+) -> None:
+    """asentar_cuenta, mas contarle a quien acaba de entrar lo que ha pasado
+    cuando no habia nada que preguntarle.
+
+    Entrar en la cuenta que ya era duena de esta cache no pregunta nada, y
+    hace bien: esos enlaces ya eran suyos. Pero lo que se guardo sin sesion se
+    sube igual, y eso pasaba **en silencio**. Parecia que la aplicacion no se
+    habia enterado de los enlaces nuevos.
+
+    El aviso es un cuadro y no un mensaje en la barra de estado a proposito:
+    la barra no la lee NVDA cuando cambia (ver _decir_estado), asi que un
+    aviso ahi es justo lo que no se entera quien mas falta le hace.
+    """
+    # Se cuentan ANTES: sin sesion, lo que este sin subir solo puede haberse
+    # guardado sin cuenta.
+    sin_subir = len(almacen.cargar_pendientes())
+    pregunto = False
+
+    def preguntar(enlaces: EnlacesEnElEquipo) -> bool:
+        nonlocal pregunto
+        pregunto = True
+        return preguntar_importacion(enlaces, padre)
+
+    asentar_cuenta(almacen, identidad_dueno(url_servidor, email), preguntar)
+
+    # Si hubo pregunta ya se hablo de estos enlaces; un segundo cuadro sobra.
+    if not sin_subir or pregunto:
+        return
+
+    if sin_subir == 1:
+        texto = (
+            "El enlace que guardaste sin haber iniciado sesión se va a subir "
+            "a tu cuenta. También lo verás en el móvil."
+        )
+    else:
+        texto = (
+            f"Los {sin_subir} enlaces que guardaste sin haber iniciado sesión "
+            "se van a subir a tu cuenta. También los verás en el móvil."
+        )
+    avisar(texto, "Enlaces guardados sin sesión", padre)
 
 
 def avisar(texto: str, titulo: str, padre: wx.Window | None = None, grave: bool = False) -> None:

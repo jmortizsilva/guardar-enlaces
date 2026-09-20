@@ -9,10 +9,10 @@ import wx
 
 from .almacen_local import AlmacenLocal
 from .api_cliente import ClienteApi
-from .asentar_cuenta import asentar_cuenta, identidad_dueno
+from .asentar_cuenta import identidad_dueno
 from .sesion import Sesion
 from .ui.dialogo_login import DialogoLogin
-from .ui.preguntas import preguntar_importacion
+from .ui.preguntas import asentar_cuenta_contandolo
 from .ui.ventana_principal import VentanaPrincipal
 
 
@@ -59,7 +59,7 @@ class AplicacionGuardarEnlaces(wx.App):
                 if almacen.dueno_actual() is None:
                     almacen.fijar_dueno(dueno)
             else:
-                asentar_cuenta(almacen, dueno, preguntar_importacion)
+                asentar_cuenta_contandolo(almacen, cliente.url_base, correo)
 
         ventana = VentanaPrincipal(almacen, cliente, sesion)
         ventana.Show()

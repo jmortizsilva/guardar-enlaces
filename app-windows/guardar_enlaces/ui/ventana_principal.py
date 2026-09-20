@@ -25,7 +25,6 @@ import wx
 from .. import actualizaciones
 from ..almacen_local import AlmacenLocal
 from ..api_cliente import ClienteApi, ErrorApi
-from ..asentar_cuenta import asentar_cuenta, identidad_dueno
 from ..modelo import (
     Elemento,
     EtiquetaDefinida,
@@ -53,7 +52,7 @@ from .dialogo_anadir import DialogoAnadir
 from .dialogo_detalle import DialogoDetalle
 from .dialogo_gestion_etiquetas import DialogoGestionEtiquetas
 from .dialogo_login import DialogoLogin
-from .preguntas import avisar, confirmar_eliminacion, preguntar_importacion
+from .preguntas import asentar_cuenta_contandolo, avisar, confirmar_eliminacion
 
 _TODAS_LAS_ETIQUETAS = "(todas las etiquetas)"
 
@@ -593,10 +592,8 @@ class VentanaPrincipal(wx.Frame):
     def _tras_entrar(self) -> None:
         correo = (self._sesion.usuario or {}).get("email")
         if correo:
-            asentar_cuenta(
-                self._almacen,
-                identidad_dueno(self._cliente.url_base, correo),
-                lambda enlaces: preguntar_importacion(enlaces, self),
+            asentar_cuenta_contandolo(
+                self._almacen, self._cliente.url_base, correo, self
             )
         self.SetTitle(_titulo_con_cuenta(self._sesion))
         self._actualizar_menu_cuenta()
