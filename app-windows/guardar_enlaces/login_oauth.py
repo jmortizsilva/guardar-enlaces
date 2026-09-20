@@ -7,9 +7,9 @@ buzon que esta funcion sondea. El codigo de canje es de un solo uso y dura
 ~60s; cambiarlo por tokens es cosa de Sesion, aqui solo se consigue.
 
 Es el otro extremo del mismo flujo que en el iPhone resuelve
-`app-ios/src/sesion/loginProveedor.ts`, con la diferencia que impone el
-contrato: alli el movil recibe la vuelta por deep link, aqui no hay a donde
-volver, asi que se pregunta al servidor cada segundo y medio.
+`app-ios-nativa/Guardalo/IniciadorDeSesion.swift`, con la diferencia que
+impone el contrato: alli el movil recibe la vuelta por deep link, aqui no hay
+a donde volver, asi que se pregunta al servidor cada segundo y medio.
 
 Sin wx a proposito: todo lo de aqui corre en el hilo de fondo y se prueba sin
 levantar interfaz.

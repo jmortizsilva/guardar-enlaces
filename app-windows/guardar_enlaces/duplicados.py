@@ -12,9 +12,9 @@ no se descartan).
 Es duplicado solo dentro de la biblioteca de cada uno: que otra persona tenga
 guardado el mismo enlace no pinta nada aqui, sus elementos ni se ven.
 
-Calco de app-ios/src/dominio/duplicados.ts. Si cambia el criterio de que es el
-mismo enlace, hay que tocarlo en los dos sitios o cada cliente avisara de cosas
-distintas.
+Calco de app-ios-nativa/Dominio/Fuentes/Dominio/Duplicados.swift. Si cambia
+el criterio de que es el mismo enlace, hay que tocarlo en los dos sitios o
+cada cliente avisara de cosas distintas.
 """
 
 from __future__ import annotations

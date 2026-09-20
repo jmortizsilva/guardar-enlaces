@@ -10,8 +10,3 @@ app-windows/.pytest_cache/
 app-windows/datos/
 *.sqlite
 *.sqlite-*
-
-# Expo / iOS (para cuando exista app-ios/)
-app-ios/node_modules/
-app-ios/.expo/
-app-ios/dist/

@@ -1,5 +1,6 @@
-"""Mismas reglas que app-ios/src/dominio/duplicados.test.ts: si cambia el
-criterio de que es el mismo enlace, los dos ficheros tienen que cambiar."""
+"""Mismas reglas que PruebasDuplicados.swift, en app-ios-nativa/Dominio: si
+cambia el criterio de que es el mismo enlace, los dos ficheros tienen que
+cambiar."""
 
 from guardar_enlaces.duplicados import buscar_duplicado, misma_url, normalizar_url
 from guardar_enlaces.modelo import Elemento

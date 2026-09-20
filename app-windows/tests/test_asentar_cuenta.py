@@ -1,4 +1,4 @@
-"""Mismos casos que app-ios/src/almacen/asentarCuenta.test.ts."""
+"""Mismos casos que PruebasAsentarCuenta.swift, en app-ios-nativa/Dominio."""
 
 from unittest.mock import MagicMock
 

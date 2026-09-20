@@ -2,7 +2,7 @@
 cuenta. Logica pura sobre el almacen: se prueba con un almacen falso, sin
 SQLite ni wx.
 
-Calco de app-ios/src/almacen/asentarCuenta.ts.
+Calco de app-ios-nativa/Dominio/Fuentes/Dominio/AsentarCuenta.swift.
 """
 
 from __future__ import annotations

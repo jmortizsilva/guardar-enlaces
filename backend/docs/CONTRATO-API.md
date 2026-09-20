@@ -59,10 +59,10 @@ Query params:
 Responde `302` redirigiendo al consentimiento del proveedor. El cliente debe
 generar `estado` con suficiente entropía (ej. 16 bytes aleatorios en base64url).
 
-- **iOS**: abre esta URL con `expo-web-browser` → `openAuthSessionAsync`, en
-  modo `deeplink` con `esquema=guardarenlaces`. La sesión de autenticación
-  nativa (`ASWebAuthenticationSession`) captura directamente la redirección
-  final a `guardarenlaces://auth-callback?...`.
+- **iOS**: abre esta URL con `ASWebAuthenticationSession`, en modo `deeplink`
+  con `esquema=guardarenlaces`. La hoja de autenticación del sistema captura
+  ella misma la redirección final a `guardarenlaces://auth-callback?...`, así
+  que esa vuelta no pasa por el manejador de enlaces de la app.
 - **Windows**: abre esta URL con `webbrowser.open()`, en modo `polling`, y
   empieza a sondear `GET /auth/estado` (paso 4) cada 1-2 segundos.
 
