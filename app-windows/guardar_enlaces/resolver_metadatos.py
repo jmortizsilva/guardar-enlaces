@@ -39,18 +39,32 @@ MAX_REDIRECCIONES = 5
 # Se inyecta para poder probar sin red.
 Descargador = Callable[[str], bytes | None]
 
+# Nos presentamos como el navegador que somos a efectos de esta peticion, y no
+# como un robot. No es un capricho: velocidadcuchara.com responde 403 al
+# "python-requests/2.x" que manda requests por su cuenta, y con esto responde
+# 200. La pagina la pide una persona que acaba de escribir esa URL en su
+# ordenador, una sola vez, para leerla luego; es exactamente lo que haria su
+# navegador. El servidor si se identifica como bot, porque alli la peticion no
+# la hace nadie que este delante.
+#
+# En el iPhone esto no hizo falta porque URLSession ya se presenta como Safari.
+CABECERAS = {
+    "User-Agent": (
+        "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 "
+        "(KHTML, like Gecko) Chrome/125.0.0.0 Safari/537.36"
+    ),
+    "Accept-Language": "es-ES,es;q=0.9",
+}
+
 
 def _sesion_http() -> requests.Session:
     sesion = requests.Session()
     sesion.max_redirects = MAX_REDIRECCIONES
+    sesion.headers.update(CABECERAS)
     return sesion
 
 
 def descargar(url: str) -> bytes | None:
-    """Sin presentarse como nada en particular: algunos sitios responden un
-    HTML distinto, o un muro, a lo que parece un robot, y aqui interesa justo
-    lo que veria el navegador. El servidor si se identifica como bot, porque
-    alli la peticion no la hace un usuario."""
     try:
         with _sesion_http() as sesion:
             respuesta = sesion.get(url, timeout=TIEMPO_LIMITE_S, stream=True)

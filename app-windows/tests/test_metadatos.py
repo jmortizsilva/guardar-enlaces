@@ -9,7 +9,11 @@ from guardar_enlaces.metadatos import (
     metadatos_desde_oembed,
     url_oembed,
 )
-from guardar_enlaces.resolver_metadatos import resolver_en_este_equipo
+from guardar_enlaces.resolver_metadatos import (
+    CABECERAS,
+    _sesion_http,
+    resolver_en_este_equipo,
+)
 
 
 def _pagina(cabeza: str) -> str:
@@ -195,3 +199,18 @@ class TestResolverEnEsteEquipo:
             return b"<html><title>Caf\xe9 roto</title></html>"
 
         assert resolver_en_este_equipo("https://ejemplo.com/a", bajar)["titulo"]
+
+
+class TestComoNosPresentamos:
+    """Comprobado contra velocidadcuchara.com, que respondia 403 al
+    "python-requests/2.x" que manda requests por su cuenta y 200 en cuanto nos
+    presentamos como el navegador que a efectos de esta peticion somos. El
+    enlace se guardaba sin titulo y sin decir por que."""
+
+    def test_no_salimos_como_python_requests(self):
+        assert "python-requests" not in CABECERAS["User-Agent"]
+        assert "requests" not in CABECERAS["User-Agent"].lower()
+
+    def test_la_cabecera_llega_a_la_peticion(self):
+        """La constante no sirve de nada si no se aplica a la sesion."""
+        assert _sesion_http().headers["User-Agent"] == CABECERAS["User-Agent"]
