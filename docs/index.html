@@ -321,16 +321,6 @@ section + section { border-top: 1px solid var(--borde); }
 }
 .aviso b { color: var(--aviso); }
 
-/* Marcador temporal: se quita al pegar el enlace de TestFlight. */
-.pendiente {
-  padding: .9rem 1.1rem;
-  border: 2px dashed var(--aviso-borde);
-  border-radius: 8px;
-  color: var(--aviso);
-  font-weight: 700;
-  font-size: .9375rem;
-}
-
 /* ---- Bloques con subapartado --------------------------------------- */
 
 .bloque { display: flex; flex-direction: column; gap: 1.1rem; max-width: var(--medida); }
@@ -474,14 +464,10 @@ section + section { border-top: 1px solid var(--borde); }
           <h3>Para iPhone</h3>
           <p class="ficha__datos">Versión de pruebas en TestFlight · iOS 18 o posterior</p>
           <p>
-            <!-- PENDIENTE: sustituir por el enlace de invitacion de TestFlight
-                 (https://testflight.apple.com/join/XXXXXXXX) y borrar el
-                 parrafo con clase "pendiente" que hay debajo. -->
-            <a class="boton" href="PEGAR-AQUI-EL-ENLACE-DE-TESTFLIGHT" aria-describedby="falta-testflight">
+            <a class="boton" href="https://testflight.apple.com/join/4bP9F9yZ">
               Probar en TestFlight
             </a>
           </p>
-          <p class="pendiente" id="falta-testflight">Pendiente: este botón todavía no lleva a ningún sitio. Falta pegar el enlace de invitación de TestFlight.</p>
           <ul class="ficha__notas">
             <li>Necesitas la aplicación <strong>TestFlight</strong> de Apple, que es gratuita y está en la App Store.</li>
             <li>Es una versión de pruebas. Si algo no funciona como debería, cuéntalo: para eso está.</li>
