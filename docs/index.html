@@ -443,7 +443,7 @@ section + section { border-top: 1px solid var(--borde); }
 
         <article class="ficha">
           <h3>Para Windows</h3>
-          <p class="ficha__datos" id="datos-windows">Versión 1.1.1 · ZIP de unos 21 MB · Windows 10 u 11</p>
+          <p class="ficha__datos" id="datos-windows">Versión 1.2.1 · ZIP de unos 21 MB · Windows 10 u 11</p>
           <p>
             <a class="boton" href="https://github.com/jmortizsilva/guardar-enlaces/releases/latest">
               Descargar para Windows
@@ -527,21 +527,30 @@ section + section { border-top: 1px solid var(--borde); }
 </div>
 
 <script>
-// La aplicacion de Windows se actualiza leyendo este mismo manifiesto, que
-// vive en una URL fija. Si responde, la ficha deja de envejecer sola; si no
-// (sin red, o CORS), se queda el texto escrito arriba y no pasa nada.
+// Para que la version de la ficha no envejezca sola se pregunta cual es la
+// ultima publicada. Se pregunta a la API de GitHub y NO al manifiesto que usa
+// la propia aplicacion para actualizarse, aunque seria lo natural: las
+// descargas de una release no devuelven cabecera Access-Control-Allow-Origin,
+// asi que desde una pagina el navegador bloquea la respuesta y aqui no
+// llegaba nunca. Comprobado: la ficha se quedo anunciando la 1.1.1 con la
+// 1.2.1 ya publicada. La API si la devuelve, a cambio de un limite de 60
+// peticiones por hora y direccion; pasado ese limite responde 403 y se queda
+// el texto escrito arriba, que es lo mismo que pasa sin red.
 (async () => {
   const ficha = document.getElementById("datos-windows");
   if (!ficha) return;
   try {
     const r = await fetch(
-      "https://github.com/jmortizsilva/guardar-enlaces/releases/latest/download/ultima.json",
+      "https://api.github.com/repos/jmortizsilva/guardar-enlaces/releases/latest",
       { cache: "no-store" }
     );
     if (!r.ok) return;
-    const { version } = await r.json();
-    if (typeof version === "string" && /^[\d.]+$/.test(version)) {
-      ficha.textContent = `Versión ${version} · ZIP de unos 21 MB · Windows 10 u 11`;
+    const { tag_name: etiqueta } = await r.json();
+    // La etiqueta es "windows-v1.2.1": el numero es lo unico que se aprovecha.
+    const version =
+      typeof etiqueta === "string" ? etiqueta.match(/\d+(?:\.\d+)+/) : null;
+    if (version) {
+      ficha.textContent = `Versión ${version[0]} · ZIP de unos 21 MB · Windows 10 u 11`;
     }
   } catch {
     /* Se queda la version escrita en el HTML. */
