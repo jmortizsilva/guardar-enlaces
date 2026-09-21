@@ -173,6 +173,39 @@ SEGUNDOS_DE_GRACIA = 4
 REINTENTOS = 60
 
 
+NOMBRE_MARCA_VERSION = "version-vista.txt"
+
+
+def estrena_version(version_actual: str, marca: Path) -> bool:
+    """True si esta version NO es la que se vio la ultima vez, o sea: acaban
+    de actualizar la aplicacion. Deja constancia para la proxima.
+
+    Esta senal la comprueba el codigo NUEVO, que es lo que la hace util: el
+    relevo lo escribe la version vieja, asi que cualquier marca que pusiera el
+    guion solo funcionaria una actualizacion mas tarde. Ademas pilla tambien
+    al que sustituye la carpeta a mano.
+
+    La primera vez de todas no cuenta como estreno: no hay de donde venir, y
+    anunciar "actualizada" al estrenarla seria mentira.
+    """
+    try:
+        vista = marca.read_text(encoding="utf-8").strip()
+    except (OSError, ValueError):
+        # ValueError cubre UnicodeDecodeError, que NO es un OSError. Paso por
+        # aqui: una marca escrita en UTF-16 --el Out-File de PowerShell 5.1 lo
+        # hace-- reventaba la lectura, y como esto corre en OnInit se llevaba
+        # por delante el arranque entero. La aplicacion no abria, sin ventana
+        # y sin aviso, por un fichero de pista que no deberia importar tanto.
+        vista = ""
+    if vista != version_actual:
+        try:
+            marca.parent.mkdir(parents=True, exist_ok=True)
+            marca.write_text(version_actual, encoding="utf-8")
+        except OSError:
+            pass  # sin poder escribir se avisara de mas, nunca de menos
+    return bool(vista) and vista != version_actual
+
+
 def guion_de_relevo(
     carpeta_nueva: Path,
     destino: Path,

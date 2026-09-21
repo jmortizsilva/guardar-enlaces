@@ -9,11 +9,18 @@ import wx
 
 from .almacen_local import AlmacenLocal
 from .api_cliente import ClienteApi
+from .actualizaciones import NOMBRE_MARCA_VERSION, estrena_version
 from .asentar_cuenta import identidad_dueno
 from .sesion import Sesion
+from .version import VERSION
 from .ui.dialogo_login import DialogoLogin
 from .ui.preguntas import asentar_cuenta_contandolo
 from .ui.ventana_principal import VentanaPrincipal
+
+
+#: Lo que hay que esperar a que la ventana termine de activarse antes de
+#: traerla delante. Medido: con cero --un CallAfter-- no se queda.
+_ESPERA_PARA_HACERSE_NOTAR_MS = 1500
 
 
 def _ruta_datos() -> Path:
@@ -32,6 +39,14 @@ def _url_base() -> str:
 
 class AplicacionGuardarEnlaces(wx.App):
     def OnInit(self) -> bool:
+        # Antes que nada: si la version que arranca no es la que se vio la
+        # ultima vez, es que acaban de actualizarla y nadie esta delante
+        # esperandola. Se mira aqui para que quede constancia aunque luego
+        # falle cualquier otra cosa.
+        recien_actualizada = estrena_version(
+            VERSION, _ruta_datos().parent / NOMBRE_MARCA_VERSION
+        )
+
         cliente = ClienteApi(_url_base())
         sesion = Sesion(cliente)
         almacen = AlmacenLocal(_ruta_datos())
@@ -67,6 +82,20 @@ class AplicacionGuardarEnlaces(wx.App):
         # Con CallAfter: justo despues de Show() la ventana aun no esta activa, y
         # al activarse el foco iba al primer control, el buscador.
         wx.CallAfter(ventana.enfocar_lo_primero)
+        if recien_actualizada:
+            # CallLater y no CallAfter, y esto esta medido: con CallAfter la
+            # ventana se quedaba detras igual. Se ejecuta en cuanto hay un
+            # hueco, antes de que la ventana termine de activarse, y el
+            # primer plano que se gana ahi no se queda. Con esta espera si.
+            #
+            # Va despues de enfocar_lo_primero a proposito: aquello mueve el
+            # foco DENTRO de la ventana, y esto mueve la ventana.
+            # Guardado en la aplicacion a proposito: un wx.CallLater sin
+            # referencia puede llevarselo el recolector ANTES de que salte,
+            # y entonces no pasa nada y nadie se entera de por que.
+            self._aviso_actualizada = wx.CallLater(
+                _ESPERA_PARA_HACERSE_NOTAR_MS, ventana.hacerse_notar_tras_actualizar
+            )
         self.SetTopWindow(ventana)
         return True
 

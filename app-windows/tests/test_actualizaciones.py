@@ -18,6 +18,7 @@ from guardar_enlaces.actualizaciones import (
     comprobar,
     descargar,
     descomprimir,
+    estrena_version,
     guion_de_relevo,
     hay_version_nueva,
     leer_manifiesto,
@@ -218,3 +219,76 @@ def _sin_escribir_en_el_sistema():
     with patch("subprocess.Popen") as popen:
         yield
         popen.assert_not_called()
+
+
+class TestEstrenaVersion:
+    """Como sabe la aplicacion que acaban de actualizarla.
+
+    La senal es que la version que arranca no sea la ultima que se vio, y no
+    una marca que ponga el relevo: el relevo lo escribe la version VIEJA, asi
+    que una marca suya solo serviria una actualizacion mas tarde. Esta la
+    comprueba el codigo nuevo, asi que funciona ya en la primera.
+    """
+
+    def test_la_primera_vez_de_todas_no_es_un_estreno(self, tmp_path: Path):
+        """Anunciar "actualizada" al estrenarla seria mentira."""
+        assert not estrena_version("1.2.0", tmp_path / "version-vista.txt")
+
+    def test_abrirla_otra_vez_igual_no_es_un_estreno(self, tmp_path: Path):
+        marca = tmp_path / "version-vista.txt"
+        estrena_version("1.2.0", marca)
+        assert not estrena_version("1.2.0", marca)
+
+    def test_una_version_distinta_si_lo_es(self, tmp_path: Path):
+        marca = tmp_path / "version-vista.txt"
+        estrena_version("1.2.0", marca)
+        assert estrena_version("1.2.1", marca)
+
+    def test_y_solo_se_avisa_una_vez(self, tmp_path: Path):
+        marca = tmp_path / "version-vista.txt"
+        estrena_version("1.2.0", marca)
+        assert estrena_version("1.2.1", marca)
+        assert not estrena_version("1.2.1", marca)
+
+    def test_tambien_pilla_volver_a_una_version_anterior(self, tmp_path: Path):
+        """Sustituir la carpeta a mano por una vieja tambien es un cambio."""
+        marca = tmp_path / "version-vista.txt"
+        estrena_version("1.2.1", marca)
+        assert estrena_version("1.2.0", marca)
+
+    def test_si_no_se_puede_escribir_no_revienta(self, tmp_path: Path):
+        """Sin poder dejar constancia se avisara de mas, nunca de menos."""
+        carpeta = tmp_path / "soy-un-fichero"
+        carpeta.write_text("estorbo", encoding="utf-8")
+        assert not estrena_version("1.2.0", carpeta / "version-vista.txt")
+
+    def test_el_guion_del_relevo_no_lleva_ninguna_marca(self):
+        """Se probo a que el relevo pasara un argumento y se descarto: lo
+        escribe la version vieja. Que no vuelva a colarse."""
+        guion = guion_de_relevo(Path("C:/nueva"), Path("C:/destino"))
+        assert "--tras-actualizar" not in guion
+
+
+class TestUnaMarcaIlegibleNoTumbaLaAplicacion:
+    """estrena_version corre dentro de OnInit: lo que lance aqui deja a la
+    aplicacion sin abrir, sin ventana y sin aviso. Un fichero de pista no
+    puede tener ese poder."""
+
+    def test_en_utf16_no_revienta(self, tmp_path: Path):
+        """Como lo escribe el Out-File de PowerShell 5.1. Paso de verdad."""
+        marca = tmp_path / "version-vista.txt"
+        marca.write_bytes(b"\xff\xfe1\x00.\x002\x00.\x000\x00")
+        assert estrena_version("1.2.1", marca) is False
+
+    def test_con_basura_binaria_tampoco(self, tmp_path: Path):
+        marca = tmp_path / "version-vista.txt"
+        marca.write_bytes(b"\x00\x01\x02\xff\xfe\xfd")
+        assert estrena_version("1.2.1", marca) is False
+
+    def test_y_despues_se_deja_legible(self, tmp_path: Path):
+        """No basta con no reventar: hay que dejarla arreglada, o el mismo
+        fichero roto seguiria ahi para siempre."""
+        marca = tmp_path / "version-vista.txt"
+        marca.write_bytes(b"\xff\xfe1\x00.\x002\x00.\x000\x00")
+        estrena_version("1.2.1", marca)
+        assert marca.read_text(encoding="utf-8") == "1.2.1"

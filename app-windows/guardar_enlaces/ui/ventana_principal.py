@@ -41,6 +41,7 @@ from ..modelo import (
     renombrar_etiqueta_definida,
 )
 from ..presentacion import texto_fila
+from ..primer_plano import traer_al_frente
 from ..seleccion import fila_tras_refrescar
 from ..sesion import Sesion
 from ..sincronizador import Sincronizador, aviso_tras_sincronizar, toca_sincronizar
@@ -583,6 +584,24 @@ class VentanaPrincipal(wx.Frame):
             self,
             grave=True,
         )
+
+    def hacerse_notar_tras_actualizar(self) -> None:
+        """A esta ventana la ha abierto el relevo, no una persona, asi que
+        nadie esta mirando a ver si vuelve.
+
+        Se hacen las DOS cosas, y no una, y esto esta MEDIDO: traer la
+        ventana delante funciona a veces. En el ejecutable, lanzado como lo
+        lanza el relevo, salio bien una de cada tres pruebas; en una ventana
+        suelta sale siempre. Windows concede el primer plano segun quien lo
+        tenga y desde cuando, asi que no es algo con lo que se pueda contar.
+
+        La voz SI es fiable, porque no depende del foco: va por el mismo
+        camino que el "URL copiada" y se oye aunque la ventana se quede
+        detras. Esa es la que garantiza que te enteres de que ha vuelto;
+        ponerla delante es el extra.
+        """
+        traer_al_frente(int(self.GetHandle()))
+        self._decir_estado(f"Guárdalo actualizado a la versión {VERSION}.")
 
     # --- cuenta ---
 
