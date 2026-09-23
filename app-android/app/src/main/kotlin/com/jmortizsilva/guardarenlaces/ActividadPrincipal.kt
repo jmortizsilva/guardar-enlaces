@@ -7,11 +7,16 @@ import android.content.Intent
 import android.os.Build
 import android.os.Bundle
 import androidx.activity.ComponentActivity
+import androidx.activity.compose.BackHandler
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
 import androidx.browser.customtabs.CustomTabsIntent
+import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.saveable.rememberSaveableStateHolder
 import androidx.core.net.toUri
 import com.jmortizsilva.guardarenlaces.dominio.Elemento
 import com.jmortizsilva.guardarenlaces.dominio.Textos
@@ -25,20 +30,87 @@ class ActividadPrincipal : ComponentActivity() {
         // Con targetSdk 36 el borde a borde es obligatorio; el Scaffold deja sitio a las barras.
         enableEdgeToEdge()
         atender(intent)
+        setContent { Tema { Aplicacion() } }
+    }
+
+    /**
+     * La pantalla de arriba de la pila. La lista guarda su búsqueda y su filtro mientras se va al
+     * detalle y se vuelve (`SaveableStateProvider`): volver y encontrarla vacía obligaría a buscar
+     * otra vez lo que se estaba mirando.
+     */
+    @Composable
+    private fun Aplicacion() {
         val modelo = contenedor.modelo
-        setContent {
-            Tema {
-                val elementos by modelo.elementos.collectAsState()
-                val etiquetas by modelo.etiquetasDisponibles.collectAsState()
-                PantallaLista(
-                    elementos = elementos,
-                    etiquetasDisponibles = etiquetas,
-                    conCuenta = modelo.conCuenta,
-                    anuncios = modelo.anuncios,
-                    alAbrir = ::abrir,
-                    alCopiar = ::copiar,
-                    alEliminar = modelo::eliminar,
-                )
+        val navegacion = remember { Navegacion() }
+        val estados = rememberSaveableStateHolder()
+        val elementos by modelo.elementos.collectAsState()
+        val etiquetas by modelo.etiquetasDisponibles.collectAsState()
+
+        BackHandler(enabled = navegacion.puedeVolver) { navegacion.volver() }
+
+        when (val pantalla = navegacion.actual) {
+            Pantalla.Lista ->
+                estados.SaveableStateProvider("lista") {
+                    PantallaLista(
+                        elementos = elementos,
+                        etiquetasDisponibles = etiquetas,
+                        conCuenta = modelo.conCuenta,
+                        anuncios = modelo.anuncios,
+                        alAbrir = ::abrir,
+                        alCopiar = ::copiar,
+                        alEliminar = modelo::eliminar,
+                        alVerDetalles = { navegacion.abrir(Pantalla.Detalle(it.id)) },
+                        alEditarEtiquetas = { navegacion.abrir(Pantalla.Etiquetas(it.id)) },
+                        llegada = navegacion.llegada,
+                        alAtenderLlegada = navegacion::llegadaAtendida,
+                    )
+                }
+            is Pantalla.Detalle -> {
+                val elemento = elementos.firstOrNull { it.id == pantalla.id }
+                if (elemento == null) {
+                    // Se eliminó mientras tanto, desde otro sitio: no hay nada que enseñar.
+                    LaunchedEffect(pantalla) { navegacion.volver() }
+                } else {
+                    PantallaDetalle(
+                        elemento = elemento,
+                        conCuenta = modelo.conCuenta,
+                        anuncios = modelo.anuncios,
+                        llegada = navegacion.llegada,
+                        alAtenderLlegada = navegacion::llegadaAtendida,
+                        alVolver = { navegacion.volver() },
+                        alEditarEtiquetas = { navegacion.abrir(Pantalla.Etiquetas(elemento.id)) },
+                        alAbrir = { abrir(elemento) },
+                        alCopiar = { copiar(elemento) },
+                        alEliminar = { navegacion.volver(Llegada.EliminarFila(elemento.id)) },
+                    )
+                }
+            }
+            is Pantalla.Etiquetas -> {
+                val elemento = elementos.firstOrNull { it.id == pantalla.id }
+                if (elemento == null) {
+                    LaunchedEffect(pantalla) { navegacion.volver() }
+                } else {
+                    PantallaEtiquetas(
+                        disponibles = etiquetas,
+                        elegidasAlEntrar = elemento.etiquetas,
+                        anuncios = modelo.anuncios,
+                        alCancelar = { navegacion.volver() },
+                        alGuardar = { elegidas ->
+                            modelo.cambiarEtiquetas(elemento, elegidas)
+                            // Se dice cómo quedan, al llegar adonde se estaba: desde el detalle,
+                            // al botón de etiquetas; desde la lista, a la fila.
+                            val anuncio = Textos.etiquetasGuardadas(elegidas)
+                            val desdeDetalle = navegacion.pila.getOrNull(navegacion.pila.size - 2)
+                            navegacion.volver(
+                                if (desdeDetalle is Pantalla.Detalle) {
+                                    Llegada.ABotonEtiquetas(anuncio)
+                                } else {
+                                    Llegada.AFila(elemento.id, anuncio)
+                                }
+                            )
+                        },
+                    )
+                }
             }
         }
     }

@@ -66,6 +66,13 @@ class ModeloApp(
         sincronizarEnSilencio()
     }
 
+    /** Como `eliminar`, sin anunciar: quien llama lleva antes el cursor adonde toca. */
+    fun cambiarEtiquetas(elemento: Elemento, etiquetas: List<String>) {
+        almacen.marcarPendiente(elemento.conEtiquetas(etiquetas))
+        refrescar()
+        sincronizarEnSilencio()
+    }
+
     /**
      * La automática: se calla pase lo que pase. El cambio ya está en la cola local y se reintenta
      * en la siguiente; avisar de cada fallo de red sería ruido constante.

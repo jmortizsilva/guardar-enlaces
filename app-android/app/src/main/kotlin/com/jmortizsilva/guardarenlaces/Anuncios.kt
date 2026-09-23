@@ -65,9 +65,13 @@ class Anuncios {
 fun LineaDeAvisos(anuncios: Anuncios, modifier: Modifier = Modifier) {
     val aviso by anuncios.actual.collectAsState()
     var mostrado by remember { mutableStateOf("") }
+    // Cada pantalla tiene su línea, y al aparecer se encontraba el último aviso, fuera de cuando
+    // fuera, y lo volvía a decir: al volver al detalle se oían las etiquetas de antes (medido el
+    // 2026-09-23). Lo que ya estaba al aparecer no se dice.
+    val yaEstaba = remember { anuncios.actual.value?.numero }
 
     LaunchedEffect(aviso?.numero) {
-        val actual = aviso ?: return@LaunchedEffect
+        val actual = aviso?.takeIf { it.numero != yaEstaba } ?: return@LaunchedEffect
         mostrado = ""
         delay(PAUSA_ENTRE_AVISOS_MS)
         mostrado = actual.texto

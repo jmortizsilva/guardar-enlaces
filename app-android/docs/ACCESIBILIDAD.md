@@ -38,6 +38,31 @@ Con eso el cursor va a la fila siguiente, o a la anterior si se eliminó la
 Primero se mueve el cursor y después se anuncia el resultado: al revés, el
 cambio de cursor corta el anuncio.
 
+**Una vez no siempre basta.** Al eliminar desde el detalle se cierra un
+diálogo y se cambia de pantalla a la vez, y TalkBack ponía su cursor en el
+buscador *después* de que la app lo pusiera en la fila. Se mueve dos veces,
+con medio segundo entre medias. Si la primera ya acertó, la segunda no hace
+nada ni se oye nada: Compose no envía el evento si el nodo ya tiene el cursor
+(`requestAccessibilityFocus`, visto en Compose 1.12.1).
+
+**Al volver, el cursor va a lo que abrió la pantalla**: a la fila, o en el
+detalle, al botón de etiquetas. Y la decisión de llevarlo al título al abrir
+una pantalla se toma una sola vez. Se tomaba en cada composición, y al volver
+al detalle el cursor llegaba al botón y saltaba enseguida al título.
+
+## El título de la pantalla, una sola vez
+
+Con `paneTitle` en el detalle, Android anunciaba el título al abrirlo, y al
+llegar el cursor al encabezado se oía otra vez. En las pantallas a las que se
+lleva el cursor al título no se pone `paneTitle`: con el cursor basta, y queda
+en la pantalla nueva. La lista lo conserva.
+
+## Un aviso viejo no se repite
+
+Cada pantalla tiene su línea de avisos, y al aparecer volvía a decir el
+último aviso que hubiera, de cuando fuera: al volver al detalle se oían las
+etiquetas de antes. Lo que ya estaba cuando aparece la línea no se dice.
+
 ## La región viva sirve para anunciar
 
 `announceForAccessibility` está obsoleta desde Android 16. Una línea de texto
@@ -63,4 +88,7 @@ o anterior, que es también lo que recomienda Google.
   (`semantics { selected = … }`).
 - Tocar dos veces una fila abre la página en una pestaña del navegador, y el
   gesto de atrás de TalkBack vuelve a la lista.
+- Las casillas de «Editar etiquetas» se oyen como marcadas o no marcadas
+  (`toggleable` con `Role.Checkbox`).
+- La búsqueda y el filtro de la lista siguen puestos al volver del detalle.
 - El título de la pantalla se anuncia como encabezado.

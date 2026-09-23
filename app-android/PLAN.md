@@ -321,8 +321,9 @@ por su lista de textos**, que se revisa antes de escribir la pantalla.
       `docs/ACCESIBILIDAD.md`.
       - [x] Lista, con búsqueda, filtro, abrir, copiar y eliminar, oída con
             TalkBack el 2026-09-23. Lo medido está en `docs/ACCESIBILIDAD.md`.
-      - [ ] Ver detalles y editar etiquetas, las dos acciones que faltan en
-            la fila.
+      - [x] Ver detalles y editar etiquetas, con la fila ya con sus cuatro
+            acciones, y una pila de pantallas propia que devuelve el cursor a
+            lo que abrió cada una. Oído con TalkBack el 2026-09-23.
       - [ ] Añadir, gestionar etiquetas, ajustes, bienvenida e inicio de
             sesión.
 - [ ] **4. Compartir desde otras apps** y guardado silencioso, con el

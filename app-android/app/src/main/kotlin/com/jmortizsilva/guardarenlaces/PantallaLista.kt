@@ -17,7 +17,6 @@ import androidx.compose.foundation.text.input.TextFieldLineLimits
 import androidx.compose.foundation.text.input.clearText
 import androidx.compose.foundation.text.input.rememberTextFieldState
 import androidx.compose.material3.AlertDialog
-import androidx.compose.material3.CenterAlignedTopAppBar
 import androidx.compose.material3.DropdownMenu
 import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.ExperimentalMaterial3Api
@@ -43,14 +42,12 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.focus.FocusRequester
 import androidx.compose.ui.focus.focusRequester
 import androidx.compose.ui.platform.LocalSoftwareKeyboardController
-import androidx.compose.ui.platform.LocalView
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.semantics.CustomAccessibilityAction
 import androidx.compose.ui.semantics.clearAndSetSemantics
 import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.customActions
-import androidx.compose.ui.semantics.heading
 import androidx.compose.ui.semantics.paneTitle
 import androidx.compose.ui.semantics.selected
 import androidx.compose.ui.semantics.semantics
@@ -84,6 +81,10 @@ fun PantallaLista(
     alAbrir: (Elemento) -> Unit,
     alCopiar: (Elemento) -> Unit,
     alEliminar: (Elemento) -> Unit,
+    alVerDetalles: (Elemento) -> Unit = {},
+    alEditarEtiquetas: (Elemento) -> Unit = {},
+    llegada: Llegada? = null,
+    alAtenderLlegada: () -> Unit = {},
 ) {
     val busqueda = rememberTextFieldState()
     var etiqueta by rememberSaveable { mutableStateOf<String?>(null) }
@@ -92,13 +93,35 @@ fun PantallaLista(
     val focos = remember { mutableMapOf<String, FocusRequester>() }
     val focoListaVacia = remember { FocusRequester() }
     val estadoLista = rememberLazyListState()
-    val vista = LocalView.current
+    val movedor = movedorDeCursor()
 
     val visibles =
         Biblioteca.buscar(
             Biblioteca.filtrarPorEtiqueta(elementos, etiqueta),
             busqueda.text.toString(),
         )
+
+    /**
+     * Elimina y deja el cursor en la fila siguiente, o en la anterior si era la última: quedarse
+     * sin sitio después de eliminar obliga a buscar desde arriba dónde se estaba. Lo usan el
+     * diálogo de aquí y el del detalle.
+     */
+    fun eliminarConCursor(elemento: Elemento) {
+        val indice = visibles.indexOfFirst { it.id == elemento.id }
+        val vecina = visibles.getOrNull(indice + 1) ?: visibles.getOrNull(indice - 1)
+        alEliminar(elemento)
+        destino = DestinoDelFoco(vecina?.id, Textos.eliminado(Presentacion.titulo(elemento)))
+    }
+
+    LaunchedEffect(llegada) {
+        when (val adonde = llegada) {
+            is Llegada.AFila -> destino = DestinoDelFoco(adonde.id, adonde.anuncio)
+            is Llegada.EliminarFila ->
+                visibles.firstOrNull { it.id == adonde.id }?.let(::eliminarConCursor)
+            else -> return@LaunchedEffect
+        }
+        alAtenderLlegada()
+    }
 
     LaunchedEffect(destino) {
         val adonde = destino ?: return@LaunchedEffect
@@ -119,9 +142,7 @@ fun PantallaLista(
             // La fila ya no está en pantalla. El foco se queda donde lo deje el sistema.
         }
         // Y el cursor de TalkBack, que no sigue al anterior (ver CursorDeTalkBack.kt).
-        vista.llevarCursorDeTalkBack(
-            if (indice >= 0) etiquetaDeFila(adonde.id!!) else ETIQUETA_LISTA_VACIA
-        )
+        movedor.llevarA(if (indice >= 0) etiquetaDeFila(adonde.id!!) else ETIQUETA_LISTA_VACIA)
         // Primero el foco y después el anuncio: mover el foco corta lo que se esté diciendo.
         adonde.anuncio?.let {
             delay(ESPERA_TRAS_CERRAR_MS)
@@ -132,11 +153,7 @@ fun PantallaLista(
 
     Scaffold(
         modifier = Modifier.semantics { paneTitle = Textos.tituloApp },
-        topBar = {
-            CenterAlignedTopAppBar(
-                title = { Text(Textos.tituloApp, modifier = Modifier.semantics { heading() }) }
-            )
-        },
+        topBar = { BarraSuperior(Textos.tituloApp) },
         bottomBar = { LineaDeAvisos(anuncios) },
     ) { margen ->
         Column(Modifier.padding(margen).fillMaxSize()) {
@@ -166,6 +183,8 @@ fun PantallaLista(
                             elemento = elemento,
                             foco = foco,
                             alAbrir = { alAbrir(elemento) },
+                            alVerDetalles = { alVerDetalles(elemento) },
+                            alEditarEtiquetas = { alEditarEtiquetas(elemento) },
                             alCopiar = { alCopiar(elemento) },
                             alPedirEliminar = { aEliminar = elemento },
                         )
@@ -188,14 +207,8 @@ fun PantallaLista(
             confirmButton = {
                 TextButton(
                     onClick = {
-                        // La siguiente fila, o la anterior si era la última: quedarse sin sitio
-                        // después de eliminar obliga a buscar desde arriba dónde se estaba.
-                        val indice = visibles.indexOf(elemento)
-                        val vecina =
-                            visibles.getOrNull(indice + 1) ?: visibles.getOrNull(indice - 1)
                         aEliminar = null
-                        alEliminar(elemento)
-                        destino = DestinoDelFoco(vecina?.id, Textos.eliminado(titulo))
+                        eliminarConCursor(elemento)
                     }
                 ) {
                     Text(Textos.eliminar)
@@ -283,9 +296,20 @@ fun FilaEnlace(
     elemento: Elemento,
     foco: FocusRequester,
     alAbrir: () -> Unit,
+    alVerDetalles: () -> Unit,
+    alEditarEtiquetas: () -> Unit,
     alCopiar: () -> Unit,
     alPedirEliminar: () -> Unit,
 ) {
+    // Las mismas cuatro, y en el mismo orden, en las acciones de TalkBack y en el menú de quien
+    // mira la pantalla. El orden es el de iOS.
+    val acciones =
+        listOf(
+            Textos.verDetalles to alVerDetalles,
+            Textos.editarEtiquetas to alEditarEtiquetas,
+            Textos.copiarUrl to alCopiar,
+            Textos.eliminar to alPedirEliminar,
+        )
     val titulo = Presentacion.titulo(elemento)
     val subtitulo = Presentacion.subtitulo(elemento)
     var menuAbierto by remember { mutableStateOf(false) }
@@ -301,17 +325,12 @@ fun FilaEnlace(
                     contentDescription = "$titulo. $subtitulo"
                     // En el orden en que se quieren oír. En iOS se declaran al revés porque
                     // VoiceOver las lee al revés; en TalkBack no hay nada documentado, y se mide.
-                    customActions =
-                        listOf(
-                            CustomAccessibilityAction(Textos.copiarUrl) {
-                                alCopiar()
-                                true
-                            },
-                            CustomAccessibilityAction(Textos.eliminar) {
-                                alPedirEliminar()
-                                true
-                            },
-                        )
+                    customActions = acciones.map { (etiqueta, accion) ->
+                        CustomAccessibilityAction(etiqueta) {
+                            accion()
+                            true
+                        }
+                    }
                 }
                 .padding(start = 16.dp, top = 12.dp, bottom = 12.dp),
     ) {
@@ -338,20 +357,15 @@ fun FilaEnlace(
                 Icon(painterResource(R.drawable.icono_mas_opciones), contentDescription = null)
             }
             DropdownMenu(expanded = menuAbierto, onDismissRequest = { menuAbierto = false }) {
-                DropdownMenuItem(
-                    text = { Text(Textos.copiarUrl) },
-                    onClick = {
-                        menuAbierto = false
-                        alCopiar()
-                    },
-                )
-                DropdownMenuItem(
-                    text = { Text(Textos.eliminar) },
-                    onClick = {
-                        menuAbierto = false
-                        alPedirEliminar()
-                    },
-                )
+                acciones.forEach { (etiqueta, accion) ->
+                    DropdownMenuItem(
+                        text = { Text(etiqueta) },
+                        onClick = {
+                            menuAbierto = false
+                            accion()
+                        },
+                    )
+                }
             }
         }
     }

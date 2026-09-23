@@ -111,7 +111,11 @@ class PruebasPantallaLista {
                 it.label
             }
 
-        assertEquals(listOf(Textos.copiarUrl, Textos.eliminar), acciones)
+        // Las de iOS, en su orden. Aquí se declaran tal cual; en iOS, al revés.
+        assertEquals(
+            listOf(Textos.verDetalles, Textos.editarEtiquetas, Textos.copiarUrl, Textos.eliminar),
+            acciones,
+        )
     }
 
     @Test
@@ -151,7 +155,7 @@ class PruebasPantallaLista {
 
         fila(enlaces[0]).performCustomAction(Textos.eliminar)
         compose.onNode(hasText(Textos.eliminar) and hasClickAction()).performClick()
-        compose.mainClock.advanceTimeBy(1_000)
+        compose.mainClock.advanceTimeBy(2_000)
         compose.waitForIdle()
 
         assertEquals(listOf("b", "c"), guardados.map { it.id })
@@ -165,7 +169,7 @@ class PruebasPantallaLista {
 
         fila(enlaces[2]).performCustomAction(Textos.eliminar)
         compose.onNode(hasText(Textos.eliminar) and hasClickAction()).performClick()
-        compose.mainClock.advanceTimeBy(1_000)
+        compose.mainClock.advanceTimeBy(2_000)
         compose.waitForIdle()
 
         fila(enlaces[1]).assertIsFocused()
@@ -177,12 +181,38 @@ class PruebasPantallaLista {
 
         fila(enlaces[1]).performCustomAction(Textos.eliminar)
         compose.onNodeWithText(Textos.cancelar).performClick()
-        compose.mainClock.advanceTimeBy(1_000)
+        compose.mainClock.advanceTimeBy(2_000)
         compose.waitForIdle()
 
         assertEquals(3, guardados.size)
         fila(enlaces[1]).assertIsFocused()
         assertEquals(null, anuncios.actual.value)
+    }
+
+    @Test
+    fun al_volver_del_detalle_con_orden_de_eliminar_elimina_y_lleva_el_cursor_a_la_vecina() {
+        val guardados = mutableStateListOf(*enlaces.toTypedArray())
+        var atendida = false
+        compose.setContent {
+            PantallaLista(
+                elementos = guardados.toList(),
+                etiquetasDisponibles = emptyList(),
+                conCuenta = false,
+                anuncios = anuncios,
+                alAbrir = {},
+                alCopiar = {},
+                alEliminar = { guardados.remove(it) },
+                llegada = Llegada.EliminarFila("a"),
+                alAtenderLlegada = { atendida = true },
+            )
+        }
+        compose.mainClock.advanceTimeBy(2_000)
+        compose.waitForIdle()
+
+        assertEquals(listOf("b", "c"), guardados.map { it.id })
+        fila(enlaces[1]).assertIsFocused()
+        assertEquals("Eliminado, Primero", anuncios.actual.value?.texto)
+        assertEquals(true, atendida)
     }
 
     @Test
