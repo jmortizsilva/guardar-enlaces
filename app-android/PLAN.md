@@ -1,6 +1,6 @@
 # Guárdalo en Android
 
-Estado: en la fase 2.
+Estado: en la fase 3.
 
 ## Por qué
 
@@ -62,9 +62,13 @@ Expo (`git show 464610c:app-ios/...`) solo se consulta como historia.
 - **El token de refresco** se cifra con AES-GCM usando una clave que se crea
   dentro del Android Keystore y no sale de él. El resultado cifrado se guarda
   en un fichero privado de la app.
-- La clave se pide con `setUnlockedDeviceRequired(true)` (API 28): el
-  equivalente a `kSecAttrAccessibleWhenUnlocked` de iOS. Compartir un enlace
-  exige tener el teléfono desbloqueado, así que no estorba.
+- La clave **no** se pide con `setUnlockedDeviceRequired(true)`, aunque es el
+  equivalente a `kSecAttrAccessibleWhenUnlocked` de iOS. La primera versión
+  de este plan lo pedía; al probarlo en el teléfono (2026-09-23), bloqueado,
+  la clave se niega a cifrar. Si la pantalla se bloquea mientras se renueva
+  la sesión, el servidor ya ha revocado el token viejo y el nuevo no se puede
+  guardar: la sesión se pierde en el siguiente arranque. La clave sigue sin
+  poder salir del Keystore.
 - **`EncryptedSharedPreferences` se descarta**: la librería
   `androidx.security:security-crypto` está marcada entera como obsoleta desde
   junio de 2025, y la propia nota recomienda usar el Keystore directamente.
@@ -287,10 +291,28 @@ por su lista de textos**, que se revisa antes de escribir la pantalla.
             «Borrar búsqueda», «Más opciones», «Pegar» y el aviso de texto
             copiado). «URL copiada» queda a medir: puede que Android 13 ya
             lo diga por su cuenta.
-- [ ] **2. Fontanería.** Almacén SQLite con el esquema de Windows,
+- [x] **2. Fontanería.** Almacén SQLite con el esquema de Windows,
       comprobado columna por columna en una prueba; cliente HTTP; sesión con
       rotación; sincronizador; `GuardarEnlace`, `CrearEtiqueta` y resolver
       metadatos en el teléfono cuando no hay cuenta. El Keystore, en `app`.
+      - [x] 65 pruebas en la JVM del Mac, en menos de un segundo, contra
+            `MockWebServer`. Un interceptor de OkHttp desvía al servidor de
+            mentira cualquier dirección, como hace iOS por debajo de
+            `URLSession`: así se prueban el oEmbed de YouTube y el `https`
+            de verdad sin tocar el código de la app.
+      - [x] 9 pruebas en el teléfono (`./probar-en-telefono`): el Keystore
+            y el SQLite del sistema, que no existen en el Mac. No se usa
+            `connectedDebugAndroidTest` porque al terminar desinstala la app
+            y se lleva los enlaces guardados.
+      - [x] Lo que salió en el teléfono y no en el Mac: el conductor de
+            SQLite del sistema trata aparte `PRAGMA journal_mode` y revienta
+            si se le da más de un paso; y la clave con
+            `setUnlockedDeviceRequired` se niega a cifrar con el teléfono
+            bloqueado, que habría perdido la sesión (ver «La sesión»).
+      - [x] Diferencias con iOS, a propósito: las renovaciones van de una
+            en una; el token guardado solo se tira con un 401; cada fusión
+            de la sincronización se guarda en una transacción, con el
+            cursor dentro; y de una página solo se leen los primeros 512 KB.
 - [ ] **3. Interfaz.** Lista (búsqueda, filtro, acciones y eliminación),
       elegir etiquetas, añadir, detalle, gestionar etiquetas, ajustes,
       bienvenida e inicio de sesión. Cada pantalla, con sus textos revisados
@@ -333,9 +355,17 @@ Descartado:
 
 ## Cabos sueltos
 
-- **La renovación simultánea en iOS.** Si el análisis de «La sesión» es
-  correcto, dos 401 a la vez pueden cerrar la sesión del iPhone. No está
-  comprobado y no se toca en esta rama, que no toca `app-ios-nativa`.
+- **Tres posibles fallos de sesión en iOS**, vistos al portar su código y
+  no comprobados en el iPhone; esta rama no toca `app-ios-nativa`:
+  - dos 401 a la vez hacen dos renovaciones, y la segunda cierra la sesión
+    (el actor deja entrar otra llamada mientras la primera espera a la red);
+  - `Sesion.restaurar` tira el token guardado por cualquier fallo, también
+    por no tener red: abrir la app sin conexión cerraría la sesión;
+  - el token va en el llavero con `kSecAttrAccessibleWhenUnlocked`: si el
+    teléfono se bloquea a mitad de una renovación, el nuevo no se podría
+    guardar. Es lo que se midió en Android con su equivalente.
+- **Windows dice «Google rechazó el inicio de sesión»** también al entrar
+  con Apple, que allí va por web. En Android dice el proveedor.
 - **El esquema `guardarenlaces` se puede suplantar en Android** cuando no hay
   Auth Tab. Cerrarlo del todo pide un cambio de contrato (PKCE o App Links).
 - **Apple no está configurado en el servidor compartido.** Hasta entonces, el

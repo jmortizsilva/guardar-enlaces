@@ -1,0 +1,18 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+  Copia de seguridad desde Android 12. Entra todo menos el token de sesión:
+  cifrado con una clave del Keystore que no viaja con la copia, en otro
+  teléfono sería basura. La base de datos sí entra, para que quien usa la app
+  sin cuenta no pierda sus enlaces al cambiar de teléfono.
+
+  La carpeta es la de Ubicaciones.ficheroCredenciales: si cambia allí, cambia
+  aquí y en reglas_copia_antigua.xml.
+-->
+<data-extraction-rules>
+    <cloud-backup>
+        <exclude domain="file" path="sesion/" />
+    </cloud-backup>
+    <device-transfer>
+        <exclude domain="file" path="sesion/" />
+    </device-transfer>
+</data-extraction-rules>

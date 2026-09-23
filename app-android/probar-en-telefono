@@ -1,0 +1,21 @@
+#!/bin/bash
+# Las pruebas que solo pueden correr en un teléfono: el Keystore y el SQLite
+# del sistema (app/src/androidTest).
+#
+# No se usa `./gradlew connectedDebugAndroidTest` a propósito: al terminar
+# desinstala la app, y con ella los enlaces que hubiera guardados en el
+# teléfono. Así se instalan la app y las pruebas, se ejecutan, y la app se
+# queda como estaba.
+set -euo pipefail
+
+cd "$(dirname "$0")"
+source herramientas/telefono.sh
+
+./gradlew --quiet :app:installDebug :app:installDebugAndroidTest
+salida=$("$ADB" shell am instrument -w \
+    com.jmortizsilva.guardarenlaces.test/androidx.test.runner.AndroidJUnitRunner)
+echo "$salida"
+
+# `am instrument` devuelve cero aunque fallen pruebas: lo que cuenta es el
+# resumen que escribe al final.
+echo "$salida" | grep -q "^OK (" || exit 1

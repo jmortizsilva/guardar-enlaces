@@ -27,7 +27,7 @@ dependencies {
     api(project(":dominio"))
     api(libs.sqlite)
     implementation(libs.serialization.json)
-    implementation(libs.coroutines.core)
+    api(libs.coroutines.core)
     implementation(libs.okhttp)
     testImplementation(libs.kotlin.test)
     testImplementation(libs.sqlite.bundled)

@@ -19,6 +19,9 @@ android {
         targetSdk = 36
         versionCode = 1
         versionName = "0.1.0"
+        // Las pruebas de `src/androidTest` corren en el teléfono: el Keystore y el SQLite del
+        // sistema no existen en el Mac.
+        testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
     }
 
     buildFeatures { compose = true }
@@ -73,10 +76,15 @@ dependencies {
     implementation(libs.compose.ui)
     implementation(libs.compose.material3)
     implementation(libs.activity.compose)
+    implementation(libs.sqlite.framework)
 
     testImplementation(platform(libs.compose.bom))
     testImplementation(libs.compose.ui.test.junit4)
     testImplementation(libs.robolectric)
     testImplementation(libs.junit)
     debugImplementation(libs.compose.ui.test.manifest)
+
+    androidTestImplementation(libs.androidx.test.runner)
+    androidTestImplementation(libs.androidx.test.junit)
+    androidTestImplementation(libs.junit)
 }

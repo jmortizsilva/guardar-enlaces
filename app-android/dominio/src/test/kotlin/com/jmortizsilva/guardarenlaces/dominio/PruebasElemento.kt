@@ -156,6 +156,16 @@ class PruebasElementoJson {
     }
 
     @Test
+    fun `lo que no se sabe no se manda, igual que desde el iPhone`() {
+        // Hoy el servidor trata igual un null que un campo ausente. Si algún día un null borrara,
+        // un enlace guardado sin red se llevaría el título que le puso otro dispositivo.
+        val json = jsonDelContrato.encodeToString(Elemento(id = "x1", url = "https://a.com"))
+
+        assertFalse("titulo" in json)
+        assertFalse("null" in json)
+    }
+
+    @Test
     fun `el tipo de la base de datos se lee igual de tolerante`() {
         assertEquals(TipoElemento.Articulo, TipoElemento.desde("articulo"))
         assertEquals(TipoElemento.Enlace, TipoElemento.desde("pódcast"))

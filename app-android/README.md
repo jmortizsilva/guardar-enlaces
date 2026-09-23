@@ -13,8 +13,13 @@ Se trabaja por línea de comandos, sin Android Studio:
 ```
 ./verificar                 # formato, Lint y pruebas. Si esto no pasa, no está terminado
 ./instalar                  # compilar, instalar en el teléfono y abrir la app
+./probar-en-telefono        # lo que solo existe en el teléfono: Keystore y SQLite del sistema
 ./gradlew :dominio:test     # solo la lógica pura
 ```
+
+`probar-en-telefono` no usa `./gradlew connectedDebugAndroidTest` a
+propósito: esa orden desinstala la app al terminar, y con ella los enlaces
+guardados en el teléfono.
 
 Hace falta el JDK 21 (`brew install openjdk@21`) y el Android SDK en
 `~/Library/Android/sdk`, con `platform-tools` y `platforms;android-37.0`.
@@ -58,5 +63,6 @@ mirar la pantalla: `adb shell uiautomator dump` y buscar en el XML.
 
 ## Lo que todavía no está
 
-Fases 1 a 6 del plan. Ahora mismo esto es andamiaje: la app arranca, enseña
-su título y enlaza con `dominio`, nada más.
+Fases 3 a 6 del plan: la interfaz, compartir desde otras apps, la firma de
+publicación y repartirla. El dominio y la fontanería están hechos y probados;
+la app todavía solo enseña su título.
