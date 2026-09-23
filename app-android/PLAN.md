@@ -1,6 +1,6 @@
 # Guárdalo en Android
 
-Estado: en la fase 0.
+Estado: en la fase 1, pendiente de revisar los textos.
 
 ## Por qué
 
@@ -53,7 +53,7 @@ Expo (`git show 464610c:app-ios/...`) solo se consulta como historia.
 | Navegación | Una sola actividad y una pila de pantallas propia, con `BackHandler` | Son seis pantallas. Navigation Compose se valorará en la fase 3 si la pila propia se complica; lo que importa aquí es que el gesto de atrás de TalkBack haga siempre lo que se espera, y eso hay que medirlo con cualquiera de las dos |
 | Hojas | Pantallas completas y `AlertDialog`; nada de `ModalBottomSheet` | Una hoja inferior de Compose tiene su propio arrastre y su propia gestión del foco, y no sé cómo se comporta con TalkBack. Una pantalla completa y un diálogo son ventanas que TalkBack ya sabe tratar. Hasta medir la hoja en el teléfono, no se usa |
 | Textos | Un objeto `Textos` en `dominio`, no `strings.xml` | Igual que en iOS, y por lo mismo: se revisan todos juntos y se prueban en la JVM. Los recursos de Android necesitan un `Context`, y en una prueba eso es Robolectric. La app está solo en español, así que no se pierde la traducción |
-| Formato y análisis | Avisos del compilador como errores, Android Lint con avisos como errores y `ktfmt` | `ktfmt` formatea sin opciones que discutir, como `swift-format`. ktlint y detekt se descartan: más reglas que configurar para un proyecto de este tamaño |
+| Formato y análisis | Avisos del compilador como errores, Android Lint con avisos como errores, `ktfmt`, y `animal-sniffer` en los módulos sin Android | `ktfmt` formatea sin opciones que discutir, como `swift-format`. ktlint y detekt se descartan: más reglas que configurar para un proyecto de este tamaño. `animal-sniffer`, con las firmas de la API 28 de gummy-bears, se añadió en la fase 1: es lo único que avisa si `dominio` o `fontaneria` usan algo del JDK que Android 9 no tiene. Lint no lo hace en un módulo sin Android, comprobado. OkHttp se protege igual |
 | Compilar e instalar | `./gradlew` y `adb`, sin Android Studio | Ver «Compilar, firmar e instalar» |
 
 ### La sesión
@@ -223,8 +223,9 @@ por su lista de textos**, que se revisa antes de escribir la pantalla.
 ## Pruebas
 
 - **`dominio` y `fontaneria`**: pruebas de JUnit en la JVM del Mac, sin
-  emulador ni teléfono. Las 73 del dominio de iOS y las 38 de su fontanería
-  sirven de especificación: se traen una a una y se cuenta cuáles no tienen
+  emulador ni teléfono. Las pruebas de iOS sirven de especificación (124 del
+  dominio y 58 de la fontanería el 2026-09-23; su plan dice 73 y 38, que eran
+  las del día en que se escribió): se traen una a una y se cuenta cuáles no tienen
   sentido aquí y por qué. El almacén se prueba con el conductor de SQLite
   empaquetado; el cliente, la sesión y el sincronizador, contra
   `MockWebServer`. El reloj y los identificadores se inyectan, como en iOS.
@@ -263,6 +264,23 @@ por su lista de textos**, que se revisa antes de escribir la pantalla.
       sincronización, asentar cuenta, enlaces, metadatos, login y etiquetas
       reservadas, con sus pruebas. Los `Textos` de Android se escriben aquí,
       enteros y juntos, y se revisan antes de seguir.
+      - [x] Portado, con 134 pruebas que corren en una décima de segundo.
+            De las 124 de iOS se quedan fuera las 3 del nonce de Apple, que
+            solo sirve para el inicio de sesión nativo; el resto son de
+            Android: el `+` en una consulta, el espacio duro delante de una
+            dirección, no partir un emoji al recortar, los `null` del
+            servidor, y que ningún texto hable del iPhone.
+      - [x] Dos cambios de comportamiento respecto a iOS, y no por gusto:
+            el error de inicio de sesión dice el proveedor, porque aquí
+            Google y Apple van los dos por web; y `Elemento` esconde su
+            `copy`, que en Kotlin dejaría cambiar un campo sin mover
+            `actualizadoEn`.
+      - [x] `animal-sniffer` con las firmas de la API 28 en `verificar`.
+            `dominio` se compila contra el JDK 21 y dos llamadas que no
+            existen en Android 9 (`Locale.of` y `URLDecoder.decode` con un
+            `Charset`) pasaban la compilación y las pruebas. Lint no las ve
+            en un módulo sin Android; se probó antes de descartarlo.
+      - [ ] Revisar los textos.
 - [ ] **2. Fontanería.** Almacén SQLite con el esquema de Windows,
       comprobado columna por columna en una prueba; cliente HTTP; sesión con
       rotación; sincronizador; `GuardarEnlace`, `CrearEtiqueta` y resolver

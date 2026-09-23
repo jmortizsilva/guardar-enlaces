@@ -5,6 +5,9 @@
 # Los avisos del compilador cuentan como error aquí, y solo aquí: el
 # proyecto los deja pasar mientras se escribe.
 #
+# `animalsnifferMain` comprueba que `dominio` y `fontaneria`, que se compilan
+# contra el JDK, no usan nada que Android 9 no tenga.
+#
 # Las pruebas de interfaz corren en la JVM con Robolectric, sin teléfono.
 # Leen el árbol de semántica, que no es exactamente lo que oye TalkBack: lo
 # que se oye se comprueba en el teléfono (ver PLAN.md, «Pruebas»).
@@ -17,6 +20,8 @@ export ANDROID_HOME="${ANDROID_HOME:-$HOME/Library/Android/sdk}"
 
 ./gradlew --quiet -PavisosComoErrores \
     ktfmtCheck \
+    :dominio:animalsnifferMain \
+    :fontaneria:animalsnifferMain \
     :dominio:test \
     :fontaneria:test \
     :app:testDebugUnitTest \
