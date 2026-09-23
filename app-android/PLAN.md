@@ -1,6 +1,6 @@
 # Guárdalo en Android
 
-Estado: en la fase 1, pendiente de revisar los textos.
+Estado: en la fase 2.
 
 ## Por qué
 
@@ -204,7 +204,7 @@ cambian lo que hay que traducir:
 | Las acciones, **una sola vez**: nada de `swipeActions`, que las duplicaban | El rotor no se ensucia | La trampa equivalente en Android es la **pulsación larga**: `combinedClickable` con `onLongClick` añade «mantener pulsado» a las acciones de TalkBack. No se usa, ni `SwipeToDismissBox`. Para quien mira la pantalla, un botón «Más opciones» en la fila con el mismo menú, **oculto a TalkBack** (`clearAndSetSemantics {}`), porque TalkBack ya tiene esas acciones en la fila. Es la misma regla de iOS: el menú para el tacto y las acciones desde una sola fuente | Sí, con otra trampa |
 | El orden de las acciones, **declarado al revés** porque VoiceOver las lee al revés | Se oyen en el orden que se quiere | No hay nada documentado sobre el orden en TalkBack. Se declaran en el orden en que se quieren oír y **se mide** | A medir |
 | El toque en la fila abre, con «Abrir en modo lector» como pista | Doble toque = abrir | `Modifier.clickable(onClickLabel = …)`: TalkBack dice «toca dos veces para …» con esa etiqueta. **Pero no hay modo lector**: una Custom Tab no se puede abrir en modo lector desde la app. El texto tiene que decir lo que pasa de verdad (propuesta: «Abrir»), y eso es una diferencia de textos, no una traducción | Sí; el texto cambia |
-| `accessibilityCustomContent`, que en iOS **no se usa** (ver arriba) | — | TalkBack **no tiene** contenido que se lea solo si se pide. Lo que hay: la etiqueta (siempre), `stateDescription` (siempre, detrás) y las acciones. Opciones: **(a)** lo mismo que hace iOS hoy, todo en la etiqueta con el título primero, que al deslizar corta la lectura; **(b)** solo el título en la etiqueta, y lo demás en la pantalla de detalle. **Lo decides tú** antes de la fase 3 | No |
+| `accessibilityCustomContent`, que en iOS **no se usa** (ver arriba) | — | TalkBack **no tiene** contenido que se lea solo si se pide. Lo que hay: la etiqueta (siempre), `stateDescription` (siempre, detrás) y las acciones. Opciones: **(a)** lo mismo que hace iOS hoy, todo en la etiqueta con el título primero, que al deslizar corta la lectura; **(b)** solo el título en la etiqueta, y lo demás en la pantalla de detalle. **Decidido el 2026-09-23: la (a)**, lo mismo que se oye en el iPhone | No |
 | Prioridad de los anuncios: `importante` (alta) e `informativo` (normal), con `accessibilitySpeechAnnouncementPriority` | Un resultado se oye entero aunque cambie el foco | `announceForAccessibility` y los eventos `TYPE_ANNOUNCEMENT` están **obsoletos desde Android 16**. Lo que recomienda Android: **(1)** para un cambio de pantalla, `paneTitle`; **(2)** para un cambio importante, una **región viva**, `liveRegion = Assertive` (corta lo que se esté leyendo) o `Polite` (espera); **(3)** para un error de un campo, la semántica `error`. Propuesta: el mismo `Anuncios` de dos funciones, hecho con una línea de estado visible en la pantalla con región viva, `Assertive` para `importante` y `Polite` para `informativo`. Dos trampas conocidas: una región viva solo habla cuando **cambia** su texto, así que el mismo aviso dos veces seguidas («URL copiada») no suena si no se vacía antes; y no se sabe si TalkBack lee una región viva que no se ve. **Se mide.** Si no alcanza, el recurso es la API obsoleta, que sigue funcionando, apuntando el motivo | Parcial |
 | Un anuncio al abrir una pantalla se pierde; iOS espera 900 ms | «Hay un enlace copiado, puedes pegarlo» | Cada pantalla lleva su `paneTitle` y TalkBack la anuncia al entrar. El aviso del enlace copiado va en un texto visible junto al botón de pegar, con región viva `Polite`, para que espere a que acabe el título. El retraso de iOS no se copia sin medirlo | A medir |
 | Si un control aparece solo, se dice | El botón de pegar | Igual, con la línea anterior. **Diferencia:** en Android 12 o posterior leer el portapapeles saca un aviso del sistema («Guárdalo ha pegado…»), y no hay botón de pegar del sistema como `PasteButton`. Se puede saber si hay texto copiado sin leerlo (la descripción del portapapeles), y desde la API 31 incluso si parece una URL. Por debajo de 31, se ofrece el botón con cualquier texto copiado | Parcial |
@@ -260,7 +260,7 @@ por su lista de textos**, que se revisa antes de escribir la pantalla.
             el 2026-09-23, primero por cable y después por depuración
             inalámbrica, ya sin cable. TalkBack lee «Guárdalo, encabezado»:
             el encabezado de la API 28 llega de verdad, no solo en la prueba.
-- [ ] **1. Dominio en Kotlin.** Elemento, duplicados, presentación,
+- [x] **1. Dominio en Kotlin.** Elemento, duplicados, presentación,
       sincronización, asentar cuenta, enlaces, metadatos, login y etiquetas
       reservadas, con sus pruebas. Los `Textos` de Android se escriben aquí,
       enteros y juntos, y se revisan antes de seguir.
@@ -280,7 +280,13 @@ por su lista de textos**, que se revisa antes de escribir la pantalla.
             existen en Android 9 (`Locale.of` y `URLDecoder.decode` con un
             `Charset`) pasaban la compilación y las pruebas. Lint no las ve
             en un módulo sin Android; se probó antes de descartarlo.
-      - [ ] Revisar los textos.
+      - [x] Textos revisados y aprobados el 2026-09-23. Lo que cambia
+            respecto a iOS: «teléfono» donde decía «iPhone», «Abrir» en vez
+            de «Abrir en modo lector», «Volver» en vez de «Cerrar», el
+            navegador en vez de Safari, y los nuevos de Android («Buscar»,
+            «Borrar búsqueda», «Más opciones», «Pegar» y el aviso de texto
+            copiado). «URL copiada» queda a medir: puede que Android 13 ya
+            lo diga por su cuenta.
 - [ ] **2. Fontanería.** Almacén SQLite con el esquema de Windows,
       comprobado columna por columna en una prueba; cliente HTTP; sesión con
       rotación; sincronizador; `GuardarEnlace`, `CrearEtiqueta` y resolver
@@ -327,8 +333,6 @@ Descartado:
 
 ## Cabos sueltos
 
-- **Qué se lee en cada fila** (opción a o b de la tabla). Es de
-  accesibilidad y lo decides tú.
 - **La renovación simultánea en iOS.** Si el análisis de «La sesión» es
   correcto, dos 401 a la vez pueden cerrar la sesión del iPhone. No está
   comprobado y no se toca en esta rama, que no toca `app-ios-nativa`.
