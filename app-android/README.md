@@ -28,6 +28,23 @@ sube al repositorio:
 sdk.dir=/Users/<usuario>/Library/Android/sdk
 ```
 
+## El teléfono, sin cable
+
+`instalar` usa la depuración inalámbrica si la encuentra. El Mac y el
+teléfono quedaron emparejados el 2026-09-23, y después de eso basta con que
+estén en la misma red y la depuración inalámbrica esté activa en el teléfono:
+adb lo encuentra solo aunque cambie de puerto.
+
+Si deja de encontrarlo (tras borrar las autorizaciones, o en una red nueva):
+
+1. En el teléfono, Opciones para desarrolladores → Depuración inalámbrica →
+   «Vincular dispositivo con código de vinculación».
+2. En el Mac, con la dirección y el código que enseña el teléfono:
+   `adb pair <dirección>:<puerto> <código>`.
+
+Con el cable puesto, el código y la dirección se pueden leer desde el Mac sin
+mirar la pantalla: `adb shell uiautomator dump` y buscar en el XML.
+
 ## Estructura
 
 - `dominio/` — Kotlin puro: sin Android, sin red y sin base de datos. Todo lo

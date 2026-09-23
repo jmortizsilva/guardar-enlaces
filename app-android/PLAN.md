@@ -246,7 +246,7 @@ por su lista de textos**, que se revisa antes de escribir la pantalla.
 
 ## Fases
 
-- [ ] **0. Andamiaje.** Rama `app-android`, herramientas instaladas (ver
+- [x] **0. Andamiaje.** Rama `app-android`, herramientas instaladas (ver
       «Herramientas en este Mac»), proyecto de Gradle con sus tres módulos,
       `verificar`, `instalar`, y una app vacía instalada en el teléfono.
       - [x] Proyecto, módulos, icono y `verificar` en verde: formato, Lint
@@ -255,8 +255,10 @@ por su lista de textos**, que se revisa antes de escribir la pantalla.
             de Compose corren con Robolectric. Robolectric necesita permisos
             para tocar clases internas de Java desde el JDK 17; están en
             `app/build.gradle.kts`.
-      - [ ] Instalada en el teléfono, primero por cable y después por
-            depuración inalámbrica.
+      - [x] Instalada en el teléfono (Pixel 10a, Android 17, TalkBack 17.0)
+            el 2026-09-23, primero por cable y después por depuración
+            inalámbrica, ya sin cable. TalkBack lee «Guárdalo, encabezado»:
+            el encabezado de la API 28 llega de verdad, no solo en la prueba.
 - [ ] **1. Dominio en Kotlin.** Elemento, duplicados, presentación,
       sincronización, asentar cuenta, enlaces, metadatos, login y etiquetas
       reservadas, con sus pruebas. Los `Textos` de Android se escriben aquí,
