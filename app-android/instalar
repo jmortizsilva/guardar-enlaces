@@ -1,0 +1,24 @@
+#!/bin/bash
+# Compila, instala en el teléfono y abre la app. Sin pasar por las pruebas:
+# es para oír un cambio con TalkBack cuanto antes. Antes de un commit, siempre
+# `./verificar` entero.
+#
+# Con más de un aparato conectado, adb no sabe a cuál hablar: se elige con
+# ANDROID_SERIAL=<número de serie>, que se ve con `adb devices`.
+set -euo pipefail
+
+cd "$(dirname "$0")"
+
+export JAVA_HOME="${JAVA_HOME:-/opt/homebrew/opt/openjdk@21}"
+export ANDROID_HOME="${ANDROID_HOME:-$HOME/Library/Android/sdk}"
+ADB="$ANDROID_HOME/platform-tools/adb"
+
+if ! "$ADB" get-state >/dev/null 2>&1; then
+    echo "No hay ningún teléfono conectado, o hay más de uno. Esto es lo que ve adb:"
+    "$ADB" devices -l
+    exit 1
+fi
+
+./gradlew --quiet :app:installDebug
+"$ADB" shell am start -n com.jmortizsilva.guardarenlaces/.ActividadPrincipal >/dev/null
+echo "Instalada y abierta."

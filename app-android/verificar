@@ -1,0 +1,27 @@
+#!/bin/bash
+# Formato + Lint + pruebas, igual que `./verificar` en app-ios-nativa o
+# `pytest` en app-windows. Si esto no pasa, no está terminado.
+#
+# Los avisos del compilador cuentan como error aquí, y solo aquí: el
+# proyecto los deja pasar mientras se escribe.
+#
+# Las pruebas de interfaz corren en la JVM con Robolectric, sin teléfono.
+# Leen el árbol de semántica, que no es exactamente lo que oye TalkBack: lo
+# que se oye se comprueba en el teléfono (ver PLAN.md, «Pruebas»).
+set -euo pipefail
+
+cd "$(dirname "$0")"
+
+export JAVA_HOME="${JAVA_HOME:-/opt/homebrew/opt/openjdk@21}"
+export ANDROID_HOME="${ANDROID_HOME:-$HOME/Library/Android/sdk}"
+
+./gradlew --quiet -PavisosComoErrores \
+    ktfmtCheck \
+    :dominio:test \
+    :fontaneria:test \
+    :app:testDebugUnitTest \
+    :app:lintDebug \
+    :app:assembleDebug
+
+echo
+echo "Todo en verde."

@@ -1,0 +1,19 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+  El marcador de libro blanco de Guárdalo, el mismo de iOS y de Windows
+  (app-ios-nativa/herramientas/generar-icono.swift).
+
+  Un icono adaptable mide 108 unidades y el sistema recorta y enseña solo las
+  72 del centro, así que las proporciones de iOS se aplican sobre ese cuadro
+  de 72 que empieza en 18: ancho 0,40; arriba 0,20; abajo 0,78; la muesca
+  sube hasta 0,56.
+-->
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="108dp"
+    android:height="108dp"
+    android:viewportWidth="108"
+    android:viewportHeight="108">
+    <path
+        android:fillColor="#FFFFFF"
+        android:pathData="M39.6,32.4 L68.4,32.4 L68.4,74.16 L54,58.32 L39.6,74.16 Z" />
+</vector>
