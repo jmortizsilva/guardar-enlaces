@@ -56,6 +56,16 @@ class PruebasEtiquetasEnUso {
     }
 
     @Test
+    fun `las disponibles suman las reservadas, sin repetir y en orden`() {
+        val a = elemento("a", etiquetas = listOf("ocio", "trabajo"))
+
+        assertEquals(
+            listOf("casa", "ocio", "trabajo"),
+            Biblioteca.etiquetasDisponibles(listOf(a), reservadas = listOf("ocio", "casa")),
+        )
+    }
+
+    @Test
     fun `sin elementos, o sin etiquetas, no hay ninguna`() {
         assertTrue(Biblioteca.etiquetasEnUso(emptyList()).isEmpty())
         assertTrue(Biblioteca.etiquetasEnUso(listOf(elemento("a"))).isEmpty())

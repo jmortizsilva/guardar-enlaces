@@ -2,11 +2,21 @@
 # Compila, instala en el teléfono y abre la app. Sin pasar por las pruebas:
 # es para oír un cambio con TalkBack cuanto antes. Antes de un commit, siempre
 # `./verificar` entero.
+#
+#     ./instalar --ejemplos    además, repone los enlaces de ejemplo (solo en la de pruebas)
 set -euo pipefail
 
 cd "$(dirname "$0")"
 source herramientas/telefono.sh
 
 ./gradlew --quiet :app:installDebug
-"$ADB" shell am start -n com.jmortizsilva.guardarenlaces/.ActividadPrincipal >/dev/null 2>&1
+
+# Una sola orden de arranque, y esperando a que termine (`-W`). Con dos seguidas,
+# la segunda llegaba mientras la primera todavía arrancaba la app, y los
+# ejemplos no se cargaban (comprobado el 2026-09-23).
+arranque=(-S -W -n com.jmortizsilva.guardarenlaces/.ActividadPrincipal)
+if [ "${1:-}" = "--ejemplos" ]; then
+    arranque+=(--ez cargar-ejemplos true)
+fi
+"$ADB" shell am start "${arranque[@]}" >/dev/null 2>&1
 echo "Instalada y abierta en $ANDROID_SERIAL."

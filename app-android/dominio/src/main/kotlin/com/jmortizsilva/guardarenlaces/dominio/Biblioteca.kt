@@ -23,6 +23,13 @@ object Biblioteca {
     fun etiquetasEnUso(elementos: List<Elemento>): List<String> =
         elementos.flatMap { it.etiquetas }.toSet().sortedWith(ordenAlfabetico)
 
+    /**
+     * Las que se pueden elegir: las que ya lleva algún enlace más las reservadas, que existen
+     * aunque todavía no las lleve ninguno. Sin repetir y en orden alfabético.
+     */
+    fun etiquetasDisponibles(elementos: List<Elemento>, reservadas: List<String>): List<String> =
+        (elementos.flatMap { it.etiquetas } + reservadas).toSet().sortedWith(ordenAlfabetico)
+
     /** Cuántos enlaces lleva cada etiqueta, para poder decirlo antes de renombrarla o borrarla. */
     fun recuentoPorEtiqueta(elementos: List<Elemento>): Map<String, Int> =
         elementos.flatMap { it.etiquetas }.groupingBy { it }.eachCount()

@@ -60,8 +60,9 @@ object Textos {
     const val copiarUrl = "Copiar URL"
     const val eliminar = "Eliminar"
     /**
-     * El botón de cada fila para quien usa la pantalla mirando. TalkBack no lo encuentra, porque
-     * esas mismas acciones ya las tiene en la fila, pero Voice Access sí lo usa por su nombre.
+     * El botón de cada fila para quien usa la pantalla mirando. Está oculto a TalkBack, que ya
+     * tiene esas acciones en la fila, y con él a Voice Access, que lee el mismo árbol: por eso no
+     * lleva esta etiqueta. Se queda aquí para que una prueba compruebe que no aparece.
      */
     const val masOpciones = "Más opciones"
     const val cancelar = "Cancelar"
@@ -84,8 +85,8 @@ object Textos {
     // Lo que se dice en voz alta
 
     /**
-     * A medir en el teléfono: desde Android 13 el sistema enseña su propio aviso al copiar, y puede
-     * que TalkBack ya lo lea. Si es así, esto sobra y se oiría dos veces.
+     * Solo en Android 12 o anterior. Desde Android 13 el sistema dice «Texto copiado» por su
+     * cuenta, y con este se oían los dos seguidos (medido el 2026-09-23).
      */
     const val urlCopiada = "URL copiada"
 
