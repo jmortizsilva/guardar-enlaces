@@ -1,0 +1,156 @@
+{
+  "_comentario": [
+    "Lo que tiene que salir de cada fichero de al lado. Lo leen las pruebas de",
+    "los tres clientes, para que los tres importen lo mismo.",
+    "",
+    "creadoEn en milisegundos. null significa 'la fecha de la importacion':",
+    "el fichero no traia ninguna, asi que se usa el reloj, y la prueba solo",
+    "comprueba que no viene vacio.",
+    "",
+    "titulo null es 'no venia titulo'. No se inventa: la lista ya sabe ensenar",
+    "el dominio cuando falta."
+  ],
+
+  "marcadores-navegador.html": {
+    "descartados": 3,
+    "motivos": [
+      "javascript:void(0) y place: no son direcciones http ni https",
+      "el segundo https://ejemplo.com/flan ya estaba en el mismo fichero"
+    ],
+    "elementos": [
+      {
+        "url": "https://www.xataka.com/basics/alternativas-pocket",
+        "titulo": "Las mejores alternativas a Pocket",
+        "etiquetas": [],
+        "creadoEn": 1700000100000
+      },
+      {
+        "url": "https://velocidadcuchara.com/arroz-caldoso/",
+        "titulo": "Arroz caldoso",
+        "etiquetas": ["Recetas"],
+        "creadoEn": 1700000300000
+      },
+      {
+        "url": "https://ejemplo.com/flan",
+        "titulo": "Flan de la abuela",
+        "etiquetas": ["Postres"],
+        "creadoEn": 1700000500000
+      },
+      {
+        "url": "https://ejemplo.com/tarta-de-queso",
+        "titulo": "Tarta de queso & nata",
+        "etiquetas": ["Postres"],
+        "creadoEn": 1700000600000
+      },
+      {
+        "url": "https://ejemplo.com/sin-titulo",
+        "titulo": null,
+        "etiquetas": [],
+        "creadoEn": 1700000700000
+      },
+      {
+        "url": "https://ejemplo.com/sin-fecha",
+        "titulo": "Un marcador sin ADD_DATE",
+        "etiquetas": ["Sin fecha"],
+        "creadoEn": null
+      }
+    ]
+  },
+
+  "pocket.csv": {
+    "descartados": 0,
+    "elementos": [
+      {
+        "url": "https://www.xataka.com/basics/alternativas-pocket",
+        "titulo": "Las mejores alternativas a Pocket",
+        "etiquetas": ["leer", "tecnologia"],
+        "creadoEn": 1700000100000
+      },
+      {
+        "url": "https://velocidadcuchara.com/arroz-caldoso/",
+        "titulo": "Arroz caldoso",
+        "etiquetas": ["recetas"],
+        "creadoEn": 1700000300000
+      },
+      {
+        "url": "https://ejemplo.com/sin-titulo",
+        "titulo": null,
+        "etiquetas": [],
+        "creadoEn": 1700000700000
+      },
+      {
+        "url": "https://ejemplo.com/tarta-de-queso",
+        "titulo": "Tarta de queso, con nata",
+        "etiquetas": ["recetas", "postres"],
+        "creadoEn": 1700000600000
+      },
+      {
+        "url": "https://ejemplo.com/flan",
+        "titulo": "El mismo flan otra vez",
+        "etiquetas": ["postres"],
+        "creadoEn": 1700000800000
+      }
+    ]
+  },
+
+  "raindrop.csv": {
+    "descartados": 0,
+    "motivos": [
+      "la carpeta va primero y los tags detras; 'postres' no se anade otra vez porque ya esta 'Postres', que solo cambia en la mayuscula"
+    ],
+    "elementos": [
+      {
+        "url": "https://ejemplo.com/flan",
+        "titulo": "Flan de la abuela",
+        "etiquetas": ["Postres", "dulce"],
+        "creadoEn": 1788256800000
+      },
+      {
+        "url": "https://www.xataka.com/basics/alternativas-pocket",
+        "titulo": "Las mejores alternativas a Pocket",
+        "etiquetas": ["Tecnología", "leer"],
+        "creadoEn": 1788348600000
+      },
+      {
+        "url": "https://ejemplo.com/sin-carpeta",
+        "titulo": "Un enlace suelto",
+        "etiquetas": [],
+        "creadoEn": 1788426900000
+      }
+    ]
+  },
+
+  "enlaces.txt": {
+    "descartados": 3,
+    "motivos": [
+      "la linea de comentario y la frase sin direccion no llevan ninguna url",
+      "el segundo https://ejemplo.com/flan ya estaba en el mismo fichero"
+    ],
+    "elementos": [
+      {
+        "url": "https://www.xataka.com/basics/alternativas-pocket",
+        "titulo": null,
+        "etiquetas": [],
+        "creadoEn": null
+      },
+      {
+        "url": "https://velocidadcuchara.com/arroz-caldoso/",
+        "titulo": null,
+        "etiquetas": [],
+        "creadoEn": null
+      },
+      {
+        "url": "https://ejemplo.com/flan",
+        "titulo": null,
+        "etiquetas": [],
+        "creadoEn": null
+      },
+      {
+        "url": "https://ejemplo.com/tarta-de-queso",
+        "titulo": null,
+        "etiquetas": [],
+        "creadoEn": null
+      }
+    ]
+  }
+}

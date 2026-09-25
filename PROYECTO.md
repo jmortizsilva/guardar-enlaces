@@ -41,6 +41,15 @@ fuente de la verdad; cualquier cambio de API se decide ahí primero, antes de
 tocar código de cliente. Cómo se despliega el servidor, en
 [`backend/docs/DESPLIEGUE.md`](backend/docs/DESPLIEGUE.md).
 
+Lo mismo para **importar enlaces de otra aplicación**: el comportamiento se
+decide en [`IMPORTAR.md`](IMPORTAR.md) y vale para todos los clientes. Ahí no
+entra el backend —importar es crear enlaces locales y de subirlos ya se
+encarga la sincronización—, pero el lector de ficheros se escribe una vez por
+cliente, así que hace falta algo que los ate: los ficheros de ejemplo de
+`pruebas-compartidas/importacion/` y el `esperado.json` que dice qué debe
+salir de cada uno. Las pruebas de todos los clientes leen esos mismos
+ficheros.
+
 ## Por dónde empezar
 
 ### Backend (hace falta que esté corriendo para probar cualquiera de los dos clientes)
