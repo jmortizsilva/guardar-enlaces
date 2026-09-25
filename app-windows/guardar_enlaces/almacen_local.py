@@ -197,6 +197,23 @@ class AlmacenLocal:
         )
         self._conexion.commit()
 
+    def marcar_varios_pendientes(self, elementos: Iterable[Elemento]) -> None:
+        """Como `marcar_pendiente`, pero de una tacada y con un solo commit.
+
+        Importar trae cientos de enlaces de golpe, y `marcar_pendiente` hace
+        commit por cada uno: son cientos de escrituras a disco, y ahi esta la
+        diferencia entre tardar un instante y tardar minutos.
+        """
+        lista = list(elementos)
+        if not lista:
+            return
+        for elemento in lista:
+            self._upsert_elemento(elemento)
+        self._conexion.executemany(
+            "INSERT OR IGNORE INTO outbox (id) VALUES (?)", [(e.id,) for e in lista]
+        )
+        self._conexion.commit()
+
     def limpiar_pendientes(self, ids: Iterable[str]) -> None:
         self._conexion.executemany(
             "DELETE FROM outbox WHERE id = ?", [(i,) for i in ids]

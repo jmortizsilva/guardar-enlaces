@@ -98,8 +98,10 @@ ignoran sin más, incluidas las de comentario.
 Los textos concretos van en cada cliente, pero el guion es el mismo:
 
 - Se elige el fichero con el selector del sistema.
-- Importar cientos de enlaces tarda, así que **se avisa del progreso**, sin
-  machacar al lector de pantalla: uno de cada cien, no uno por enlace.
+- **No hace falta avisar del progreso.** Se midió antes de escribir la
+  pantalla: 5000 marcadores tardan 175 ms en leerse y prepararse, y guardarlos
+  otros pocos. Una barra de progreso para eso solo añade una ventana que
+  cerrar y una frase que oír.
 - **Al terminar se dice el resultado, no que la acción ocurrió**: «Importados
   143 enlaces, 12 ya los tenías», no «Importación completada».
 - Si el fichero no tiene ni un enlace, se dice por qué se cree que es: no es

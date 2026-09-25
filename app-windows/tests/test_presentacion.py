@@ -2,7 +2,6 @@ from guardar_enlaces.modelo import nuevo_elemento_local
 from guardar_enlaces.presentacion import (
     texto_detalle,
     texto_fila,
-    texto_progreso_importacion,
     texto_resultado_importacion,
 )
 
@@ -59,7 +58,3 @@ def test_resultado_importacion_cuando_no_entra_nada_dice_por_que():
         == "No hay nada nuevo: el único enlace del fichero ya lo tenías."
     )
     assert texto_resultado_importacion(0, 0) == "Ese fichero no tiene ninguna dirección."
-
-
-def test_progreso_dice_primero_la_accion_y_despues_el_objeto():
-    assert texto_progreso_importacion(100, 800) == "Importando, 100 de 800"

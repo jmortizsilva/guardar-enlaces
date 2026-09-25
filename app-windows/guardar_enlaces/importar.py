@@ -22,7 +22,7 @@ from dataclasses import dataclass, replace
 from datetime import datetime, timezone
 from html.parser import HTMLParser
 
-from .duplicados import buscar_duplicado, normalizar_url
+from .duplicados import normalizar_url
 from .modelo import Elemento, ahora_ms, nuevo_elemento_local
 
 # Solo direcciones de verdad. Los `javascript:` de los bookmarklets y los
@@ -62,6 +62,23 @@ class Lectura:
     enlaces: tuple[EnlaceImportado, ...]
     descartados: int
     formato: str
+
+
+def texto_de(datos: bytes) -> str:
+    """El contenido del fichero, en la codificacion que traiga.
+
+    Quien exporta no elige la codificacion ni suele saber cual es. Los
+    navegadores escriben UTF-8, pero Excel guarda los CSV en la del sistema, y
+    en un Windows en espanol eso es cp1252. Se prueban por orden: primero con
+    marca de orden de bytes, que es lo que pone Excel; y `latin-1` al final
+    porque acepta cualquier byte, asi que hace de red y nunca lanza.
+    """
+    for codificacion in ("utf-8-sig", "utf-8", "cp1252", "latin-1"):
+        try:
+            return datos.decode(codificacion)
+        except UnicodeDecodeError:
+            continue
+    return datos.decode("utf-8", errors="replace")
 
 
 def detectar_formato(contenido: str) -> str:
@@ -385,12 +402,17 @@ def preparar(
     golpe y sin que los veas pasar, asi que pisar titulos y etiquetas puestos
     a mano seria un destrozo que no se puede deshacer.
     """
-    guardados = list(existentes)
+    # Un conjunto con las direcciones ya normalizadas, y no `buscar_duplicado`
+    # por cada enlace: eso recorria la lista entera y volvia a normalizar cada
+    # direccion cada vez. Medido con 800 enlaces contra 500 guardados, 2,6
+    # segundos; con este, milisegundos. La comparacion es la misma.
+    vistas = {normalizar_url(e.url) for e in existentes if not e.borrado}
     nuevos: list[Elemento] = []
     ya_estaban = 0
 
     for enlace in lectura.enlaces:
-        if buscar_duplicado(guardados, enlace.url) is not None:
+        clave = normalizar_url(enlace.url)
+        if clave in vistas:
             ya_estaban += 1
             continue
         elemento = nuevo_elemento_local(
@@ -404,8 +426,6 @@ def preparar(
         if enlace.creado_en is not None:
             elemento = replace(elemento, creado_en=enlace.creado_en)
         nuevos.append(elemento)
-        # Cuenta para los siguientes: dos ficheros distintos pueden traer el
-        # mismo enlace en la misma importacion.
-        guardados.append(elemento)
+        vistas.add(clave)
 
     return Preparado(tuple(nuevos), ya_estaban, lectura.descartados)

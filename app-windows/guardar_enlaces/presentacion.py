@@ -64,11 +64,6 @@ def texto_resultado_importacion(importados: int, ya_estaban: int) -> str:
     return f"{frase} {ya_estaban} ya los tenías."
 
 
-def texto_progreso_importacion(hechos: int, total: int) -> str:
-    """Durante una importacion larga. Primero la accion y despues el objeto."""
-    return f"Importando, {hechos} de {total}"
-
-
 def _enlaces(cuantos: int) -> str:
     """Plurales concordados de verdad, nunca «enlace(s)»."""
     return "1 enlace" if cuantos == 1 else f"{cuantos} enlaces"

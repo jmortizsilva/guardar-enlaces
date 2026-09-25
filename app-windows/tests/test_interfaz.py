@@ -204,6 +204,19 @@ def test_los_menus_no_repiten_tecla_de_acceso(app, almacen):
         bandeja.Destroy()
 
 
+def test_el_menu_archivo_ofrece_importar(app, almacen):
+    """El lector de ficheros tiene sus propias pruebas; esto solo comprueba
+    que se llega a el, que es lo unico que no cubren aquellas."""
+    ventana = _ventana(almacen)
+    try:
+        barra = ventana.GetMenuBar()
+        archivo = barra.GetMenu(barra.FindMenu("Archivo"))
+        etiquetas = [item.GetItemLabel() for item in archivo.GetMenuItems()]
+        assert any("Importar" in etiqueta for etiqueta in etiquetas), etiquetas
+    finally:
+        ventana.Destroy()
+
+
 def test_la_lista_tiene_siempre_una_fila_activa_y_sigue_al_mismo_enlace(app, almacen):
     for url in ("https://a.com", "https://b.com"):
         almacen.marcar_pendiente(nuevo_elemento_local(url, titulo=url))
