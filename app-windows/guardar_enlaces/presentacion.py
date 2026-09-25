@@ -33,3 +33,42 @@ def _fecha_legible(timestamp_ms: int) -> str:
     if not timestamp_ms:
         return "sin fecha"
     return datetime.fromtimestamp(timestamp_ms / 1000).strftime("%d/%m/%Y")
+
+
+# --- Importar de otra aplicacion ------------------------------------------
+
+
+def texto_resultado_importacion(importados: int, ya_estaban: int) -> str:
+    """Lo que se dice al terminar de importar.
+
+    Se cuenta el resultado, no que la accion ocurrio: «Importados 143 enlaces»
+    y no «Importacion completada», que no dice nada de lo que ha pasado.
+
+    Los descartados (bookmarklets, lineas sin direccion, repetidos dentro del
+    propio fichero) NO se mencionan cuando entro algo: son ruido del fichero de
+    origen y no hay nada que hacer con ellos. Si no entro nada, entonces si hay
+    que explicar por que.
+    """
+    if importados == 0 and ya_estaban == 0:
+        return "Ese fichero no tiene ninguna dirección."
+    if importados == 0 and ya_estaban == 1:
+        return "No hay nada nuevo: el único enlace del fichero ya lo tenías."
+    if importados == 0:
+        return f"No hay nada nuevo: los {ya_estaban} enlaces del fichero ya los tenías."
+
+    frase = "Importado 1 enlace." if importados == 1 else f"Importados {importados} enlaces."
+    if ya_estaban == 0:
+        return frase
+    if ya_estaban == 1:
+        return f"{frase} Uno ya lo tenías."
+    return f"{frase} {ya_estaban} ya los tenías."
+
+
+def texto_progreso_importacion(hechos: int, total: int) -> str:
+    """Durante una importacion larga. Primero la accion y despues el objeto."""
+    return f"Importando, {hechos} de {total}"
+
+
+def _enlaces(cuantos: int) -> str:
+    """Plurales concordados de verdad, nunca «enlace(s)»."""
+    return "1 enlace" if cuantos == 1 else f"{cuantos} enlaces"
