@@ -12,6 +12,11 @@ sealed interface Pantalla {
     data class Detalle(val id: String) : Pantalla
 
     data class Etiquetas(val id: String) : Pantalla
+
+    data object Anadir : Pantalla
+
+    /** Elegir las etiquetas del enlace que se está añadiendo, que todavía no existe. */
+    data object EtiquetasDelBorrador : Pantalla
 }
 
 /**
@@ -26,7 +31,7 @@ sealed interface Llegada {
     /** Eliminar esa fila con el mismo camino que desde la lista: cursor a la vecina y aviso. */
     data class EliminarFila(val id: String) : Llegada
 
-    /** En el detalle, el cursor al botón de etiquetas, y el anuncio si lo hay. */
+    /** En el detalle o en añadir, el cursor al botón de etiquetas, y el anuncio si lo hay. */
     data class ABotonEtiquetas(val anuncio: String? = null) : Llegada
 }
 
@@ -53,7 +58,8 @@ class Navegacion {
 
     /**
      * Quita la pantalla de arriba. Sin `llegada` explícita, el cursor vuelve a lo que la abrió: la
-     * fila del enlace, o en el detalle, el botón de etiquetas.
+     * fila del enlace, o en el detalle y en añadir, el botón de etiquetas. Al salir de añadir sin
+     * guardar no hay fila a la que volver, y el cursor lo pone el sistema.
      */
     fun volver(con: Llegada? = null) {
         if (!puedeVolver) return
@@ -61,7 +67,8 @@ class Navegacion {
         llegada =
             con
                 ?: when {
-                    actual is Pantalla.Detalle -> Llegada.ABotonEtiquetas()
+                    actual is Pantalla.Detalle || actual is Pantalla.Anadir ->
+                        Llegada.ABotonEtiquetas()
                     saliente is Pantalla.Detalle -> Llegada.AFila(saliente.id)
                     saliente is Pantalla.Etiquetas -> Llegada.AFila(saliente.id)
                     else -> null

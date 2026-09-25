@@ -1,10 +1,14 @@
 package com.jmortizsilva.guardarenlaces
 
 import com.jmortizsilva.guardarenlaces.dominio.Biblioteca
+import com.jmortizsilva.guardarenlaces.dominio.Duplicados
 import com.jmortizsilva.guardarenlaces.dominio.Elemento
+import com.jmortizsilva.guardarenlaces.dominio.MetadatosExtraidos
 import com.jmortizsilva.guardarenlaces.dominio.Sincronizacion
 import com.jmortizsilva.guardarenlaces.fontaneria.AlmacenLocal
 import com.jmortizsilva.guardarenlaces.fontaneria.ErrorApi
+import com.jmortizsilva.guardarenlaces.fontaneria.GuardarEnlace
+import com.jmortizsilva.guardarenlaces.fontaneria.ResolverMetadatos
 import com.jmortizsilva.guardarenlaces.fontaneria.Sesion
 import com.jmortizsilva.guardarenlaces.fontaneria.Sincronizador
 import kotlinx.coroutines.CoroutineScope
@@ -25,6 +29,7 @@ class ModeloApp(
     private val almacen: AlmacenLocal,
     private val sesion: Sesion,
     private val sincronizador: Sincronizador,
+    private val resolvedor: ResolverMetadatos,
     val anuncios: Anuncios,
     private val alcance: CoroutineScope = MainScope(),
 ) {
@@ -72,6 +77,26 @@ class ModeloApp(
         refrescar()
         sincronizarEnSilencio()
     }
+
+    /** El enlace ya guardado con esa URL, si lo hay: para avisar antes de guardar, no después. */
+    fun repetido(url: String): Elemento? = Duplicados.buscar(elementos.value, url)
+
+    /** Título y descripción de una URL. Nunca lanza: guardar no depende de esto. */
+    suspend fun comprobar(url: String): MetadatosExtraidos? = resolvedor.resolver(url)
+
+    /**
+     * Guarda la URL, o actualiza el enlace que ya la tenía. No anuncia: quien llama lleva antes el
+     * cursor al enlace, y el anuncio sale de `Resultado.anuncio`.
+     */
+    fun guardarEnlace(
+        url: String,
+        etiquetas: List<String>,
+        metadatos: MetadatosExtraidos?,
+    ): GuardarEnlace.Resultado =
+        GuardarEnlace.guardar(url, etiquetas, metadatos, almacen).also {
+            refrescar()
+            sincronizarEnSilencio()
+        }
 
     /**
      * La automática: se calla pase lo que pase. El cambio ya está en la cola local y se reintenta

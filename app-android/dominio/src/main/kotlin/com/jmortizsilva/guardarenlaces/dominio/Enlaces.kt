@@ -37,6 +37,13 @@ object Enlaces {
     fun direccionDentroDe(texto: String): String? =
         partirPorEspacios(texto).firstOrNull { esDireccion(it) }
 
+    /**
+     * Lo que se mete en el campo al pegar: la dirección si hay una dentro de lo copiado, y si no,
+     * lo copiado tal cual, sin espacios alrededor. Tal cual y no nada: si no es una dirección, el
+     * campo dice por qué, y eso se entiende mejor que un botón que no hace nada.
+     */
+    fun paraPegar(copiado: String): String = direccionDentroDe(copiado) ?: copiado.trim()
+
     private fun partirPorEspacios(texto: String): List<String> {
         val trozos = mutableListOf<String>()
         val actual = StringBuilder()

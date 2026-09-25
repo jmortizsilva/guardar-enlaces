@@ -15,8 +15,12 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.saveable.rememberSaveableStateHolder
+import androidx.compose.runtime.setValue
+import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.platform.LocalWindowInfo
 import androidx.core.net.toUri
 import com.jmortizsilva.guardarenlaces.dominio.Elemento
 import com.jmortizsilva.guardarenlaces.dominio.Textos
@@ -43,6 +47,7 @@ class ActividadPrincipal : ComponentActivity() {
         val modelo = contenedor.modelo
         val navegacion = remember { Navegacion() }
         val estados = rememberSaveableStateHolder()
+        var borrador by remember { mutableStateOf(BorradorEnlace()) }
         val elementos by modelo.elementos.collectAsState()
         val etiquetas by modelo.etiquetasDisponibles.collectAsState()
 
@@ -61,6 +66,10 @@ class ActividadPrincipal : ComponentActivity() {
                         alEliminar = modelo::eliminar,
                         alVerDetalles = { navegacion.abrir(Pantalla.Detalle(it.id)) },
                         alEditarEtiquetas = { navegacion.abrir(Pantalla.Etiquetas(it.id)) },
+                        alAnadir = {
+                            borrador = BorradorEnlace()
+                            navegacion.abrir(Pantalla.Anadir)
+                        },
                         llegada = navegacion.llegada,
                         alAtenderLlegada = navegacion::llegadaAtendida,
                     )
@@ -85,6 +94,48 @@ class ActividadPrincipal : ComponentActivity() {
                     )
                 }
             }
+            Pantalla.Anadir -> {
+                // Android solo deja mirar el portapapeles con el foco de la ventana: se mira cuando
+                // lo tiene, y no antes.
+                val conFoco = LocalWindowInfo.current.isWindowFocused
+                val contexto = LocalContext.current
+                val copiado =
+                    remember(conFoco) {
+                        if (conFoco) Portapapeles.queHay(contexto) else Copiado.Nada
+                    }
+                PantallaAnadir(
+                    borrador = borrador,
+                    anuncios = modelo.anuncios,
+                    copiado = copiado,
+                    llegada = navegacion.llegada,
+                    alAtenderLlegada = navegacion::llegadaAtendida,
+                    repetido = modelo::repetido,
+                    comprobar = modelo::comprobar,
+                    leerPortapapeles = { Portapapeles.leer(contexto) },
+                    alElegirEtiquetas = { navegacion.abrir(Pantalla.EtiquetasDelBorrador) },
+                    alCancelar = { navegacion.volver() },
+                    alGuardar = { url, elegidas, metadatos ->
+                        val resultado = modelo.guardarEnlace(url, elegidas, metadatos)
+                        navegacion.volver(
+                            Llegada.AFila(
+                                resultado.elemento.id,
+                                resultado.anuncio(seComprobo = metadatos != null),
+                            )
+                        )
+                    },
+                )
+            }
+            Pantalla.EtiquetasDelBorrador ->
+                PantallaEtiquetas(
+                    disponibles = etiquetas,
+                    elegidasAlEntrar = borrador.etiquetas,
+                    anuncios = modelo.anuncios,
+                    alCancelar = { navegacion.volver() },
+                    alGuardar = {
+                        borrador.etiquetas = it
+                        navegacion.volver()
+                    },
+                )
             is Pantalla.Etiquetas -> {
                 val elemento = elementos.firstOrNull { it.id == pantalla.id }
                 if (elemento == null) {

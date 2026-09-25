@@ -67,4 +67,17 @@ class PruebasEnlaces {
             Enlaces.direccionDentroDe("https://uno.com y también https://dos.com"),
         )
     }
+
+    @Test
+    fun `al pegar se saca la direccion de la frase copiada`() {
+        assertEquals(
+            "https://ejemplo.com/a",
+            Enlaces.paraPegar("Mira esto: https://ejemplo.com/a vía @alguien"),
+        )
+    }
+
+    @Test
+    fun `al pegar algo que no es una direccion se pega tal cual`() {
+        assertEquals("nota para el lunes", Enlaces.paraPegar("  nota para el lunes\n"))
+    }
 }

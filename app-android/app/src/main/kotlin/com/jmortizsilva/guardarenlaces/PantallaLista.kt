@@ -83,6 +83,7 @@ fun PantallaLista(
     alEliminar: (Elemento) -> Unit,
     alVerDetalles: (Elemento) -> Unit = {},
     alEditarEtiquetas: (Elemento) -> Unit = {},
+    alAnadir: () -> Unit = {},
     llegada: Llegada? = null,
     alAtenderLlegada: () -> Unit = {},
 ) {
@@ -153,7 +154,16 @@ fun PantallaLista(
 
     Scaffold(
         modifier = Modifier.semantics { paneTitle = Textos.tituloApp },
-        topBar = { BarraSuperior(Textos.tituloApp) },
+        topBar = {
+            BarraSuperior(Textos.tituloApp) {
+                IconButton(onClick = alAnadir) {
+                    Icon(
+                        painterResource(R.drawable.icono_anadir),
+                        contentDescription = Textos.anadirEnlace,
+                    )
+                }
+            }
+        },
         bottomBar = { LineaDeAvisos(anuncios) },
     ) { margen ->
         Column(Modifier.padding(margen).fillMaxSize()) {

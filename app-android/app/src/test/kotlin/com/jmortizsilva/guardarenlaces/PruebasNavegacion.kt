@@ -59,4 +59,14 @@ class PruebasNavegacion {
 
         assertNull(navegacion.llegada)
     }
+
+    @Test
+    fun al_volver_a_anadir_desde_sus_etiquetas_el_cursor_va_al_boton() {
+        navegacion.abrir(Pantalla.Anadir)
+        navegacion.abrir(Pantalla.EtiquetasDelBorrador)
+        navegacion.volver()
+
+        assertEquals(Pantalla.Anadir, navegacion.actual)
+        assertEquals(Llegada.ABotonEtiquetas(), navegacion.llegada)
+    }
 }
