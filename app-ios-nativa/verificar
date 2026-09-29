@@ -7,14 +7,14 @@
 # xcodebuild -quiet imprime el aviso, devuelve cero, y el script acaba
 # diciendo "Todo en verde" con un aviso a la vista.
 #
-# El simulador se fija por nombre Y versión a propósito: hay un "iPhone 16
-# Pro" por cada runtime instalado, y sin la versión xcodebuild no sabe cuál
-# es y falla listando los cuarenta destinos que no valen.
+# El simulador es uno propio de este proyecto, por su identificador: ver
+# herramientas/simulador.sh. Por nombre no valía: hay un "iPhone 17" por cada
+# sistema instalado, y lo comparten todos los proyectos del Mac.
 set -euo pipefail
 
 cd "$(dirname "$0")"
 
-SIMULADOR="${SIMULADOR:-platform=iOS Simulator,name=iPhone 17,OS=27.0}"
+SIMULADOR="${SIMULADOR:-platform=iOS Simulator,id=$(herramientas/simulador.sh)}"
 
 for paquete in Dominio Fontaneria; do
     echo "== $paquete: pruebas =="

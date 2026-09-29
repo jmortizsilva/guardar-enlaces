@@ -31,6 +31,10 @@ security list-keychains -d user -s guardalo-firma.keychain login.keychain-db
 
 # Que no se suba nada que no pase las pruebas.
 echo "== Verificando =="
+# Con nuestro simulador limpio, y SOLO el nuestro. La primera version apagaba
+# todos, y eso tumbaba las pruebas de cualquier otro proyecto que estuviera
+# usando el suyo en ese momento (InventarioCasa lo estaba, el 2026-09-29).
+xcrun simctl shutdown "$(herramientas/simulador.sh)" 2>/dev/null || true
 ./verificar > /tmp/guardalo-verificar.log 2>&1 || {
     echo "Las pruebas no pasan. Mira /tmp/guardalo-verificar.log" >&2
     exit 1
