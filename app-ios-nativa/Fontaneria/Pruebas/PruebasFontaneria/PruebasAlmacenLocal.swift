@@ -221,3 +221,26 @@ struct PruebasEtiquetasEnAlmacen {
         #expect(try almacen.cargarEtiquetasDefinidas().count == 1)
     }
 }
+
+@Suite("Guardar muchos de una vez, para importar")
+struct PruebasMarcarPendientes {
+    @Test("entran todos, y todos quedan encolados para subir")
+    func entranTodos() throws {
+        let almacen = try AlmacenLocal(ruta: ":memory:")
+        let elementos = (0..<50).map {
+            Elemento(id: "e\($0)", url: "https://ejemplo.com/\($0)", creadoEn: 1, actualizadoEn: 1)
+        }
+
+        try almacen.marcarPendientes(elementos)
+
+        #expect(try almacen.cargarTodos().count == 50)
+        #expect(try almacen.cargarPendientes().count == 50)
+    }
+
+    @Test("una lista vacía no abre ni cierra nada")
+    func listaVacia() throws {
+        let almacen = try AlmacenLocal(ruta: ":memory:")
+        try almacen.marcarPendientes([])
+        #expect(try almacen.cargarTodos().isEmpty)
+    }
+}

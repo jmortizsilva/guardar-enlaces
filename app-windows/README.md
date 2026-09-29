@@ -109,6 +109,11 @@ son tres copias de lo mismo.
   (Administrador de credenciales de Windows), nunca en fichero plano.
 - `guardar_enlaces/voz.py` — le dice al lector de pantalla lo que se escribe
   en la barra de estado, que NVDA no lee sola (con `prismatoid`).
+- `guardar_enlaces/importar.py` — lee marcadores de navegador (HTML), CSV y
+  texto. El comportamiento no se decide aquí: lo manda
+  [`IMPORTAR.md`](../IMPORTAR.md), que vale para los tres clientes, y las
+  pruebas leen los ficheros de ejemplo compartidos de
+  `pruebas-compartidas/importacion/`.
 - `guardar_enlaces/ui/` — ventanas wxPython.
 
 ## Accesibilidad
