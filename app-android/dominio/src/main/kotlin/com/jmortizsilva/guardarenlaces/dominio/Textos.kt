@@ -311,6 +311,49 @@ object Textos {
     const val pistaGuardadoSilencioso =
         "Al compartir un enlace se guarda al momento, sin enseñar esta pantalla"
 
+    // Importar enlaces de otra aplicación
+
+    const val importarEnlaces = "Importar enlaces"
+    const val pistaImportar = "Marcadores del navegador, un CSV o una lista de direcciones"
+    const val aceptar = "Aceptar"
+
+    /**
+     * Lo que se dice al terminar. Palabra por palabra lo mismo que en Windows y en el iPhone: es el
+     * mismo resultado y tiene que sonar igual en los tres.
+     *
+     * Se cuenta el resultado, no que la acción ocurrió. Los descartados no se mencionan cuando
+     * entró algo: son ruido del fichero de origen. Si no entró nada, se dice por qué, y las dos
+     * razones posibles se distinguen.
+     */
+    fun resultadoImportacion(importados: Int, yaEstaban: Int): String =
+        when {
+            importados == 0 && yaEstaban == 0 -> "Ese fichero no tiene ninguna dirección."
+            importados == 0 && yaEstaban == 1 ->
+                "No hay nada nuevo: el único enlace del fichero ya lo tenías."
+            importados == 0 ->
+                "No hay nada nuevo: los $yaEstaban enlaces del fichero ya los tenías."
+            else -> {
+                val frase =
+                    if (importados == 1) "Importado 1 enlace."
+                    else "Importados $importados enlaces."
+                when (yaEstaban) {
+                    0 -> frase
+                    1 -> "$frase Uno ya lo tenías."
+                    else -> "$frase $yaEstaban ya los tenías."
+                }
+            }
+        }
+
+    /**
+     * No es «no se pudo importar» a secas: el fichero se leyó bien, lo que falló fue guardarlo, y
+     * no entró ninguno porque va todo o nada.
+     */
+    const val noSePudieronGuardar =
+        "No se pudieron guardar los enlaces. No se ha importado ninguno."
+
+    /** La causa la pone el sistema y la acción la ponemos aquí. */
+    fun noSePudoAbrirArchivo(causa: String) = "No se pudo abrir el archivo. $causa"
+
     // Recortes
 
     /**

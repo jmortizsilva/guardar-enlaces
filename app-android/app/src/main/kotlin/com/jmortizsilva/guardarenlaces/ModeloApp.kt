@@ -3,8 +3,10 @@ package com.jmortizsilva.guardarenlaces
 import com.jmortizsilva.guardarenlaces.dominio.Biblioteca
 import com.jmortizsilva.guardarenlaces.dominio.Duplicados
 import com.jmortizsilva.guardarenlaces.dominio.Elemento
+import com.jmortizsilva.guardarenlaces.dominio.Importar
 import com.jmortizsilva.guardarenlaces.dominio.MetadatosExtraidos
 import com.jmortizsilva.guardarenlaces.dominio.Sincronizacion
+import com.jmortizsilva.guardarenlaces.dominio.Textos
 import com.jmortizsilva.guardarenlaces.fontaneria.AlmacenLocal
 import com.jmortizsilva.guardarenlaces.fontaneria.ErrorApi
 import com.jmortizsilva.guardarenlaces.fontaneria.GuardarEnlace
@@ -97,6 +99,30 @@ class ModeloApp(
             refrescar()
             sincronizarEnSilencio()
         }
+
+    /**
+     * Trae los enlaces de un fichero exportado y devuelve lo que hay que contar. El comportamiento
+     * lo manda `IMPORTAR.md`, igual para los tres clientes; aquí solo se guarda.
+     *
+     * No anuncia: el resultado se enseña en un cuadro que TalkBack lee al abrirse, y anunciarlo
+     * también lo haría sonar dos veces.
+     */
+    fun importar(datos: ByteArray): String {
+        val lectura = Importar.leer(Importar.texto(datos))
+        val preparado = Importar.preparar(lectura, elementos.value)
+        try {
+            // Todo o nada: si falla a mitad no entra ninguno, y lo que se cuenta sigue siendo
+            // verdad.
+            almacen.marcarPendientes(preparado.nuevos)
+        } catch (_: Exception) {
+            return Textos.noSePudieronGuardar
+        }
+        if (preparado.nuevos.isNotEmpty()) {
+            refrescar()
+            sincronizarEnSilencio()
+        }
+        return Textos.resultadoImportacion(preparado.importados, preparado.yaEstaban)
+    }
 
     /**
      * La automática: se calla pase lo que pase. El cambio ya está en la cola local y se reintenta
