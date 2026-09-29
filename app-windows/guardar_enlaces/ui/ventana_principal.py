@@ -342,9 +342,7 @@ class VentanaPrincipal(wx.Frame):
             # La causa la pone el sistema y la accion la ponemos aqui: asi el
             # mismo fallo sirve para decir que no se pudo abrir, sin mentir
             # sobre por que.
-            self._decir_estado(
-                f"No se pudo abrir el archivo. {error.strerror}", tras_cerrar_ventana=True
-            )
+            self._contar_importacion(f"No se pudo abrir el archivo. {error.strerror}", grave=True)
             return
 
         guardados = elementos_visibles(self._almacen.cargar_todos())
@@ -356,12 +354,23 @@ class VentanaPrincipal(wx.Frame):
             self._almacen.marcar_varios_pendientes(preparado.nuevos)
             self._cargar_desde_cache()
 
-        self._decir_estado(
-            texto_resultado_importacion(preparado.importados, preparado.ya_estaban),
-            tras_cerrar_ventana=True,
+        self._contar_importacion(
+            texto_resultado_importacion(preparado.importados, preparado.ya_estaban)
         )
         if preparado.nuevos:
             self.sincronizar_en_segundo_plano()
+
+    def _contar_importacion(self, texto: str, grave: bool = False) -> None:
+        """El resultado en un cuadro con Aceptar, y no solo dicho en voz alta.
+
+        Pedido tras probarlo: una frase que solo se oye se pierde, y no hay
+        donde volver a leerla ni quien no use lector de pantalla se entera.
+        No se anuncia ademas por voz: el lector ya lee el cuadro al abrirse, y
+        con las dos cosas la misma frase sonaba dos veces seguidas. En la
+        barra de estado si queda, que no habla sola.
+        """
+        self.SetStatusText(texto)
+        avisar(texto, "Importar enlaces", self, grave=grave)
 
     def _al_abrir_seleccionado(self, evento: wx.ListEvent) -> None:
         elemento = self._elemento_en(evento.GetIndex())

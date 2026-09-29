@@ -103,6 +103,14 @@ Los textos concretos van en cada cliente, pero el guion es el mismo:
   otros pocos. Una barra de progreso para eso solo añade una ventana que
   cerrar y una frase que oír.
 - **Al terminar se dice el resultado, no que la acción ocurrió**: «Importados
-  143 enlaces, 12 ya los tenías», no «Importación completada».
+  143 enlaces. 12 ya los tenías.», no «Importación completada».
+- **Y se dice en un cuadro con un botón Aceptar**, no solo en voz alta.
+  Salió al probarlo en Windows: una frase que solo se oye se pierde, no hay
+  dónde volver a leerla y quien no usa lector de pantalla no se entera de
+  nada. En el iPhone y en Android es una alerta con el mismo texto.
+- **Sin anuncio además del cuadro.** El lector ya lee el cuadro al abrirse;
+  con las dos cosas, la misma frase suena dos veces seguidas.
+- Los errores (no se pudo abrir el archivo) van por el mismo camino, en el
+  mismo cuadro.
 - Si el fichero no tiene ni un enlace, se dice por qué se cree que es: no es
   lo mismo «no se reconoce el formato» que «no hay ninguna dirección dentro».
