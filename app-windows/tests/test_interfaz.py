@@ -24,6 +24,7 @@ from guardar_enlaces.ui.dialogo_anadir import DialogoAnadir
 from guardar_enlaces.ui.dialogo_detalle import DialogoDetalle
 from guardar_enlaces.ui.dialogo_gestion_etiquetas import DialogoGestionEtiquetas
 from guardar_enlaces.ui.dialogo_login import DialogoLogin
+from guardar_enlaces.ui.preguntas import DialogoAvisoLegible
 from guardar_enlaces import login_oauth
 from guardar_enlaces.ui.ventana_principal import VentanaPrincipal
 from guardar_enlaces.voz import SinScreenReader, Voz
@@ -215,6 +216,27 @@ def test_el_menu_archivo_ofrece_importar(app, almacen):
         assert any("Importar" in etiqueta for etiqueta in etiquetas), etiquetas
     finally:
         ventana.Destroy()
+
+
+def test_el_resultado_de_importar_se_puede_recorrer_con_las_flechas(app):
+    """Pedido al probarlo: el cuadro de mensaje del sistema se lee entero al
+    abrirse pero no deja volver a una cifra. Aqui el texto va en un campo con
+    nombre, de solo lectura, que tiene el foco, y detras un unico Aceptar."""
+    texto = "Importados 143 enlaces. 12 ya los tenías."
+    dialogo = DialogoAvisoLegible(None, texto, "Importar enlaces", "&Resultado:")
+    try:
+        assert etiqueta_de(dialogo.campo) == "Resultado:"
+        assert dialogo.campo.GetValue() == texto
+        assert not dialogo.campo.IsEditable()
+        # Multilinea, o el tabulador no se detiene en un campo de solo lectura.
+        assert dialogo.campo.IsMultiLine()
+        # El cursor al principio, para que las flechas empiecen por la primera
+        # palabra y no por el final.
+        assert dialogo.campo.GetInsertionPoint() == 0
+        assert dialogo.boton.GetLabel() == "&Aceptar"
+        assert dialogo.GetEscapeId() == wx.ID_OK
+    finally:
+        dialogo.Destroy()
 
 
 def test_la_lista_tiene_siempre_una_fila_activa_y_sigue_al_mismo_enlace(app, almacen):

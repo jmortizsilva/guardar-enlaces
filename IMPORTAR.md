@@ -107,7 +107,14 @@ Los textos concretos van en cada cliente, pero el guion es el mismo:
 - **Y se dice en un cuadro con un botón Aceptar**, no solo en voz alta.
   Salió al probarlo en Windows: una frase que solo se oye se pierde, no hay
   dónde volver a leerla y quien no usa lector de pantalla no se entera de
-  nada. En el iPhone y en Android es una alerta con el mismo texto.
+  nada.
+- **El texto va en un campo de solo lectura que se puede recorrer**, y no
+  en el mensaje suelto de un cuadro del sistema: ese se lee entero al abrirse,
+  pero no deja volver a una cifra con las flechas. El campo se llama
+  «Resultado», tiene el foco al abrirse y el cursor al principio. En el iPhone
+  y en Android hay que buscar el equivalente — un texto que VoiceOver y
+  TalkBack dejen recorrer por palabras o caracteres —, no una alerta simple
+  sin más.
 - **Sin anuncio además del cuadro.** El lector ya lee el cuadro al abrirse;
   con las dos cosas, la misma frase suena dos veces seguidas.
 - Los errores (no se pudo abrir el archivo) van por el mismo camino, en el

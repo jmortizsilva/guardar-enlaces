@@ -54,7 +54,7 @@ from .dialogo_anadir import DialogoAnadir
 from .dialogo_detalle import DialogoDetalle
 from .dialogo_gestion_etiquetas import DialogoGestionEtiquetas
 from .dialogo_login import DialogoLogin
-from .preguntas import asentar_cuenta_contandolo, avisar, confirmar_eliminacion
+from .preguntas import asentar_cuenta_contandolo, avisar, avisar_legible, confirmar_eliminacion
 
 _TODAS_LAS_ETIQUETAS = "(todas las etiquetas)"
 
@@ -342,7 +342,7 @@ class VentanaPrincipal(wx.Frame):
             # La causa la pone el sistema y la accion la ponemos aqui: asi el
             # mismo fallo sirve para decir que no se pudo abrir, sin mentir
             # sobre por que.
-            self._contar_importacion(f"No se pudo abrir el archivo. {error.strerror}", grave=True)
+            self._contar_importacion(f"No se pudo abrir el archivo. {error.strerror}")
             return
 
         guardados = elementos_visibles(self._almacen.cargar_todos())
@@ -360,17 +360,19 @@ class VentanaPrincipal(wx.Frame):
         if preparado.nuevos:
             self.sincronizar_en_segundo_plano()
 
-    def _contar_importacion(self, texto: str, grave: bool = False) -> None:
-        """El resultado en un cuadro con Aceptar, y no solo dicho en voz alta.
+    def _contar_importacion(self, texto: str) -> None:
+        """El resultado en un cuadro, dentro de un campo que se puede recorrer.
 
-        Pedido tras probarlo: una frase que solo se oye se pierde, y no hay
-        donde volver a leerla ni quien no use lector de pantalla se entera.
+        Pedido en dos pasos, al probarlo: primero, que no se dijera solo en voz
+        alta, porque una frase que solo se oye se pierde; despues, que no fuera
+        el cuadro de mensaje del sistema, porque ese se lee entero al abrirse
+        y no deja volver a una cifra con las flechas.
         No se anuncia ademas por voz: el lector ya lee el cuadro al abrirse, y
         con las dos cosas la misma frase sonaba dos veces seguidas. En la
         barra de estado si queda, que no habla sola.
         """
         self.SetStatusText(texto)
-        avisar(texto, "Importar enlaces", self, grave=grave)
+        avisar_legible(texto, "Importar enlaces", self)
 
     def _al_abrir_seleccionado(self, evento: wx.ListEvent) -> None:
         elemento = self._elemento_en(evento.GetIndex())
