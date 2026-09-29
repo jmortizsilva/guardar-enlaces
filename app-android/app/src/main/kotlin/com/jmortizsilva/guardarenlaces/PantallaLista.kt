@@ -84,6 +84,7 @@ fun PantallaLista(
     alVerDetalles: (Elemento) -> Unit = {},
     alEditarEtiquetas: (Elemento) -> Unit = {},
     alAnadir: () -> Unit = {},
+    alAbrirAjustes: () -> Unit = {},
     llegada: Llegada? = null,
     alAtenderLlegada: () -> Unit = {},
 ) {
@@ -160,6 +161,12 @@ fun PantallaLista(
                     Icon(
                         painterResource(R.drawable.icono_anadir),
                         contentDescription = Textos.anadirEnlace,
+                    )
+                }
+                IconButton(onClick = alAbrirAjustes) {
+                    Icon(
+                        painterResource(R.drawable.icono_ajustes),
+                        contentDescription = Textos.ajustes,
                     )
                 }
             }

@@ -70,6 +70,7 @@ class ActividadPrincipal : ComponentActivity() {
                             borrador = BorradorEnlace()
                             navegacion.abrir(Pantalla.Anadir)
                         },
+                        alAbrirAjustes = { navegacion.abrir(Pantalla.Ajustes) },
                         llegada = navegacion.llegada,
                         alAtenderLlegada = navegacion::llegadaAtendida,
                     )
@@ -125,6 +126,8 @@ class ActividadPrincipal : ComponentActivity() {
                     },
                 )
             }
+            Pantalla.Ajustes ->
+                PantallaAjustes(alVolver = { navegacion.volver() }, importar = modelo::importar)
             Pantalla.EtiquetasDelBorrador ->
                 PantallaEtiquetas(
                     disponibles = etiquetas,
