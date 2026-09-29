@@ -217,6 +217,27 @@ public final class AlmacenLocal {
         try bd.ejecutar("INSERT OR IGNORE INTO outbox (id) VALUES (?)", [.texto(elemento.id)])
     }
 
+    /// Como `marcarPendiente`, pero muchos de una vez y en una sola
+    /// transacción.
+    ///
+    /// Es para importar. Más que por velocidad (con WAL, quinientos uno a uno
+    /// son 40 ms en el Mac), por no dejar las cosas a medias: si algo falla en
+    /// el enlace trescientos, no entra ninguno, y el resultado que se cuenta
+    /// sigue siendo verdad.
+    public func marcarPendientes(_ elementos: [Elemento]) throws {
+        guard !elementos.isEmpty else { return }
+        try bd.ejecutar("BEGIN")
+        do {
+            for elemento in elementos {
+                try marcarPendiente(elemento)
+            }
+            try bd.ejecutar("COMMIT")
+        } catch {
+            try? bd.ejecutar("ROLLBACK")
+            throw error
+        }
+    }
+
     public func limpiarPendientes(_ ids: [String]) throws {
         for id in ids {
             try bd.ejecutar("DELETE FROM outbox WHERE id = ?", [.texto(id)])

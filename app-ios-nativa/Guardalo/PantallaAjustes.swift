@@ -1,6 +1,7 @@
 import Dominio
 import Fontaneria
 import SwiftUI
+import UniformTypeIdentifiers
 
 struct PantallaAjustes: View {
     @Environment(ModeloApp.self) private var modelo
@@ -13,6 +14,8 @@ struct PantallaAjustes: View {
         store: Configuracion.ajustesCompartidos()
     )
     private var guardadoSilencioso = false
+    @State private var eligiendoFichero = false
+    @State private var resultadoImportacion: String?
 
     var body: some View {
         NavigationStack {
@@ -39,6 +42,32 @@ struct PantallaAjustes: View {
                 }
 
                 Section {
+                    Button(Textos.importarEnlaces) { eligiendoFichero = true }
+                        .accessibilityHint(Textos.pistaImportar)
+                        // Colgados del botón y no del formulario: dos hojas en
+                        // la misma vista se pisan en SwiftUI, y el formulario
+                        // ya presenta la del inicio de sesión.
+                        .fileImporter(
+                            isPresented: $eligiendoFichero,
+                            allowedContentTypes: [.html, .commaSeparatedText, .plainText, .text]
+                        ) { resultado in
+                            resultadoImportacion = importar(resultado)
+                        }
+                        .sheet(
+                            isPresented: Binding(
+                                get: { resultadoImportacion != nil },
+                                set: { if !$0 { resultadoImportacion = nil } }
+                            )
+                        ) {
+                            HojaResultado(
+                                titulo: Textos.importarEnlaces,
+                                texto: resultadoImportacion ?? "",
+                                alAceptar: { resultadoImportacion = nil }
+                            )
+                        }
+                }
+
+                Section {
                     Text(Self.versionInstalada)
                         .foregroundStyle(.secondary)
                 }
@@ -52,6 +81,26 @@ struct PantallaAjustes: View {
             }
             .sheet(isPresented: $entrando) {
                 PantallaLogin(presentada: $entrando)
+            }
+        }
+    }
+
+    /// Lee el fichero elegido y lo importa. Devuelve lo que hay que contar,
+    /// también cuando no se pudo ni abrir.
+    private func importar(_ resultado: Result<URL, Error>) -> String {
+        switch resultado {
+        case .failure(let error):
+            return Textos.noSePudoAbrirArchivo(error.localizedDescription)
+        case .success(let url):
+            // El fichero viene de fuera de la app (Archivos, iCloud): sin
+            // pedir permiso para leerlo, `Data(contentsOf:)` falla aunque el
+            // selector lo haya enseñado.
+            let conPermiso = url.startAccessingSecurityScopedResource()
+            defer { if conPermiso { url.stopAccessingSecurityScopedResource() } }
+            do {
+                return modelo.importar(try Data(contentsOf: url))
+            } catch {
+                return Textos.noSePudoAbrirArchivo(error.localizedDescription)
             }
         }
     }

@@ -104,7 +104,10 @@ ignoran sin más, incluidas las de comentario.
 
 Los textos concretos van en cada cliente, pero el guion es el mismo:
 
-- Se elige el fichero con el selector del sistema.
+- Se elige el fichero con el selector del sistema. Dónde está la opción:
+  en Windows, **Archivo → Importar enlaces**; en el iPhone, **Ajustes →
+  Importar enlaces**, en su propia sección. Es algo que se hace una vez, y no
+  merece sitio en la lista.
 - **No hace falta avisar del progreso.** Se midió antes de escribir la
   pantalla: 5000 marcadores tardan 175 ms en leerse y prepararse, y guardarlos
   otros pocos. Una barra de progreso para eso solo añade una ventana que
