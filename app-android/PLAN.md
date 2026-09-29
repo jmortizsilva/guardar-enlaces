@@ -324,8 +324,16 @@ por su lista de textos**, que se revisa antes de escribir la pantalla.
       - [x] Ver detalles y editar etiquetas, con la fila ya con sus cuatro
             acciones, y una pila de pantallas propia que devuelve el cursor a
             lo que abrió cada una. Oído con TalkBack el 2026-09-23.
-      - [ ] Añadir, gestionar etiquetas, ajustes, bienvenida e inicio de
-            sesión.
+      - [~] Ajustes, adelantados solo con **importar enlaces** (2026-09-29),
+            porque la importación se pidió para las tres apps. Visto en el
+            teléfono, pero **sin importar nada todavía**: no había cómo pasarle
+            un fichero. Queda por oír con TalkBack que la opción se lee en una
+            sola parada con su explicación, que el cuadro del resultado cae
+            directo en el texto y se recorre por palabras, y decidir si al
+            volver a la lista el cursor debe ir a la rueda dentada (ahora lo
+            pone el sistema, como al cancelar Añadir).
+      - [ ] Añadir, gestionar etiquetas, el resto de Ajustes (cuenta y
+            guardado silencioso), bienvenida e inicio de sesión.
 - [ ] **4. Compartir desde otras apps** y guardado silencioso, con el
       interruptor en Ajustes.
 - [ ] **5. Firma de publicación**, el almacén de claves fuera del repositorio
