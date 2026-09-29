@@ -123,11 +123,24 @@ final class ModeloApp {
         // lista hasta cerrar y abrir la aplicación, y sin cuenta no aparecía
         // nunca, porque la sincronización no tiene nada que traer.
         refrescar()
+        await recuperarSesionSiQuedoPendiente()
         guard Sincronizacion.tocaSincronizar(ultima: ultimaSincronizacion, ahora: relojDelSistema())
         else {
             return
         }
         await sincronizarEnSilencio()
+    }
+
+    /// Si la app arrancó sin red, la sesión quedó guardada pero sin renovar,
+    /// y la app funciona como si no hubiera cuenta. Aquí se reintenta, en
+    /// silencio: cuando vuelve la conexión, la cuenta vuelve sola.
+    ///
+    /// Antes esto no hacía falta porque arrancar sin red borraba el token, y
+    /// no había nada que recuperar: había que volver a entrar con la cuenta.
+    private func recuperarSesionSiQuedoPendiente() async {
+        guard !autenticado, await sesion.tieneSesionGuardada else { return }
+        autenticado = await sesion.restaurar()
+        usuario = await sesion.usuario
     }
 
     /// Las que ya lleva algún enlace más las reservadas, que existen aunque
@@ -418,6 +431,7 @@ final class ModeloApp {
     /// La que pide el usuario arrastrando la lista: dice cómo ha acabado,
     /// igual que la app de Windows al pulsar F5.
     func sincronizarAMano() async {
+        await recuperarSesionSiQuedoPendiente()
         guard autenticado else {
             return
         }

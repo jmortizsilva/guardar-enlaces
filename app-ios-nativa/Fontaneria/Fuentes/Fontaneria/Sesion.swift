@@ -36,22 +36,55 @@ public actor Sesion {
         try aplicar(await cliente.loginDeDesarrollo(email: email))
     }
 
+    /// Si hay un token guardado de una vez anterior, se haya podido renovar o
+    /// no. Sirve para saber que hay que reintentar cuando vuelva la red.
+    public var tieneSesionGuardada: Bool {
+        guard let guardado = try? credenciales.tokenRefresco() else { return false }
+        return !guardado.isEmpty
+    }
+
+    /// La renovación que está en marcha, si hay una. Ver `restaurar()`.
+    private var renovando: Task<Bool, Never>?
+
     /// Recupera la sesión con el token guardado de una vez anterior.
-    /// Devuelve `false` si no había, o si ya no sirve.
+    /// Devuelve `false` si no había, si ya no sirve o si no se pudo preguntar.
+    ///
+    /// Una sola renovación a la vez, aunque la pidan varios. Que esto sea un
+    /// actor no bastaba: mientras una espera a la red, el actor deja entrar a
+    /// otra. Dos peticiones con el token caducado renovaban las dos con el
+    /// mismo token de refresco; el servidor rota en el primer uso y rechaza el
+    /// segundo, y ese rechazo borraba el token bueno que acababa de guardar
+    /// la primera. Se perdía la sesión justo al sincronizar y comprobar una
+    /// página a la vez. Reproducido en `PruebasSesionFallos`.
     public func restaurar() async -> Bool {
+        if let enMarcha = renovando {
+            return await enMarcha.value
+        }
+        let tarea = Task { await self.renovarConElTokenGuardado() }
+        renovando = tarea
+        let resultado = await tarea.value
+        renovando = nil
+        return resultado
+    }
+
+    private func renovarConElTokenGuardado() async -> Bool {
         guard let guardado = try? credenciales.tokenRefresco(), !guardado.isEmpty else {
             return false
         }
         do {
             try aplicar(await cliente.renovar(tokenRefresco: guardado))
             return true
-        } catch {
-            // Da igual por qué falló: un token que no sirve no va a servir
-            // luego, y dejarlo hace que cada arranque intente renovar en
-            // vano. Se borra y se entra como si no hubiera cuenta.
+        } catch let rechazo as ErrorApi where rechazo.esSesionCaducada {
+            // El servidor dice que ese token ya no sirve: no va a servir luego,
+            // y dejarlo haría que cada arranque intentara renovar en vano.
             try? credenciales.borrarTokenRefresco()
             tokenAcceso = nil
             usuario = nil
+            return false
+        } catch {
+            // Cualquier otra cosa, y sobre todo no tener red, no dice nada de
+            // si el token sirve. Antes se borraba igual, y abrir la app sin
+            // cobertura cerraba la sesión. Se deja donde está y se reintenta.
             return false
         }
     }
@@ -80,6 +113,11 @@ public actor Sesion {
         do {
             return try await peticion(token)
         } catch let fallo as ErrorApi where fallo.esSesionCaducada {
+            // Mientras esta esperaba, otra puede haber renovado ya: entonces
+            // no hay que renovar otra vez, solo usar el token nuevo.
+            if let actual = tokenAcceso, actual != token {
+                return try await peticion(actual)
+            }
             guard await restaurar(), let renovado = tokenAcceso else {
                 throw fallo
             }
