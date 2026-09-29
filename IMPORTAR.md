@@ -60,6 +60,13 @@ quiere. **Se miran los nombres de la cabecera**, no su posición:
 
 Sin columna de dirección no hay nada que importar, y se dice así.
 
+- **El separador se deduce de la cabecera**: coma, punto y coma o tabulador,
+  el que haga aparecer la columna de direcciones. Excel en español separa por
+  punto y coma, porque la coma es su separador decimal. La primera versión de
+  Windows lo detectaba como CSV pero lo leía con comas, y decía «ese fichero
+  no tiene ninguna dirección»: está en `excel.csv` para que no vuelva.
+- Un separador dentro de un campo entre comillas es texto, no separa nada.
+
 - Las etiquetas vienen separadas por `|` (Pocket) o por `,` (Raindrop). Se
   aceptan las dos.
 - Si hay carpeta **y** etiquetas, la carpeta va primero y las etiquetas

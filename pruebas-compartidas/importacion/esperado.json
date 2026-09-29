@@ -10,7 +10,6 @@
     "titulo null es 'no venia titulo'. No se inventa: la lista ya sabe ensenar",
     "el dominio cuando falta."
   ],
-
   "marcadores-navegador.html": {
     "descartados": 3,
     "motivos": [
@@ -27,19 +26,25 @@
       {
         "url": "https://velocidadcuchara.com/arroz-caldoso/",
         "titulo": "Arroz caldoso",
-        "etiquetas": ["Recetas"],
+        "etiquetas": [
+          "Recetas"
+        ],
         "creadoEn": 1700000300000
       },
       {
         "url": "https://ejemplo.com/flan",
         "titulo": "Flan de la abuela",
-        "etiquetas": ["Postres"],
+        "etiquetas": [
+          "Postres"
+        ],
         "creadoEn": 1700000500000
       },
       {
         "url": "https://ejemplo.com/tarta-de-queso",
         "titulo": "Tarta de queso & nata",
-        "etiquetas": ["Postres"],
+        "etiquetas": [
+          "Postres"
+        ],
         "creadoEn": 1700000600000
       },
       {
@@ -51,25 +56,31 @@
       {
         "url": "https://ejemplo.com/sin-fecha",
         "titulo": "Un marcador sin ADD_DATE",
-        "etiquetas": ["Sin fecha"],
+        "etiquetas": [
+          "Sin fecha"
+        ],
         "creadoEn": null
       }
     ]
   },
-
   "pocket.csv": {
     "descartados": 0,
     "elementos": [
       {
         "url": "https://www.xataka.com/basics/alternativas-pocket",
         "titulo": "Las mejores alternativas a Pocket",
-        "etiquetas": ["leer", "tecnologia"],
+        "etiquetas": [
+          "leer",
+          "tecnologia"
+        ],
         "creadoEn": 1700000100000
       },
       {
         "url": "https://velocidadcuchara.com/arroz-caldoso/",
         "titulo": "Arroz caldoso",
-        "etiquetas": ["recetas"],
+        "etiquetas": [
+          "recetas"
+        ],
         "creadoEn": 1700000300000
       },
       {
@@ -81,18 +92,22 @@
       {
         "url": "https://ejemplo.com/tarta-de-queso",
         "titulo": "Tarta de queso, con nata",
-        "etiquetas": ["recetas", "postres"],
+        "etiquetas": [
+          "recetas",
+          "postres"
+        ],
         "creadoEn": 1700000600000
       },
       {
         "url": "https://ejemplo.com/flan",
         "titulo": "El mismo flan otra vez",
-        "etiquetas": ["postres"],
+        "etiquetas": [
+          "postres"
+        ],
         "creadoEn": 1700000800000
       }
     ]
   },
-
   "raindrop.csv": {
     "descartados": 0,
     "motivos": [
@@ -102,13 +117,19 @@
       {
         "url": "https://ejemplo.com/flan",
         "titulo": "Flan de la abuela",
-        "etiquetas": ["Postres", "dulce"],
+        "etiquetas": [
+          "Postres",
+          "dulce"
+        ],
         "creadoEn": 1788256800000
       },
       {
         "url": "https://www.xataka.com/basics/alternativas-pocket",
         "titulo": "Las mejores alternativas a Pocket",
-        "etiquetas": ["Tecnología", "leer"],
+        "etiquetas": [
+          "Tecnología",
+          "leer"
+        ],
         "creadoEn": 1788348600000
       },
       {
@@ -119,7 +140,6 @@
       }
     ]
   },
-
   "enlaces.txt": {
     "descartados": 3,
     "motivos": [
@@ -149,6 +169,38 @@
         "url": "https://ejemplo.com/tarta-de-queso",
         "titulo": null,
         "etiquetas": [],
+        "creadoEn": null
+      }
+    ]
+  },
+  "excel.csv": {
+    "descartados": 0,
+    "motivos": [
+      "Excel en espanol separa las columnas por punto y coma, no por comas: el separador se deduce de la cabecera",
+      "el punto y coma dentro de un campo entre comillas es texto, no separa nada"
+    ],
+    "elementos": [
+      {
+        "url": "https://ejemplo.com/lentejas",
+        "titulo": "Receta de lentejas",
+        "etiquetas": [
+          "recetas"
+        ],
+        "creadoEn": null
+      },
+      {
+        "url": "https://ejemplo.com/tren",
+        "titulo": "Horario del tren",
+        "etiquetas": [],
+        "creadoEn": null
+      },
+      {
+        "url": "https://ejemplo.com/tapas",
+        "titulo": "Tapas; raciones y vinos",
+        "etiquetas": [
+          "bares",
+          "ocio"
+        ],
         "creadoEn": null
       }
     ]

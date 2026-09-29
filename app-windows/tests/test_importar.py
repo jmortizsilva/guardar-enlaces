@@ -28,7 +28,7 @@ def _contenido(nombre: str) -> str:
     return (COMPARTIDAS / nombre).read_text(encoding="utf-8")
 
 
-FICHEROS = ["marcadores-navegador.html", "pocket.csv", "raindrop.csv", "enlaces.txt"]
+FICHEROS = ["marcadores-navegador.html", "pocket.csv", "raindrop.csv", "excel.csv", "enlaces.txt"]
 
 
 def test_los_ficheros_compartidos_estan_donde_se_espera():
@@ -59,6 +59,7 @@ def test_el_formato_se_reconoce_por_el_contenido_no_por_el_nombre():
     assert detectar_formato(_contenido("marcadores-navegador.html")) == HTML
     assert detectar_formato(_contenido("pocket.csv")) == CSV
     assert detectar_formato(_contenido("raindrop.csv")) == CSV
+    assert detectar_formato(_contenido("excel.csv")) == CSV
     assert detectar_formato(_contenido("enlaces.txt")) == TXT
 
 

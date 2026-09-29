@@ -205,15 +205,32 @@ def _leer_html(contenido: str) -> tuple[list[EnlaceImportado], int]:
 # --- CSV ------------------------------------------------------------------
 
 
+# Excel en espanol separa por punto y coma: la coma es el separador decimal.
+SEPARADORES = (",", ";", "\t")
+
+
+def _separador(cabecera: str) -> str | None:
+    """Con cual de los tres separadores aparece la columna de direcciones.
+
+    Se deduce de la cabecera y no se da por hecha la coma: al principio se
+    detectaba el CSV con cualquiera de los tres, pero se leia solo con comas,
+    y un CSV de Excel en espanol salia como "ese fichero no tiene ninguna
+    direccion", que era mentira.
+    """
+    direcciones = {_clave(n) for n in COLUMNAS["url"]}
+    for separador in SEPARADORES:
+        if separador in cabecera and {_clave(n) for n in cabecera.split(separador)} & direcciones:
+            return separador
+    return None
+
+
 def _cabecera_de_csv(linea: str) -> bool:
-    if "," not in linea and ";" not in linea and "\t" not in linea:
-        return False
-    nombres = {_clave(n) for n in re.split(r"[,;\t]", linea)}
-    return bool(nombres & {_clave(n) for n in COLUMNAS["url"]})
+    return _separador(linea) is not None
 
 
 def _leer_csv(contenido: str) -> tuple[list[EnlaceImportado], int]:
-    filas = list(csv.DictReader(io.StringIO(contenido)))
+    separador = _separador(_primera_linea_con_algo(contenido) or "") or ","
+    filas = list(csv.DictReader(io.StringIO(contenido), delimiter=separador))
     if not filas:
         return [], 0
 
