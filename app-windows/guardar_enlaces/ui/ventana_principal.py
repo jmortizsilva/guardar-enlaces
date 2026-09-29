@@ -40,7 +40,8 @@ from ..modelo import (
     renombrar_etiqueta,
     renombrar_etiqueta_definida,
 )
-from ..presentacion import texto_fila
+from ..importar import leer, preparar, texto_de
+from ..presentacion import texto_fila, texto_resultado_importacion
 from ..primer_plano import traer_al_frente
 from ..seleccion import fila_tras_refrescar
 from ..sesion import Sesion
@@ -53,7 +54,7 @@ from .dialogo_anadir import DialogoAnadir
 from .dialogo_detalle import DialogoDetalle
 from .dialogo_gestion_etiquetas import DialogoGestionEtiquetas
 from .dialogo_login import DialogoLogin
-from .preguntas import asentar_cuenta_contandolo, avisar, confirmar_eliminacion
+from .preguntas import asentar_cuenta_contandolo, avisar, avisar_legible, confirmar_eliminacion
 
 _TODAS_LAS_ETIQUETAS = "(todas las etiquetas)"
 
@@ -109,6 +110,7 @@ class VentanaPrincipal(wx.Frame):
 
     def _construir_menu(self) -> None:
         id_anadir = wx.NewIdRef()
+        id_importar = wx.NewIdRef()
         id_sincronizar = wx.NewIdRef()
         id_cuenta = wx.NewIdRef()
         id_actualizar = wx.NewIdRef()
@@ -117,6 +119,7 @@ class VentanaPrincipal(wx.Frame):
         barra = wx.MenuBar()
         menu_archivo = wx.Menu()
         menu_archivo.Append(id_anadir, "&Añadir enlace...\tCtrl+N")
+        menu_archivo.Append(id_importar, "&Importar enlaces...")
         menu_archivo.Append(id_sincronizar, "Si&ncronizar ahora\tF5")
         menu_archivo.AppendSeparator()
         menu_archivo.Append(id_actualizar, "Buscar act&ualizaciones...")
@@ -136,6 +139,7 @@ class VentanaPrincipal(wx.Frame):
         self.SetMenuBar(barra)
 
         self.Bind(wx.EVT_MENU, self._al_anadir, id=id_anadir)
+        self.Bind(wx.EVT_MENU, self._al_importar, id=id_importar)
         self.Bind(
             wx.EVT_MENU, lambda e: self.sincronizar_en_segundo_plano(manual=True), id=id_sincronizar
         )
@@ -312,6 +316,63 @@ class VentanaPrincipal(wx.Frame):
             )
             self.sincronizar_en_segundo_plano()
         dialogo.Destroy()
+
+    def _al_importar(self, evento: wx.CommandEvent) -> None:
+        """Traer enlaces de un fichero exportado por otra aplicacion.
+
+        El comportamiento lo manda `IMPORTAR.md`, que vale para los tres
+        clientes; aqui solo se elige el fichero y se cuenta el resultado.
+        """
+        with wx.FileDialog(
+            self,
+            "Importar enlaces",
+            wildcard=(
+                "Marcadores, CSV o texto (*.html;*.htm;*.csv;*.txt)"
+                "|*.html;*.htm;*.csv;*.txt|Todos los archivos (*.*)|*.*"
+            ),
+            style=wx.FD_OPEN | wx.FD_FILE_MUST_EXIST,
+        ) as selector:
+            if selector.ShowModal() == wx.ID_CANCEL:
+                return
+            ruta = Path(selector.GetPath())
+
+        try:
+            datos = ruta.read_bytes()
+        except OSError as error:
+            # La causa la pone el sistema y la accion la ponemos aqui: asi el
+            # mismo fallo sirve para decir que no se pudo abrir, sin mentir
+            # sobre por que.
+            self._contar_importacion(f"No se pudo abrir el archivo. {error.strerror}")
+            return
+
+        guardados = elementos_visibles(self._almacen.cargar_todos())
+        preparado = preparar(leer(texto_de(datos)), guardados)
+
+        if preparado.nuevos:
+            # De una tacada: con un commit por enlace, un fichero de mil
+            # marcadores serian mil escrituras a disco.
+            self._almacen.marcar_varios_pendientes(preparado.nuevos)
+            self._cargar_desde_cache()
+
+        self._contar_importacion(
+            texto_resultado_importacion(preparado.importados, preparado.ya_estaban)
+        )
+        if preparado.nuevos:
+            self.sincronizar_en_segundo_plano()
+
+    def _contar_importacion(self, texto: str) -> None:
+        """El resultado en un cuadro, dentro de un campo que se puede recorrer.
+
+        Pedido en dos pasos, al probarlo: primero, que no se dijera solo en voz
+        alta, porque una frase que solo se oye se pierde; despues, que no fuera
+        el cuadro de mensaje del sistema, porque ese se lee entero al abrirse
+        y no deja volver a una cifra con las flechas.
+        No se anuncia ademas por voz: el lector ya lee el cuadro al abrirse, y
+        con las dos cosas la misma frase sonaba dos veces seguidas. En la
+        barra de estado si queda, que no habla sola.
+        """
+        self.SetStatusText(texto)
+        avisar_legible(texto, "Importar enlaces", self)
 
     def _al_abrir_seleccionado(self, evento: wx.ListEvent) -> None:
         elemento = self._elemento_en(evento.GetIndex())

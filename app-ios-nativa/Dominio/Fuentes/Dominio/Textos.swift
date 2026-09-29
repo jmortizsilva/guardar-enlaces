@@ -327,3 +327,48 @@ extension Textos {
     public static let pistaGuardadoSilencioso =
         "Al compartir un enlace se guarda al momento, sin enseñar esta pantalla"
 }
+
+extension Textos {
+    // MARK: - Importar enlaces de otra aplicación
+
+    public static let importarEnlaces = "Importar enlaces"
+    public static let pistaImportar = "Marcadores del navegador, un CSV o una lista de direcciones"
+    public static let aceptar = "Aceptar"
+
+    /// Lo que se dice al terminar. Palabra por palabra lo mismo que en Windows
+    /// (`presentacion.texto_resultado_importacion`): es el mismo resultado y
+    /// tiene que sonar igual en los dos.
+    ///
+    /// Se cuenta el resultado, no que la acción ocurrió. Los descartados no se
+    /// mencionan cuando entró algo: son ruido del fichero de origen y no hay
+    /// nada que hacer con ellos. Si no entró nada, entonces sí hay que decir
+    /// por qué, y las dos razones posibles se distinguen.
+    public static func resultadoImportacion(importados: Int, yaEstaban: Int) -> String {
+        switch (importados, yaEstaban) {
+        case (0, 0):
+            return "Ese fichero no tiene ninguna dirección."
+        case (0, 1):
+            return "No hay nada nuevo: el único enlace del fichero ya lo tenías."
+        case (0, _):
+            return "No hay nada nuevo: los \(yaEstaban) enlaces del fichero ya los tenías."
+        default:
+            let frase =
+                importados == 1 ? "Importado 1 enlace." : "Importados \(importados) enlaces."
+            switch yaEstaban {
+            case 0: return frase
+            case 1: return "\(frase) Uno ya lo tenías."
+            default: return "\(frase) \(yaEstaban) ya los tenías."
+            }
+        }
+    }
+
+    /// No es «no se pudo importar» a secas: el fichero se leyó bien, lo que
+    /// falló fue guardarlo, y no entró ninguno porque va todo o nada.
+    public static let noSePudieronGuardar =
+        "No se pudieron guardar los enlaces. No se ha importado ninguno."
+
+    /// La causa la pone el sistema y la acción la ponemos aquí.
+    public static func noSePudoAbrirArchivo(_ causa: String) -> String {
+        "No se pudo abrir el archivo. \(causa)"
+    }
+}

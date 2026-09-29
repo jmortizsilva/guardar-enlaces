@@ -123,3 +123,38 @@ struct PruebasAvisoPortapapeles {
         #expect(Textos.hayEnlaceCopiado == "Hay un enlace copiado, puedes pegarlo")
     }
 }
+
+@Suite("Textos al importar")
+struct PruebasTextosImportar {
+    // Los mismos casos que `test_presentacion.py` de Windows, con las mismas
+    // frases: si uno cambia, el otro tiene que cambiar con él.
+
+    @Test("concuerda los plurales de verdad, nunca «enlace(s)»")
+    func plurales() {
+        #expect(
+            Textos.resultadoImportacion(importados: 143, yaEstaban: 12)
+                == "Importados 143 enlaces. 12 ya los tenías.")
+        #expect(
+            Textos.resultadoImportacion(importados: 143, yaEstaban: 0) == "Importados 143 enlaces.")
+        #expect(Textos.resultadoImportacion(importados: 1, yaEstaban: 0) == "Importado 1 enlace.")
+        #expect(
+            Textos.resultadoImportacion(importados: 1, yaEstaban: 1)
+                == "Importado 1 enlace. Uno ya lo tenías.")
+        #expect(
+            Textos.resultadoImportacion(importados: 2, yaEstaban: 1)
+                == "Importados 2 enlaces. Uno ya lo tenías.")
+    }
+
+    @Test("cuando no entra nada dice por qué, y distingue las dos razones")
+    func nadaNuevo() {
+        #expect(
+            Textos.resultadoImportacion(importados: 0, yaEstaban: 12)
+                == "No hay nada nuevo: los 12 enlaces del fichero ya los tenías.")
+        #expect(
+            Textos.resultadoImportacion(importados: 0, yaEstaban: 1)
+                == "No hay nada nuevo: el único enlace del fichero ya lo tenías.")
+        #expect(
+            Textos.resultadoImportacion(importados: 0, yaEstaban: 0)
+                == "Ese fichero no tiene ninguna dirección.")
+    }
+}

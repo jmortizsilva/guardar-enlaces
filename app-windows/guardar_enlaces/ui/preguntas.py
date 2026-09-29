@@ -12,6 +12,7 @@ import wx
 
 from ..almacen_local import AlmacenLocal
 from ..asentar_cuenta import EnlacesEnElEquipo, asentar_cuenta, identidad_dueno
+from .campos import ESTILO_SOLO_LECTURA, con_etiqueta
 
 
 def preguntar_importacion(enlaces: EnlacesEnElEquipo, padre: wx.Window | None = None) -> bool:
@@ -93,6 +94,56 @@ def avisar(texto: str, titulo: str, padre: wx.Window | None = None, grave: bool 
         padre, texto, titulo, wx.OK | (wx.ICON_WARNING if grave else wx.ICON_INFORMATION)
     )
     dialogo.SetOKLabel("&Aceptar")
+    dialogo.ShowModal()
+    dialogo.Destroy()
+
+
+class DialogoAvisoLegible(wx.Dialog):
+    """Un aviso cuyo texto se puede recorrer con las flechas.
+
+    `avisar` usa el cuadro de mensaje del sistema, que el lector lee entero al
+    abrirse pero no deja volver sobre una palabra ni releer una cifra: si se
+    escapa, no hay manera de oirla otra vez. Aqui el texto va en un campo de
+    solo lectura, que tiene el foco al abrirse, y detras un unico boton.
+    """
+
+    def __init__(self, padre: wx.Window | None, texto: str, titulo: str, etiqueta: str):
+        super().__init__(padre, title=titulo)
+        panel = wx.Panel(self)
+        sizer = wx.BoxSizer(wx.VERTICAL)
+
+        texto_etiqueta, self.campo = con_etiqueta(
+            panel,
+            etiqueta,
+            lambda padre: wx.TextCtrl(
+                padre, value=texto, style=ESTILO_SOLO_LECTURA, size=(420, 80)
+            ),
+        )
+        sizer.Add(texto_etiqueta, 0, wx.LEFT | wx.RIGHT | wx.TOP, 12)
+        sizer.Add(self.campo, 1, wx.EXPAND | wx.ALL, 12)
+
+        self.boton = wx.Button(panel, wx.ID_OK, "&Aceptar")
+        self.boton.SetDefault()
+        sizer.Add(self.boton, 0, wx.ALIGN_RIGHT | wx.LEFT | wx.RIGHT | wx.BOTTOM, 12)
+        # Sin boton de Cancelar, Escape no sabe que boton pulsar.
+        self.SetEscapeId(wx.ID_OK)
+
+        panel.SetSizer(sizer)
+        marco = wx.BoxSizer(wx.VERTICAL)
+        marco.Add(panel, 1, wx.EXPAND)
+        self.SetSizerAndFit(marco)
+
+        # El foco en el campo y el cursor al principio: asi el lector dice el
+        # nombre y el texto al abrirse, y las flechas empiezan por la primera
+        # palabra y no por el final.
+        self.campo.SetInsertionPoint(0)
+        self.campo.SetFocus()
+
+
+def avisar_legible(
+    texto: str, titulo: str, padre: wx.Window | None = None, etiqueta: str = "&Resultado:"
+) -> None:
+    dialogo = DialogoAvisoLegible(padre, texto, titulo, etiqueta)
     dialogo.ShowModal()
     dialogo.Destroy()
 

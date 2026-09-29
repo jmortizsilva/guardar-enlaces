@@ -319,6 +319,32 @@ final class ModeloApp {
         Task { await sincronizarEnSilencio() }
     }
 
+    // MARK: - Importar de otra aplicación
+
+    /// Trae los enlaces de un fichero exportado y devuelve lo que hay que
+    /// contar. El comportamiento lo manda `IMPORTAR.md`, igual para los tres
+    /// clientes; aquí solo se guarda.
+    ///
+    /// No anuncia nada: el resultado se enseña en una hoja que VoiceOver lee
+    /// al abrirse, y anunciarlo también lo haría sonar dos veces.
+    func importar(_ datos: Data) -> String {
+        let lectura = Importar.leer(Importar.texto(de: datos))
+        let preparado = Importar.preparar(lectura, existentes: elementos)
+        do {
+            try almacen.marcarPendientes(preparado.nuevos)
+        } catch {
+            return Textos.noSePudieronGuardar
+        }
+        if !preparado.nuevos.isEmpty {
+            refrescar()
+            Task { await sincronizarEnSilencio() }
+        }
+        return Textos.resultadoImportacion(
+            importados: preparado.importados,
+            yaEstaban: preparado.yaEstaban
+        )
+    }
+
     // MARK: - Gestionar las etiquetas de toda la biblioteca
 
     /// Las etiquetas con cuántos enlaces lleva cada una. Incluye las
