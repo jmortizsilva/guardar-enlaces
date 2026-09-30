@@ -32,8 +32,30 @@ function comprobarConfiguracionMinima(): void {
 
 async function main(): Promise<void> {
   comprobarConfiguracionMinima();
-  inicializarBd();
+  const bd = inicializarBd();
   const app = await crearServidor();
+
+  // Podman para el contenedor con SIGTERM y, si en 10 s no ha salido, lo mata con SIGKILL. Node,
+  // como primer proceso del contenedor, no tiene respuesta por defecto a SIGTERM: sin esto se
+  // quedaba esos 10 s esperando y moria a la fuerza, a mitad de lo que estuviera escribiendo
+  // (visto en el despliegue del 2026-09-30). Ahora deja de aceptar peticiones, termina las que
+  // tiene en curso y cierra la base de datos.
+  for (const senal of ['SIGTERM', 'SIGINT'] as const) {
+    process.once(senal, () => {
+      app.log.info(`${senal}: cerrando`);
+      app
+        .close()
+        .then(() => {
+          bd.close();
+          process.exit(0);
+        })
+        .catch((error: unknown) => {
+          app.log.error(error);
+          process.exit(1);
+        });
+    });
+  }
+
   await app.listen({ port: config.puerto, host: '0.0.0.0' });
   app.log.info(`servidor de guardar-enlaces escuchando en ${config.puerto}`);
 }
