@@ -7,7 +7,18 @@ import { obtenerBd } from '../db';
 // consume una sola vez. Vida corta: se limpia sola por caducidad, no hace falta tarea de fondo
 // para el MVP (una purga periodica queda para la Fase 2).
 
-export const DURACION_LOGIN_PENDIENTE_MS = 5 * 60 * 1000;
+// Lo que tiene quien inicia sesion desde que se abre la pestana hasta que vuelve del proveedor.
+// Eran 5 minutos y no bastaban: el 2026-09-30, entrar con Apple desde Android con TalkBack
+// (contrasena, codigo de verificacion en otro dispositivo) tardo 8 min 57 s, y al volver el
+// servidor ya no lo encontraba y ensenaba "Enlace caducado". Subirlo no debilita nada: la fila se
+// encuentra por un `estado` aleatorio de un solo uso, y el codigo de canje tiene su propio minuto.
+export const DURACION_LOGIN_PENDIENTE_MS = 15 * 60 * 1000;
+
+// Lo que dura el codigo de canje desde que se genera, que es lo que dice el contrato (~60 s). Antes
+// no tenia caducidad propia: heredaba la de la fila, y con ella valia hasta 5 minutos despues de
+// abrir la pestana. Separarlos es lo que permite dar mas tiempo a la pestana sin alargar la vida de
+// un codigo que, en Android sin Auth Tab, otra app podria llegar a ver.
+export const DURACION_CODIGO_CANJE_MS = 60 * 1000;
 
 export type ModoLogin = 'deeplink' | 'polling';
 
@@ -57,12 +68,19 @@ export function buscarLoginPendiente(
   return fila;
 }
 
-// Genera el codigo de canje de un solo uso y lo asocia al usuario que acaba de iniciar sesion.
-export function resolverLoginPendiente(estado: string, usuarioId: number): string {
+// Genera el codigo de canje de un solo uso y lo asocia al usuario que acaba de iniciar sesion. Desde
+// aqui, la fila vive lo que el codigo: un minuto.
+export function resolverLoginPendiente(
+  estado: string,
+  usuarioId: number,
+  ahora: () => number = () => Date.now(),
+): string {
   const codigoCanje = randomBytes(24).toString('base64url');
   obtenerBd()
-    .prepare('UPDATE login_pendientes SET codigo_canje = ?, usuario_id = ? WHERE estado = ?')
-    .run(codigoCanje, usuarioId, estado);
+    .prepare(
+      'UPDATE login_pendientes SET codigo_canje = ?, usuario_id = ?, expira_en = ? WHERE estado = ?',
+    )
+    .run(codigoCanje, usuarioId, ahora() + DURACION_CODIGO_CANJE_MS, estado);
   return codigoCanje;
 }
 

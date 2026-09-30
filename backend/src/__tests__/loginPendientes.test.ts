@@ -4,6 +4,8 @@ import {
   buscarLoginPendiente,
   consumirCodigoCanje,
   crearLoginPendiente,
+  DURACION_CODIGO_CANJE_MS,
+  DURACION_LOGIN_PENDIENTE_MS,
   marcarErrorLoginPendiente,
   resolverLoginPendiente,
 } from '../auth/loginPendientes';
@@ -28,7 +30,16 @@ describe('crearLoginPendiente / buscarLoginPendiente', () => {
   it('caducado no se puede recuperar', () => {
     const ahora = () => 1_000_000;
     crearLoginPendiente('estado1', 'polling', null, ahora);
-    expect(buscarLoginPendiente('estado1', () => 1_000_000 + 6 * 60 * 1000)).toBeUndefined();
+    expect(
+      buscarLoginPendiente('estado1', () => 1_000_000 + DURACION_LOGIN_PENDIENTE_MS + 1),
+    ).toBeUndefined();
+  });
+
+  it('a los 9 minutos todavia vale: es lo que tardo entrar con Apple con TalkBack', () => {
+    // Medido el 2026-09-30: 8 min 57 s desde abrir la pestana hasta volver de Apple. Con los 5
+    // minutos de antes, el servidor ya no lo encontraba.
+    crearLoginPendiente('estado1', 'deeplink', 'guardarenlaces://', () => 1_000_000);
+    expect(buscarLoginPendiente('estado1', () => 1_000_000 + 537_000)).toBeDefined();
   });
 
   it('desconocido no se puede recuperar', () => {
@@ -46,6 +57,21 @@ describe('resolverLoginPendiente / consumirCodigoCanje', () => {
     // segunda vez ya no existe: se borro al consumirlo
     expect(consumirCodigoCanje(codigo)).toBeUndefined();
     expect(buscarLoginPendiente('estado1')).toBeUndefined();
+  });
+
+  it('el codigo caduca al minuto de generarse, aunque la pestana tuviera mas margen', () => {
+    // Si no, dar mas tiempo a la pestana alargaria tambien la vida del codigo.
+    crearLoginPendiente('estado1', 'deeplink', 'guardarenlaces://', () => 1_000_000);
+    const generado = 1_000_000 + 2 * 60 * 1000;
+    const codigo = resolverLoginPendiente('estado1', 42, () => generado);
+
+    expect(consumirCodigoCanje(codigo, () => generado + DURACION_CODIGO_CANJE_MS + 1)).toBeUndefined();
+  });
+
+  it('dentro de su minuto, el codigo vale', () => {
+    crearLoginPendiente('estado1', 'deeplink', 'guardarenlaces://', () => 1_000_000);
+    const codigo = resolverLoginPendiente('estado1', 42, () => 1_000_000);
+    expect(consumirCodigoCanje(codigo, () => 1_000_000 + DURACION_CODIGO_CANJE_MS - 1)).toBe(42);
   });
 
   it('un codigo desconocido no resuelve nada', () => {
