@@ -370,15 +370,13 @@ Descartado:
 
 ## Cabos sueltos
 
-- **Tres posibles fallos de sesión en iOS**, vistos al portar su código y
-  no comprobados en el iPhone; esta rama no toca `app-ios-nativa`:
-  - dos 401 a la vez hacen dos renovaciones, y la segunda cierra la sesión
-    (el actor deja entrar otra llamada mientras la primera espera a la red);
-  - `Sesion.restaurar` tira el token guardado por cualquier fallo, también
-    por no tener red: abrir la app sin conexión cerraría la sesión;
-  - el token va en el llavero con `kSecAttrAccessibleWhenUnlocked`: si el
-    teléfono se bloquea a mitad de una renovación, el nuevo no se podría
-    guardar. Es lo que se midió en Android con su equivalente.
+- **Los tres posibles fallos de sesión en iOS** que se vieron al portar su
+  código están resueltos en `main` desde el 2026-09-30: los dos primeros se
+  reprodujeron con pruebas y se arreglaron, y el llavero pasó a
+  `kSecAttrAccessibleAfterFirstUnlock`, lo mismo que se decidió aquí. Ver
+  «Cabos sueltos» en `app-ios-nativa/PLAN.md`. Conviene comprobar que la
+  `Sesion` de Android no tiene los dos primeros: se portó de la de iOS antes
+  del arreglo.
 - **Windows dice «Google rechazó el inicio de sesión»** también al entrar
   con Apple, que allí va por web. En Android dice el proveedor.
 - **El esquema `guardarenlaces` se puede suplantar en Android** cuando no hay
