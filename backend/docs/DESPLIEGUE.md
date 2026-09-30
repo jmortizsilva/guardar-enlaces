@@ -29,11 +29,29 @@ el puerto por defecto de Metro, el empaquetador de Expo.
 
 ```bash
 cd ~/guardar-enlaces && git pull
-cd ~/compose/guardar-enlaces && podman-compose down
-podman-compose up -d --build
+cd ~/compose/guardar-enlaces && podman-compose build
+podman-compose down
+podman-compose up -d
 ```
 
-El `down` hace falta: sin él, `up` choca con que el contenedor ya existe.
+**Construir antes de parar.** Antes se hacía `down` y luego `up --build`, y el
+servidor quedaba caído mientras compilaba: el 2026-09-30, al cambiar
+`package-lock.json`, `npm ci` reinstaló todo y tardó dos minutos sin escribir
+nada. Construyendo primero, el `up` ya no compila y el corte es de un par de
+segundos.
+
+El `down` hace falta: sin él, `up` choca con que el contenedor ya existe. Y ya
+**no debería avisar** de «StopSignal SIGTERM failed… resorting to SIGKILL»: desde
+el 2026-09-30 el servidor atiende la señal de parada y cierra ordenado. Si el
+aviso vuelve, es que ha dejado de hacerlo y lo está matando a la fuerza.
+
+Si falta alguna variable de Apple o de Google en el `.env`, el servidor **no
+arranca** y lo dice en `podman logs`. Antes de desplegar algo que añada una, se
+comprueba con este comando, que enseña solo los nombres y nunca los valores:
+
+```bash
+grep -o '^[A-Z_]*=' ~/compose/guardar-enlaces/.env
+```
 
 Comprobar que ha entrado el código nuevo, y no una imagen de caché:
 
