@@ -3,30 +3,27 @@ import { inicializarBd } from './db';
 import { crearServidor } from './servidor';
 
 // Variables sin las que el servidor arrancaria pero fallaria en silencio (tokens firmados con
-// secreto vacio, OAuth incapaz de completar el intercambio): mejor no arrancar en absoluto.
+// secreto vacio, OAuth incapaz de completar el intercambio): mejor no arrancar en absoluto, y que
+// se note al desplegar y no cuando alguien intente entrar.
 //
-// Apple queda TEMPORALMENTE fuera de esta comprobacion (solo avisa, no bloquea el arranque):
-// se esta probando primero el login real con Google, con las credenciales de Apple todavia
-// sin tramitar. /auth/iniciar?proveedor=apple ya rechaza la peticion mientras falten (ver
-// rutas.ts). Volver a exigirlas aqui en cuanto Apple este listo.
+// Apple se exige desde el 2026-09-30, igual que Google. Hasta entonces solo avisaba, porque se
+// probo primero Google con las credenciales de Apple sin tramitar. El aviso de antes miraba
+// cuatro variables y se le escapaba APPLE_APP_ID, sin la que no funciona entrar con Apple desde
+// el iPhone (es la audiencia del token nativo).
 function comprobarConfiguracionMinima(): void {
-  const faltantes: string[] = [];
-  if (!config.tokenSecreto) faltantes.push('ENLACES_TOKEN_SECRET');
-  if (!config.google.clientId) faltantes.push('GOOGLE_CLIENT_ID');
-  if (!config.google.clientSecret) faltantes.push('GOOGLE_CLIENT_SECRET');
+  const obligatorias: [string, unknown][] = [
+    ['ENLACES_TOKEN_SECRET', config.tokenSecreto],
+    ['GOOGLE_CLIENT_ID', config.google.clientId],
+    ['GOOGLE_CLIENT_SECRET', config.google.clientSecret],
+    ['APPLE_CLIENT_ID', config.apple.clientId],
+    ['APPLE_APP_ID', config.apple.appIds.length > 0],
+    ['APPLE_TEAM_ID', config.apple.teamId],
+    ['APPLE_KEY_ID', config.apple.keyId],
+    ['APPLE_PRIVATE_KEY', config.apple.privateKey],
+  ];
+  const faltantes = obligatorias.filter(([, valor]) => !valor).map(([nombre]) => nombre);
   if (faltantes.length > 0) {
     throw new Error(`faltan variables de entorno: ${faltantes.join(', ')}`);
-  }
-  if (
-    !config.apple.clientId ||
-    !config.apple.teamId ||
-    !config.apple.keyId ||
-    !config.apple.privateKey
-  ) {
-    console.warn(
-      'Aviso: faltan variables de Apple (APPLE_CLIENT_ID/TEAM_ID/KEY_ID/PRIVATE_KEY) — ' +
-        'el login con Apple no funcionara hasta que se configuren.',
-    );
   }
 }
 

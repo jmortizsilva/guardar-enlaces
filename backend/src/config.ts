@@ -28,8 +28,8 @@ export const config = {
     // OJO: para que el iPhone y el PC sean la misma cuenta, este identificador y el Services ID
     // de arriba tienen que estar AGRUPADOS en el portal de Apple (ver CONTRATO-API.md). Si se
     // crean sueltos, el mismo Apple ID entra como dos personas distintas.
-    // Se admite mas de uno separados por comas: mientras la app nativa convive con la de Expo
-    // tiene un identificador temporal, y los dos tienen que valer.
+    // Se admite mas de uno separados por comas. Hizo falta mientras la app nativa convivio con la
+    // de Expo con un identificador temporal (.nativa); desde que la sustituyo, basta con uno.
     appIds: (process.env.APPLE_APP_ID ?? '')
       .split(',')
       .map((id) => id.trim())
