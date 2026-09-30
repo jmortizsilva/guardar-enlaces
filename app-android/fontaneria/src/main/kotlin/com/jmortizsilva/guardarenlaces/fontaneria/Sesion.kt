@@ -6,8 +6,8 @@ import kotlinx.coroutines.sync.withLock
 /**
  * La sesión: token de acceso en memoria, token de refresco en el almacén de credenciales.
  *
- * Dos diferencias con la de iOS, y las dos son fallos de allí que aquí no se copian (ninguno está
- * comprobado en el iPhone, están leídos en el código):
+ * Dos cosas que la de iOS hacía mal y aquí no se copiaron. Se vieron leyendo su código al portarla,
+ * y el 2026-09-30 se reprodujeron allí con pruebas y se arreglaron igual que están aquí:
  *
  * 1. **Las renovaciones van de una en una.** Cada `POST /auth/renovar` revoca el token de refresco
  *    usado. Si dos peticiones reciben un 401 a la vez (comprobar un enlace y sincronizar al volver
@@ -16,8 +16,8 @@ import kotlinx.coroutines.sync.withLock
  *    espera a la red. Aquí hay un cerrojo, y quien llega segundo ve que el token ya cambió y usa el
  *    nuevo.
  * 2. **El token guardado solo se tira si el servidor dice 401**, que es lo que dice el contrato:
- *    «el cliente debe volver a iniciar sesión desde cero». En iOS se tira por cualquier fallo,
- *    también por no tener red: abrir la app sin conexión cerraría la sesión.
+ *    «el cliente debe volver a iniciar sesión desde cero». En iOS se tiraba por cualquier fallo,
+ *    también por no tener red, y abrir la app sin conexión cerraba la sesión.
  */
 class Sesion(
     private val cliente: ClienteApi,

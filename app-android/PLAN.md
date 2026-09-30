@@ -374,9 +374,9 @@ Descartado:
   código están resueltos en `main` desde el 2026-09-30: los dos primeros se
   reprodujeron con pruebas y se arreglaron, y el llavero pasó a
   `kSecAttrAccessibleAfterFirstUnlock`, lo mismo que se decidió aquí. Ver
-  «Cabos sueltos» en `app-ios-nativa/PLAN.md`. Conviene comprobar que la
-  `Sesion` de Android no tiene los dos primeros: se portó de la de iOS antes
-  del arreglo.
+  «Cabos sueltos» en `app-ios-nativa/PLAN.md`. La `Sesion` de Android no los
+  tuvo nunca: se escribió evitándolos, y lo demuestran «arrancar sin red no
+  cierra la sesión» y «dos 401 a la vez hacen una sola renovación».
 - **Windows dice «Google rechazó el inicio de sesión»** también al entrar
   con Apple, que allí va por web. En Android dice el proveedor.
 - **El esquema `guardarenlaces` se puede suplantar en Android** cuando no hay
