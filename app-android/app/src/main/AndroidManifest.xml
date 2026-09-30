@@ -11,12 +11,23 @@
         android:supportsRtl="true"
         android:theme="@android:style/Theme.Material.Light.NoActionBar">
 
+        <!-- singleTask para que la vuelta del inicio de sesion por enlace llegue a esta misma
+             actividad (onNewIntent) y no abra otra encima, sin el inicio de sesion en curso. -->
         <activity
             android:name=".ActividadPrincipal"
-            android:exported="true">
+            android:exported="true"
+            android:launchMode="singleTask">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
                 <category android:name="android.intent.category.LAUNCHER" />
+            </intent-filter>
+            <!-- Solo para cuando el navegador no tiene Auth Tab: con ella, la vuelta no pasa por
+                 aqui. Ver IniciadorDeSesion. -->
+            <intent-filter>
+                <action android:name="android.intent.action.VIEW" />
+                <category android:name="android.intent.category.DEFAULT" />
+                <category android:name="android.intent.category.BROWSABLE" />
+                <data android:scheme="guardarenlaces" android:host="auth-callback" />
             </intent-filter>
         </activity>
     </application>

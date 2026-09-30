@@ -1,13 +1,22 @@
 package com.jmortizsilva.guardarenlaces
 
+import com.jmortizsilva.guardarenlaces.dominio.AsentarCuenta
+import com.jmortizsilva.guardarenlaces.dominio.AsientoDeCuenta
 import com.jmortizsilva.guardarenlaces.dominio.Biblioteca
 import com.jmortizsilva.guardarenlaces.dominio.Duplicados
 import com.jmortizsilva.guardarenlaces.dominio.Elemento
+import com.jmortizsilva.guardarenlaces.dominio.EnlacesEnElTelefono
 import com.jmortizsilva.guardarenlaces.dominio.Importar
+import com.jmortizsilva.guardarenlaces.dominio.Login
+import com.jmortizsilva.guardarenlaces.dominio.MarcaDeTiempo
 import com.jmortizsilva.guardarenlaces.dominio.MetadatosExtraidos
+import com.jmortizsilva.guardarenlaces.dominio.PasoAlEntrar
+import com.jmortizsilva.guardarenlaces.dominio.Proveedor
 import com.jmortizsilva.guardarenlaces.dominio.Sincronizacion
 import com.jmortizsilva.guardarenlaces.dominio.Textos
+import com.jmortizsilva.guardarenlaces.dominio.relojDelSistema
 import com.jmortizsilva.guardarenlaces.fontaneria.AlmacenLocal
+import com.jmortizsilva.guardarenlaces.fontaneria.ClienteApi
 import com.jmortizsilva.guardarenlaces.fontaneria.ErrorApi
 import com.jmortizsilva.guardarenlaces.fontaneria.GuardarEnlace
 import com.jmortizsilva.guardarenlaces.fontaneria.ResolverMetadatos
@@ -29,6 +38,7 @@ import kotlinx.coroutines.launch
  */
 class ModeloApp(
     private val almacen: AlmacenLocal,
+    private val cliente: ClienteApi,
     private val sesion: Sesion,
     private val sincronizador: Sincronizador,
     private val resolvedor: ResolverMetadatos,
@@ -47,6 +57,31 @@ class ModeloApp(
 
     val conCuenta: Boolean
         get() = sesion.conCuenta
+
+    /** Con qué cuenta se está, para que Ajustes cambie en cuanto se entra o se sale. */
+    sealed interface EstadoCuenta {
+        data object SinCuenta : EstadoCuenta
+
+        /**
+         * `email` es nulo mientras no se ha hablado con el servidor desde que se abrió la app, por
+         * ejemplo al arrancar sin red: la cuenta está, pero todavía no se sabe de quién es.
+         */
+        data class ConCuenta(val email: String?) : EstadoCuenta
+    }
+
+    private val _cuenta = MutableStateFlow(estadoCuenta())
+    val cuenta: StateFlow<EstadoCuenta> = _cuenta.asStateFlow()
+
+    private fun estadoCuenta(): EstadoCuenta =
+        if (sesion.conCuenta) EstadoCuenta.ConCuenta(sesion.usuario?.email)
+        else EstadoCuenta.SinCuenta
+
+    private fun avisarDeLaCuenta() {
+        _cuenta.value = estadoCuenta()
+    }
+
+    /** Para no sincronizar dos veces seguidas al alternar entre aplicaciones. */
+    @Volatile private var ultimaSincronizacion: MarcaDeTiempo = 0
 
     init {
         refrescar()
@@ -130,11 +165,96 @@ class ModeloApp(
      */
     fun sincronizarEnSilencio() {
         if (!sesion.conCuenta) return
+        ultimaSincronizacion = relojDelSistema()
         alcance.launch {
             try {
                 sincronizador.sincronizar()
             } catch (_: ErrorApi) {}
             refrescar()
+            // La primera sincronización es la que trae de quién es la cuenta.
+            avisarDeLaCuenta()
         }
+    }
+
+    /**
+     * Al volver a la app, lo que se haya guardado mientras tanto: en el teléfono (desde el menú de
+     * compartir, más adelante) y en el ordenador. Sin esto, con cuenta no se veía lo guardado en el
+     * ordenador hasta cambiar algo aquí. Como en el iPhone, con un mínimo de tiempo entre una
+     * sincronización y la siguiente.
+     */
+    fun alVolver(ahora: MarcaDeTiempo = relojDelSistema()) {
+        refrescar()
+        if (Sincronizacion.tocaSincronizar(ultimaSincronizacion, ahora)) sincronizarEnSilencio()
+    }
+
+    // --- La cuenta ---
+
+    /**
+     * Entrar con Google o con Apple. Los dos van por web: `pedirCodigo` abre la dirección en el
+     * navegador y devuelve lo que traiga la vuelta.
+     *
+     * `decidirImportacion` solo se llama si hay algo que decidir: enlaces de otra cuenta, o
+     * guardados sin cuenta. Entrar en la cuenta de siempre no pregunta nada, que es el caso normal.
+     */
+    suspend fun iniciarSesion(
+        proveedor: Proveedor,
+        pedirCodigo: suspend (String) -> Login.Resultado,
+        decidirImportacion: suspend (EnlacesEnElTelefono) -> Boolean,
+    ): Login.Resultado {
+        val resultado = pedirCodigo(cliente.urlIniciarLogin(proveedor, Login.generarEstado()))
+        if (resultado !is Login.Resultado.Exito) return resultado
+        try {
+            sesion.entrar(resultado.codigoDeCanje)
+        } catch (fallo: ErrorApi) {
+            return Login.Resultado.Error(fallo.mensaje)
+        } catch (_: Exception) {
+            return Login.Resultado.Error(Textos.loginFallido)
+        }
+        asentarLaCuenta(decidirImportacion)
+        avisarDeLaCuenta()
+        refrescar()
+        sincronizarEnSilencio()
+        return resultado
+    }
+
+    /**
+     * Qué hacer con lo que ya había en el teléfono. Sin correo no se toca nada: no habría con qué
+     * comparar y, ante la duda, ni se tira ni se importa nada.
+     */
+    private suspend fun asentarLaCuenta(
+        decidirImportacion: suspend (EnlacesEnElTelefono) -> Boolean
+    ) {
+        val email = sesion.usuario?.email ?: return
+        val dueno = AsentarCuenta.identidadDueno(Configuracion.URL_API, email)
+        when (
+            val paso =
+                AsentarCuenta.alEntrar(almacen.duenoActual(), dueno, almacen.contarElementos())
+        ) {
+            PasoAlEntrar.NoHacerNada -> return
+            is PasoAlEntrar.Asentar -> aplicar(paso.asiento)
+            is PasoAlEntrar.Preguntar ->
+                aplicar(AsentarCuenta.asiento(segunRespuesta = decidirImportacion(paso.enlaces)))
+        }
+        // El cursor era del OTRO servidor: si no se pone a cero, la primera bajada pide «lo
+        // cambiado desde» una fecha que aquí no significa nada, y se salta todo lo anterior.
+        almacen.fijarCursor(0)
+        almacen.fijarDueno(dueno)
+    }
+
+    private fun aplicar(asiento: AsientoDeCuenta) =
+        when (asiento) {
+            AsientoDeCuenta.AdoptarLoQueHay -> almacen.adoptarConIdsNuevos()
+            AsientoDeCuenta.EmpezarDeCero -> almacen.vaciar()
+        }
+
+    /**
+     * Los enlaces se quedan en el teléfono y la app sigue funcionando sin cuenta. El dueño NO se
+     * borra a propósito: si mañana entra otra cuenta, hay que saber que esto era de alguien y
+     * preguntar antes de mezclarlo.
+     */
+    suspend fun cerrarSesion() {
+        sesion.cerrar()
+        avisarDeLaCuenta()
+        refrescar()
     }
 }

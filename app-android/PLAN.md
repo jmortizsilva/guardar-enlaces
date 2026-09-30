@@ -128,9 +128,9 @@ el contrato.
 **Apple** no tiene inicio de sesión nativo en Android. Va por web, con
 `proveedor=apple`, igual que en Windows. Dos avisos:
 
-- El servidor compartido **todavía no tiene Apple configurado**
-  (`client_id=x`, comprobado el 2026-09-18 según `PROYECTO.md`). Hasta que lo
-  esté, este botón no se puede probar de verdad.
+- El servidor compartido **sí tiene Apple configurado** desde el 2026-09-19:
+  ese día se entró con Apple desde Windows, que usa este mismo flujo web. La
+  versión anterior de este plan decía lo contrario, con datos del día 18.
 - Para que sea la misma cuenta que en el iPhone, el Services ID tiene que
   estar agrupado bajo el identificador de la app de iOS (ver el contrato).
   Android usa el mismo flujo web que Windows, así que no añade nada nuevo.
@@ -381,8 +381,6 @@ Descartado:
   con Apple, que allí va por web. En Android dice el proveedor.
 - **El esquema `guardarenlaces` se puede suplantar en Android** cuando no hay
   Auth Tab. Cerrarlo del todo pide un cambio de contrato (PKCE o App Links).
-- **Apple no está configurado en el servidor compartido.** Hasta entonces, el
-  botón de Apple no se puede probar.
 - **La copia de seguridad incluye la base de datos** y excluye el token. Es
   una decisión que se puede discutir.
 - **`targetSdk` 37**: se puede subir cuando se quiera (ver «Decisiones»);

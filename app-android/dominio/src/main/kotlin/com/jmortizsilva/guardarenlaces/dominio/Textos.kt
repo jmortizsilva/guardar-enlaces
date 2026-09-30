@@ -173,6 +173,14 @@ object Textos {
     fun sesionIniciadaComo(email: String) =
         "Sesión iniciada como $email. Tus enlaces se sincronizan con el ordenador."
 
+    /**
+     * Con la cuenta, pero sin saber todavía de quién es: al abrir la app sin red, hasta que habla
+     * con el servidor. Solo en Android, porque aquí la cuenta se nota antes de la primera
+     * sincronización.
+     */
+    const val sesionIniciadaSinCorreo =
+        "Sesión iniciada. Tus enlaces se sincronizan con el ordenador."
+
     const val sinCuenta = "Sin cuenta: los enlaces se guardan solo en este teléfono."
     const val entrarConGoogle = "Entrar con Google"
     const val entrarConApple = "Entrar con Apple"

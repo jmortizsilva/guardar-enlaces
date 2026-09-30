@@ -10,6 +10,7 @@ import androidx.activity.ComponentActivity
 import androidx.activity.compose.BackHandler
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
+import androidx.browser.auth.AuthTabIntent
 import androidx.browser.customtabs.CustomTabsIntent
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
@@ -23,16 +24,25 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalWindowInfo
 import androidx.core.net.toUri
 import com.jmortizsilva.guardarenlaces.dominio.Elemento
+import com.jmortizsilva.guardarenlaces.dominio.Login
 import com.jmortizsilva.guardarenlaces.dominio.Textos
 
 class ActividadPrincipal : ComponentActivity() {
     private val contenedor
         get() = (application as Guardalo).contenedor
 
+    private val iniciador = IniciadorDeSesion()
+
+    // Registrado al construir la actividad, que es cuando Android lo permite: más tarde, en
+    // cuanto la actividad ha arrancado, registrar un lanzador revienta.
+    private val lanzadorAuthTab =
+        AuthTabIntent.registerActivityResultLauncher(this) { iniciador.alVolverDeLaAuthTab(it) }
+
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         // Con targetSdk 36 el borde a borde es obligatorio; el Scaffold deja sitio a las barras.
         enableEdgeToEdge()
+        iniciador.lanzador = lanzadorAuthTab
         atender(intent)
         setContent { Tema { Aplicacion() } }
     }
@@ -126,8 +136,23 @@ class ActividadPrincipal : ComponentActivity() {
                     },
                 )
             }
-            Pantalla.Ajustes ->
-                PantallaAjustes(alVolver = { navegacion.volver() }, importar = modelo::importar)
+            Pantalla.Ajustes -> {
+                val cuenta by modelo.cuenta.collectAsState()
+                PantallaAjustes(
+                    cuenta = cuenta,
+                    anuncios = modelo.anuncios,
+                    alVolver = { navegacion.volver() },
+                    importar = modelo::importar,
+                    entrar = { proveedor, decidir ->
+                        modelo.iniciarSesion(
+                            proveedor,
+                            pedirCodigo = { url -> iniciador.pedirCodigo(url, proveedor) },
+                            decidirImportacion = decidir,
+                        )
+                    },
+                    cerrarSesion = modelo::cerrarSesion,
+                )
+            }
             Pantalla.EtiquetasDelBorrador ->
                 PantallaEtiquetas(
                     disponibles = etiquetas,
@@ -172,6 +197,13 @@ class ActividadPrincipal : ComponentActivity() {
     /** Con la app ya abierta, lo que llega nuevo entra por aquí y no por `onCreate`. */
     override fun onNewIntent(intent: Intent) {
         super.onNewIntent(intent)
+        // La vuelta del inicio de sesión cuando el navegador no tenía Auth Tab. Si no hay uno en
+        // curso, `alVolverPorEnlace` la rechaza y no se hace nada con ella.
+        val enlace = intent.data
+        if (enlace?.scheme == Login.ESQUEMA) {
+            iniciador.alVolverPorEnlace(enlace)
+            return
+        }
         atender(intent)
     }
 
@@ -184,9 +216,9 @@ class ActividadPrincipal : ComponentActivity() {
 
     override fun onResume() {
         super.onResume()
-        // Lo que se haya guardado mientras la app estaba detrás (más adelante, desde el menú de
-        // compartir) tiene que aparecer al volver.
-        contenedor.modelo.refrescar()
+        // Lo que se haya guardado mientras la app estaba detrás tiene que aparecer al volver: en
+        // el teléfono (más adelante, desde el menú de compartir) y, con cuenta, en el ordenador.
+        contenedor.modelo.alVolver()
     }
 
     /**
