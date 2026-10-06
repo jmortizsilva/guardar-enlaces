@@ -1,7 +1,7 @@
 package com.jmortizsilva.guardarenlaces.fontaneria
 
+import com.jmortizsilva.guardarenlaces.dominio.Comprobacion
 import com.jmortizsilva.guardarenlaces.dominio.Metadatos
-import com.jmortizsilva.guardarenlaces.dominio.MetadatosExtraidos
 import com.jmortizsilva.guardarenlaces.dominio.Youtube
 import java.io.IOException
 import okhttp3.HttpUrl.Companion.toHttpUrlOrNull
@@ -23,27 +23,45 @@ class ResolverMetadatos(
     private val cliente: ClienteApi,
     private val sesion: Sesion,
     private val http: OkHttpClient = clienteHttpPorDefecto,
+    /**
+     * Sin cuenta, un fallo al descargar es igual si no hay red que si la página no existe. Esto los
+     * distingue; en el teléfono lo responde el sistema.
+     */
+    private val hayRed: () -> Boolean = { true },
 ) {
-    /** Devuelve `null` si no se pudo averiguar nada. No lanza: guardar nunca depende de esto. */
-    suspend fun resolver(url: String): MetadatosExtraidos? =
+    /**
+     * Si la página carga y, de paso, su título y su descripción. No lanza: guardar nunca depende de
+     * esto. Ver «Comprobar que carga» en `ANADIR.md`.
+     */
+    suspend fun comprobar(url: String): Comprobacion =
         if (sesion.conCuenta) enElServidor(url) else enElTelefono(url)
 
-    private suspend fun enElServidor(url: String): MetadatosExtraidos? =
+    private suspend fun enElServidor(url: String): Comprobacion =
         try {
-            sesion.conReintento { token -> cliente.metadatos(url, token).comoMetadatos }
-        } catch (_: ErrorApi) {
-            null
+            Comprobacion.Carga(
+                sesion.conReintento { token -> cliente.metadatos(url, token).comoMetadatos }
+            )
+        } catch (error: ErrorApi) {
+            when (error.codigo) {
+                // El servidor sí contestó: la dirección no vale (400) o la página no cargó (502).
+                400,
+                502 -> Comprobacion.NoCarga
+                // Sin respuesta del servidor, o un fallo suyo: no dice nada de la página.
+                else -> Comprobacion.SinComprobar
+            }
         }
 
-    private suspend fun enElTelefono(url: String): MetadatosExtraidos? {
+    private suspend fun enElTelefono(url: String): Comprobacion {
+        if (!hayRed()) return Comprobacion.SinComprobar
         // Mismo orden que el servidor: YouTube por su oEmbed, que da título y miniatura más
         // fiables que raspar og:*, y si falla, la página entera.
         if (Youtube.esUrlDeYoutube(url)) {
             descargar(Youtube.urlOEmbed(url), Long.MAX_VALUE)?.let(Youtube::metadatos)?.let {
-                return it
+                return Comprobacion.Carga(it)
             }
         }
-        return descargar(url, limiteDePagina)?.let(Metadatos::extraer)
+        val pagina = descargar(url, limiteDePagina) ?: return Comprobacion.NoCarga
+        return Comprobacion.Carga(Metadatos.extraer(pagina))
     }
 
     /**

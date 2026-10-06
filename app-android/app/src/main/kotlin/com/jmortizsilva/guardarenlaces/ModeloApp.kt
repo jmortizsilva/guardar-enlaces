@@ -3,6 +3,7 @@ package com.jmortizsilva.guardarenlaces
 import com.jmortizsilva.guardarenlaces.dominio.AsentarCuenta
 import com.jmortizsilva.guardarenlaces.dominio.AsientoDeCuenta
 import com.jmortizsilva.guardarenlaces.dominio.Biblioteca
+import com.jmortizsilva.guardarenlaces.dominio.Comprobacion
 import com.jmortizsilva.guardarenlaces.dominio.Duplicados
 import com.jmortizsilva.guardarenlaces.dominio.Elemento
 import com.jmortizsilva.guardarenlaces.dominio.EnlacesEnElTelefono
@@ -119,8 +120,8 @@ class ModeloApp(
     /** El enlace ya guardado con esa URL, si lo hay: para avisar antes de guardar, no después. */
     fun repetido(url: String): Elemento? = Duplicados.buscar(elementos.value, url)
 
-    /** Título y descripción de una URL. Nunca lanza: guardar no depende de esto. */
-    suspend fun comprobar(url: String): MetadatosExtraidos? = resolvedor.resolver(url)
+    /** Si la página carga, y su título y descripción. Nunca lanza: guardar no depende de esto. */
+    suspend fun comprobar(url: String): Comprobacion = resolvedor.comprobar(url)
 
     /**
      * Guarda la URL, o actualiza el enlace que ya la tenía. No anuncia: quien llama lleva antes el

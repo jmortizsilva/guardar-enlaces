@@ -11,6 +11,7 @@ import androidx.compose.foundation.text.input.TextFieldLineLimits
 import androidx.compose.foundation.text.input.TextFieldState
 import androidx.compose.foundation.text.input.setTextAndPlaceCursorAtEnd
 import androidx.compose.foundation.verticalScroll
+import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.OutlinedTextField
@@ -34,6 +35,9 @@ import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
+import com.jmortizsilva.guardarenlaces.dominio.Comprobacion
+import com.jmortizsilva.guardarenlaces.dominio.ComprobarDireccion
+import com.jmortizsilva.guardarenlaces.dominio.DireccionComprobada
 import com.jmortizsilva.guardarenlaces.dominio.Elemento
 import com.jmortizsilva.guardarenlaces.dominio.Enlaces
 import com.jmortizsilva.guardarenlaces.dominio.MetadatosExtraidos
@@ -55,11 +59,11 @@ class BorradorEnlace {
 }
 
 /**
- * Pegar o escribir una URL y guardarla.
+ * Pegar o escribir una URL y guardarla. No hace falta escribir `https://`: si falta, se pone.
  *
- * La comprobación va sola en segundo plano y rellena la vista previa, pero nunca hace falta
- * esperarla: guardar funciona en cuanto la dirección es válida. Si la comprobación no llega a
- * tiempo, el enlace se guarda sin título y se dice. Es lo mismo que hacen iOS y Windows.
+ * La comprobación va sola en segundo plano mientras se escribe y rellena la vista previa. Además
+ * dice si la página carga: si no, antes de guardar se pregunta. Sin red no se puede saber, y se
+ * guarda sin preguntar. Las reglas están en `ANADIR.md`, iguales para las tres apps.
  */
 @Composable
 fun PantallaAnadir(
@@ -69,7 +73,7 @@ fun PantallaAnadir(
     llegada: Llegada?,
     alAtenderLlegada: () -> Unit,
     repetido: (String) -> Elemento?,
-    comprobar: suspend (String) -> MetadatosExtraidos?,
+    comprobar: suspend (String) -> Comprobacion,
     leerPortapapeles: () -> String?,
     alElegirEtiquetas: () -> Unit,
     alCancelar: () -> Unit,
@@ -79,7 +83,9 @@ fun PantallaAnadir(
     val alcance = rememberCoroutineScope()
     val focoCampo = remember { FocusRequester() }
     var vistaPrevia by remember { mutableStateOf<MetadatosExtraidos?>(null) }
-    var comprobacion by remember { mutableStateOf<Deferred<MetadatosExtraidos?>?>(null) }
+    var comprobacion by remember { mutableStateOf<Deferred<DireccionComprobada>?>(null) }
+    /** La que no ha cargado, mientras se pregunta si guardarla igualmente. */
+    var noCarga by remember { mutableStateOf<DireccionComprobada?>(null) }
     var comprobando by remember { mutableStateOf(false) }
     /**
      * Desde que se pulsa Guardar hasta que la pantalla se cierra. Sin esto, guardar un enlace nuevo
@@ -89,8 +95,9 @@ fun PantallaAnadir(
     var guardando by remember { mutableStateOf(false) }
 
     val urlLimpia = borrador.url.text.toString().trim()
-    val urlValida = Enlaces.esDireccion(urlLimpia)
-    val yaGuardado = if (urlValida && !guardando) repetido(urlLimpia) else null
+    val escrita = Enlaces.completar(urlLimpia)
+    val urlValida = escrita != null
+    val yaGuardado = if (escrita != null && !guardando) repetido(escrita.direccion) else null
 
     // Al abrir, al campo; al volver de las etiquetas, a su botón.
     val alAbrir = remember { llegada == null }
@@ -127,17 +134,17 @@ fun PantallaAnadir(
             .collect { direccion ->
                 comprobacion?.cancel()
                 vistaPrevia = null
-                comprobando = Enlaces.esDireccion(direccion)
-                comprobacion =
-                    if (!comprobando) null
-                    else
-                        alcance.async {
-                            delay(ESPERA_COMPROBAR_MS)
-                            comprobar(direccion).also {
-                                vistaPrevia = it
-                                comprobando = false
-                            }
+                val completa = Enlaces.completar(direccion)
+                comprobando = completa != null
+                comprobacion = completa?.let {
+                    alcance.async {
+                        delay(ESPERA_COMPROBAR_MS)
+                        ComprobarDireccion.comprobar(it, comprobar).also { resultado ->
+                            vistaPrevia = (resultado.comprobacion as? Comprobacion.Carga)?.metadatos
+                            comprobando = false
                         }
+                    }
+                }
             }
     }
 
@@ -147,19 +154,28 @@ fun PantallaAnadir(
     }
 
     fun guardar() {
-        if (!urlValida || guardando) return
+        val completa = escrita ?: return
+        if (guardando) return
         guardando = true
         val enMarcha = comprobacion
         alcance.launch {
-            // Lo que se sepa de la página ahora. Si la comprobación sigue en marcha, un respiro
-            // corto y nada más: un sitio que no contesta tarda diez segundos en rendirse, y dejar
-            // la pantalla clavada sin decir nada es justo lo que no puede pasar.
-            val metadatos =
-                vistaPrevia
-                    ?: enMarcha?.let {
-                        withTimeoutOrNull(ESPERA_MAXIMA_AL_GUARDAR_MS) { it.await() }
-                    }
-            alGuardar(urlLimpia, borrador.etiquetas, metadatos)
+            // Para saber si carga hay que esperar a la comprobación. Si sigue en marcha se dice,
+            // porque una pantalla clavada sin decir nada es justo lo que no puede pasar; y se
+            // espera con un límite: pasado, se guarda como si no hubiera red.
+            if (enMarcha?.isCompleted == false) anuncios.informativo(Textos.comprobando)
+            val resultado = enMarcha?.let {
+                withTimeoutOrNull(ESPERA_MAXIMA_AL_GUARDAR_MS) { it.await() }
+            }
+            when (val sabido = resultado?.comprobacion) {
+                Comprobacion.NoCarga -> {
+                    guardando = false
+                    noCarga = resultado
+                }
+                is Comprobacion.Carga ->
+                    alGuardar(resultado.direccion, borrador.etiquetas, sabido.metadatos)
+                Comprobacion.SinComprobar,
+                null -> alGuardar(completa.direccion, borrador.etiquetas, null)
+            }
         }
     }
 
@@ -242,6 +258,34 @@ fun PantallaAnadir(
             if (yaGuardado != null) Text(Textos.enlaceRepetido)
         }
     }
+
+    noCarga?.let { comprobada ->
+        fun cancelar() {
+            noCarga = null
+            // De vuelta al campo, que es donde está lo que haya que corregir.
+            alcance.launch {
+                delay(ESPERA_MS)
+                movedor.llevarA(ETIQUETA_CAMPO_URL)
+            }
+        }
+        AlertDialog(
+            onDismissRequest = ::cancelar,
+            title = { TituloDeDialogo(Textos.tituloNoCarga) },
+            text = { Text(Textos.noCarga(urlLimpia)) },
+            confirmButton = {
+                TextButton(
+                    onClick = {
+                        noCarga = null
+                        guardando = true
+                        alGuardar(comprobada.direccion, borrador.etiquetas, null)
+                    }
+                ) {
+                    Text(Textos.guardarIgualmente)
+                }
+            },
+            dismissButton = { TextButton(onClick = ::cancelar) { Text(Textos.cancelar) } },
+        )
+    }
 }
 
 const val ETIQUETA_CAMPO_URL = "campo-url"
@@ -249,4 +293,8 @@ const val ETIQUETA_CAMPO_URL = "campo-url"
 private const val ESPERA_MS = 300L
 private const val ESPERA_AVISO_COPIADO_MS = 900L
 private const val ESPERA_COMPROBAR_MS = 500L
-private const val ESPERA_MAXIMA_AL_GUARDAR_MS = 2_000L
+/**
+ * Lo que tarda en rendirse una página que no contesta, más la alternativa con http://. Antes eran
+ * dos segundos, cuando la comprobación solo daba el título y se podía guardar sin él.
+ */
+private const val ESPERA_MAXIMA_AL_GUARDAR_MS = 12_000L

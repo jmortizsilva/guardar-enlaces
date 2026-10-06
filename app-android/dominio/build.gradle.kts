@@ -26,4 +26,6 @@ dependencies {
     signature(variantOf(libs.firmas.android.minimo) { artifactType("signature") })
     implementation(libs.serialization.json)
     testImplementation(libs.kotlin.test)
+    // Solo para lanzar desde las pruebas lo que es `suspend`; el dominio no depende de ellas.
+    testImplementation(libs.coroutines.core)
 }

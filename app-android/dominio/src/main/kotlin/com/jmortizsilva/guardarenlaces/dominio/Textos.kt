@@ -126,10 +126,26 @@ object Textos {
 
     const val anadirEnlaceTitulo = "Añadir enlace"
     const val campoUrl = "URL del enlace"
-    const val marcadorUrl = "https://…"
+    /** Sin `https://`: no hace falta escribirlo (ver `ANADIR.md`). */
+    const val marcadorUrl = "ejemplo.com"
     const val comprobando = "Comprobando…"
     const val actualizar = "Actualizar"
-    const val urlNoValida = "Escribe una dirección que empiece por http:// o https://"
+    const val urlNoValida = "Escribe una dirección, como ejemplo.com"
+
+    // Cuando la dirección no carga
+
+    const val tituloNoCarga = "No se ha podido abrir la página"
+
+    /**
+     * Con la dirección tal como se escribió, sin el `https://` que haya puesto la app: es la que se
+     * reconoce de oído. Se dice por qué puede pasar porque hay páginas que abren en el navegador y
+     * rechazan las comprobaciones automáticas, y para eso está Guardar igualmente.
+     */
+    fun noCarga(escrita: String) =
+        "$escrita no ha respondido. Puede que la dirección esté mal escrita, o que la página no " +
+            "deje comprobarla."
+
+    const val guardarIgualmente = "Guardar igualmente"
 
     /**
      * Se dice en cuanto se detecta, no al guardar: enterarte de que estaba repetido cuando ya lo

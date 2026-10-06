@@ -1,13 +1,18 @@
 package com.jmortizsilva.guardarenlaces
 
 import androidx.compose.runtime.CompositionLocalProvider
+import androidx.compose.ui.semantics.SemanticsProperties
+import androidx.compose.ui.test.SemanticsMatcher
+import androidx.compose.ui.test.assert
 import androidx.compose.ui.test.assertIsEnabled
 import androidx.compose.ui.test.assertIsNotEnabled
 import androidx.compose.ui.test.junit4.v2.createComposeRule
+import androidx.compose.ui.test.onAllNodesWithText
 import androidx.compose.ui.test.onNodeWithContentDescription
 import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.performClick
 import androidx.compose.ui.test.performTextInput
+import com.jmortizsilva.guardarenlaces.dominio.Comprobacion
 import com.jmortizsilva.guardarenlaces.dominio.Elemento
 import com.jmortizsilva.guardarenlaces.dominio.MetadatosExtraidos
 import com.jmortizsilva.guardarenlaces.dominio.Textos
@@ -31,7 +36,7 @@ class PruebasPantallaAnadir {
     private fun mostrar(
         copiado: Copiado = Copiado.Nada,
         portapapeles: String? = null,
-        comprobar: suspend (String) -> MetadatosExtraidos? = { null },
+        comprobar: suspend (String) -> Comprobacion = { Comprobacion.SinComprobar },
     ) {
         compose.setContent {
             CompositionLocalProvider(
@@ -82,7 +87,7 @@ class PruebasPantallaAnadir {
 
     @Test
     fun con_la_comprobacion_hecha_se_guarda_con_su_titulo() {
-        mostrar(comprobar = { MetadatosExtraidos(titulo = "Un artículo") })
+        mostrar(comprobar = { Comprobacion.Carga(MetadatosExtraidos(titulo = "Un artículo")) })
 
         compose.onNodeWithText(Textos.campoUrl).performTextInput("https://ejemplo.com/a")
         esperar(1_000)
@@ -96,7 +101,7 @@ class PruebasPantallaAnadir {
     }
 
     @Test
-    fun si_la_pagina_no_contesta_guarda_igual_a_los_dos_segundos_sin_titulo() {
+    fun si_la_pagina_no_contesta_lo_dice_y_al_rato_guarda_sin_titulo() {
         mostrar(comprobar = { awaitCancellation() })
 
         compose.onNodeWithText(Textos.campoUrl).performTextInput("https://lenta.com")
@@ -105,10 +110,90 @@ class PruebasPantallaAnadir {
         compose.onNodeWithText(Textos.guardar).performClick()
         esperar(1_000)
         assertNull(guardado)
-        esperar(1_500)
+        // La espera no puede ser en silencio.
+        assertEquals(Textos.comprobando, anuncios.actual.value?.texto)
+        esperar(12_000)
 
         assertEquals("https://lenta.com", guardado?.first)
         assertNull(guardado?.third)
+    }
+
+    @Test
+    fun sin_escribir_https_se_pone_al_guardar() {
+        mostrar()
+
+        compose.onNodeWithText(Textos.campoUrl).performTextInput("ejemplo.com/a")
+        esperar(1_000)
+        compose.onNodeWithText(Textos.urlNoValida).assertDoesNotExist()
+        compose.onNodeWithText(Textos.guardar).performClick()
+        esperar(100)
+
+        assertEquals("https://ejemplo.com/a", guardado?.first)
+    }
+
+    @Test
+    fun si_no_carga_con_https_y_si_con_http_se_guarda_la_de_http() {
+        mostrar(
+            comprobar = { url ->
+                if (url.startsWith("http://")) Comprobacion.Carga(null) else Comprobacion.NoCarga
+            }
+        )
+
+        compose.onNodeWithText(Textos.campoUrl).performTextInput("viejo.es")
+        esperar(1_000)
+        compose.onNodeWithText(Textos.guardar).performClick()
+        esperar(100)
+
+        assertEquals("http://viejo.es", guardado?.first)
+    }
+
+    @Test
+    fun si_no_carga_pregunta_con_el_titulo_como_cabecera_y_la_direccion_escrita() {
+        mostrar(comprobar = { Comprobacion.NoCarga })
+
+        compose.onNodeWithText(Textos.campoUrl).performTextInput("noexiste.es")
+        esperar(1_000)
+        compose.onNodeWithText(Textos.guardar).performClick()
+        esperar(100)
+
+        assertNull(guardado)
+        compose
+            .onNodeWithText(Textos.tituloNoCarga)
+            .assert(SemanticsMatcher.keyIsDefined(SemanticsProperties.Heading))
+        compose.onNodeWithText(Textos.noCarga("noexiste.es")).assertExists()
+    }
+
+    @Test
+    fun guardar_igualmente_guarda_la_de_https_sin_titulo() {
+        mostrar(comprobar = { Comprobacion.NoCarga })
+
+        compose.onNodeWithText(Textos.campoUrl).performTextInput("noexiste.es")
+        esperar(1_000)
+        compose.onNodeWithText(Textos.guardar).performClick()
+        esperar(100)
+        compose.onNodeWithText(Textos.guardarIgualmente).performClick()
+        esperar(100)
+
+        assertEquals("https://noexiste.es", guardado?.first)
+        assertNull(guardado?.third)
+    }
+
+    @Test
+    fun cancelar_no_guarda_y_devuelve_el_cursor_al_campo() {
+        mostrar(comprobar = { Comprobacion.NoCarga })
+
+        compose.onNodeWithText(Textos.campoUrl).performTextInput("noexiste.es")
+        esperar(1_000)
+        cursor.clear()
+        compose.onNodeWithText(Textos.guardar).performClick()
+        esperar(100)
+        // Dos «Cancelar»: el de la barra y el del diálogo, que es el último.
+        compose.onAllNodesWithText(Textos.cancelar)[1].performClick()
+        esperar(1_000)
+
+        assertNull(guardado)
+        assertEquals(ETIQUETA_CAMPO_URL, cursor.last())
+        compose.onNodeWithText(Textos.guardar).assertIsEnabled()
     }
 
     @Test

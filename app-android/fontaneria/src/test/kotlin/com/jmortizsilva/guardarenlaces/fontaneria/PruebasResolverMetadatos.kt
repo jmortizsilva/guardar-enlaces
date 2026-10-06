@@ -1,11 +1,11 @@
 package com.jmortizsilva.guardarenlaces.fontaneria
 
+import com.jmortizsilva.guardarenlaces.dominio.Comprobacion
 import com.jmortizsilva.guardarenlaces.dominio.TipoElemento
 import kotlin.test.AfterTest
 import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertFalse
-import kotlin.test.assertNull
 import kotlin.test.assertTrue
 import kotlinx.coroutines.runBlocking
 
@@ -36,7 +36,7 @@ class PruebasResolverMetadatos {
                    "tipo": "articulo"}"""
             )
 
-        val metadatos = resolvedor.resolver("https://a.com")
+        val metadatos = resolvedor.metadatos("https://a.com")
 
         assertEquals("Lo dijo el servidor", metadatos?.titulo)
         assertEquals(TipoElemento.Articulo, metadatos?.tipo)
@@ -51,7 +51,7 @@ class PruebasResolverMetadatos {
                 "<html><head><title>Lo leyó el teléfono</title></head></html>"
             )
 
-        val metadatos = resolvedor.resolver("https://a.com/articulo")
+        val metadatos = resolvedor.metadatos("https://a.com/articulo")
 
         assertEquals("Lo leyó el teléfono", metadatos?.titulo)
         // Nunca pasa por el servidor: sin cuenta no hay a quién preguntar.
@@ -67,7 +67,7 @@ class PruebasResolverMetadatos {
                 """{"title": "Un vídeo", "thumbnail_url": "https://i.ytimg.com/a.jpg"}"""
             )
 
-        val metadatos = resolvedor.resolver("https://youtu.be/abc123")
+        val metadatos = resolvedor.metadatos("https://youtu.be/abc123")
 
         assertEquals("Un vídeo", metadatos?.titulo)
         assertEquals(TipoElemento.Video, metadatos?.tipo)
@@ -83,7 +83,7 @@ class PruebasResolverMetadatos {
             else ServidorFalso.Respuesta.json("<title>La página del vídeo</title>")
         }
 
-        assertEquals("La página del vídeo", resolvedor.resolver("https://youtu.be/abc123")?.titulo)
+        assertEquals("La página del vídeo", resolvedor.metadatos("https://youtu.be/abc123")?.titulo)
     }
 
     @Test
@@ -91,8 +91,8 @@ class PruebasResolverMetadatos {
         val resolvedor = resolvedor(conCuenta = false)
         servidor.fallarLaConexion = true
 
-        // Guardar el enlace no puede depender de esto, así que aquí se devuelve que no se sabe.
-        assertNull(resolvedor.resolver("https://a.com"))
+        // Sin cuenta, un fallo de conexión con red es que la página no responde.
+        assertEquals(Comprobacion.NoCarga, resolvedor.comprobar("https://a.com"))
     }
 
     @Test
@@ -100,7 +100,7 @@ class PruebasResolverMetadatos {
         val resolvedor = resolvedor(conCuenta = false)
         servidor.respuesta = ServidorFalso.Respuesta(403, "<html>no autorizado</html>")
 
-        assertNull(resolvedor.resolver("https://a.com"))
+        assertEquals(Comprobacion.NoCarga, resolvedor.comprobar("https://a.com"))
     }
 
     @Test
@@ -112,7 +112,7 @@ class PruebasResolverMetadatos {
                     "<title>Cabecera</title>" + "x".repeat(3 * 1024 * 1024)
                 )
 
-            assertEquals("Cabecera", resolvedor.resolver("https://a.com")?.titulo)
+            assertEquals("Cabecera", resolvedor.metadatos("https://a.com")?.titulo)
         }
 
     @Test
@@ -120,6 +120,44 @@ class PruebasResolverMetadatos {
         val resolvedor = resolvedor(conCuenta = true)
         servidor.fallarLaConexion = true
 
-        assertNull(resolvedor.resolver("https://a.com"))
+        assertEquals(Comprobacion.SinComprobar, resolvedor.comprobar("https://a.com"))
+    }
+
+    @Test
+    fun `con cuenta, si el servidor dice que no pudo descargarla, no carga`() = runBlocking {
+        val resolvedor = resolvedor(conCuenta = true)
+        servidor.respuesta =
+            ServidorFalso.Respuesta(502, """{"error": "no se pudo obtener la vista previa"}""")
+
+        assertEquals(Comprobacion.NoCarga, resolvedor.comprobar("https://a.com"))
+    }
+
+    @Test
+    fun `con cuenta, un fallo del propio servidor no dice nada de la pagina`() = runBlocking {
+        val resolvedor = resolvedor(conCuenta = true)
+        servidor.respuesta = ServidorFalso.Respuesta(500, """{"error": "algo"}""")
+
+        assertEquals(Comprobacion.SinComprobar, resolvedor.comprobar("https://a.com"))
+    }
+
+    @Test
+    fun `sin cuenta y sin red no se intenta, y no se sabe`() = runBlocking {
+        val sesion = Sesion(cliente, CredencialesEnMemoria(null))
+        val resolvedor = ResolverMetadatos(cliente, sesion, servidor.http, hayRed = { false })
+        servidor.respuesta = ServidorFalso.Respuesta.json("<title>No debería verse</title>")
+
+        assertEquals(Comprobacion.SinComprobar, resolvedor.comprobar("https://a.com"))
+    }
+
+    @Test
+    fun `una pagina sin titulo tambien carga`() = runBlocking {
+        val resolvedor = resolvedor(conCuenta = false)
+        servidor.respuesta = ServidorFalso.Respuesta.json("<html><body>hola</body></html>")
+
+        assertTrue(resolvedor.comprobar("https://a.com") is Comprobacion.Carga)
     }
 }
+
+/** Los metadatos, si la página cargó. Para las pruebas que solo miran qué se sacó de ella. */
+private suspend fun ResolverMetadatos.metadatos(url: String) =
+    (comprobar(url) as? Comprobacion.Carga)?.metadatos
