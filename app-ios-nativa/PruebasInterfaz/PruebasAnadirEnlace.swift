@@ -25,7 +25,7 @@ final class PruebasAnadirEnlace: XCTestCase {
         campoUrl.typeText("esto no es una url")
 
         XCTAssertTrue(
-            app.staticTexts["Escribe una dirección que empiece por http:// o https://"]
+            app.staticTexts["Escribe una dirección, como ejemplo.com"]
                 .waitForExistence(timeout: 3)
         )
         XCTAssertFalse(app.buttons["Guardar"].isEnabled)
@@ -45,6 +45,21 @@ final class PruebasAnadirEnlace: XCTestCase {
         // guarda con la dirección por título, pero se guarda.
         let fila = app.buttons
             .matching(NSPredicate(format: "label BEGINSWITH %@", "https://nuevo.invalid/articulo"))
+            .firstMatch
+        XCTAssertTrue(fila.waitForExistence(timeout: 15))
+    }
+
+    func testSinEscribirHttpsSeGuardaConHttpsDelante() {
+        campoUrl.tap()
+        campoUrl.typeText("nuevo.invalid/sin-esquema")
+
+        XCTAssertTrue(app.buttons["Guardar"].isEnabled)
+        app.buttons["Guardar"].tap()
+
+        let fila = app.buttons
+            .matching(
+                NSPredicate(format: "label BEGINSWITH %@", "https://nuevo.invalid/sin-esquema")
+            )
             .firstMatch
         XCTAssertTrue(fila.waitForExistence(timeout: 15))
     }

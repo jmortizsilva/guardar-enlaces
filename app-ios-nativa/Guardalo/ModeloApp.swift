@@ -76,12 +76,14 @@ final class ModeloApp {
         sincronizador = Sincronizador(almacen: almacen, cliente: cliente, sesion: sesion)
         // Sin red: las pruebas de interfaz no pueden depender de que
         // swift.org conteste, ni ponerse a descargar páginas de verdad cada
-        // vez que se ejecutan. Con este tiempo de espera, cualquier petición
-        // falla al instante y la comprobación siempre devuelve «no se sabe»,
-        // que es justo el camino que interesa ejercitar.
+        // vez que se ejecutan. Cualquier petición falla al instante como sin
+        // conexión, y la comprobación siempre devuelve «no se sabe», que es
+        // justo el camino que interesa ejercitar. Antes se hacía con un
+        // tiempo de espera de un milisegundo, pero un tiempo agotado cuenta
+        // como que la página no carga, y eso saca la pregunta de Guardar
+        // igualmente.
         let sinRed = URLSessionConfiguration.ephemeral
-        sinRed.timeoutIntervalForRequest = 0.001
-        sinRed.timeoutIntervalForResource = 0.001
+        sinRed.protocolClasses = [SinConexion.self]
         resolvedor = ResolverMetadatos(
             cliente: cliente,
             sesion: sesion,
@@ -305,10 +307,10 @@ final class ModeloApp {
         Duplicados.buscar(en: elementos, url: url)
     }
 
-    /// Título y descripción de una URL. Nunca lanza: guardar el enlace no
-    /// puede depender de que esto salga bien.
-    func comprobar(url: String) async -> MetadatosExtraidos? {
-        await resolvedor.resolver(url: url)
+    /// Si la página carga, y su título y descripción. Nunca lanza: guardar
+    /// el enlace no puede depender de que esto salga bien.
+    func comprobar(url: String) async -> Comprobacion {
+        await resolvedor.comprobar(url: url)
     }
 
     /// Guarda la URL, o actualiza el enlace que ya la tenía.
@@ -464,4 +466,15 @@ final class ModeloApp {
         try await sincronizador.sincronizar()
         refrescar()
     }
+}
+
+/// Para las pruebas de interfaz: toda petición falla como si el teléfono no
+/// tuviera conexión.
+private final class SinConexion: URLProtocol {
+    override class func canInit(with request: URLRequest) -> Bool { true }
+    override class func canonicalRequest(for request: URLRequest) -> URLRequest { request }
+    override func startLoading() {
+        client?.urlProtocol(self, didFailWithError: URLError(.notConnectedToInternet))
+    }
+    override func stopLoading() {}
 }

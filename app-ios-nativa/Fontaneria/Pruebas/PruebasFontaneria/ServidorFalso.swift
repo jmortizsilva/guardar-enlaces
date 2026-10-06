@@ -21,6 +21,7 @@ final class ServidorFalso: URLProtocol {
         private var _manejador: (@Sendable (URLRequest) -> Respuesta)?
         private var _rutasPedidas: [String] = []
         private var _fallarLaConexion = false
+        private var _sitioInexistente = false
         private var _ultimaPeticion: URLRequest?
         private var _ultimoCuerpo = Data()
 
@@ -43,6 +44,12 @@ final class ServidorFalso: URLProtocol {
         var fallarLaConexion: Bool {
             get { cerrojo.withLock { _fallarLaConexion } }
             set { cerrojo.withLock { _fallarLaConexion = newValue } }
+        }
+
+        /// Como un dominio que no existe: hay red, pero el nombre no se encuentra.
+        var sitioInexistente: Bool {
+            get { cerrojo.withLock { _sitioInexistente } }
+            set { cerrojo.withLock { _sitioInexistente = newValue } }
         }
 
         var ultimaPeticion: URLRequest? { cerrojo.withLock { _ultimaPeticion } }
@@ -105,6 +112,10 @@ final class ServidorFalso: URLProtocol {
 
         if buzon.fallarLaConexion {
             client?.urlProtocol(self, didFailWithError: URLError(.notConnectedToInternet))
+            return
+        }
+        if buzon.sitioInexistente {
+            client?.urlProtocol(self, didFailWithError: URLError(.cannotFindHost))
             return
         }
 

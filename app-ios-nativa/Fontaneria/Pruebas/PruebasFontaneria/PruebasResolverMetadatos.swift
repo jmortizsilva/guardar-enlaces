@@ -88,4 +88,63 @@ struct PruebasResolverMetadatos {
 
         #expect(await resolvedor.resolver(url: "https://a.com") == nil)
     }
+
+    @Test("sin cuenta y sin red no se sabe si carga")
+    func sinCuentaSinRed() async {
+        let resolvedor = await resolvedor(conSesionIniciada: false)
+        buzon.fallarLaConexion = true
+
+        #expect(await resolvedor.comprobar(url: "https://a.com") == .sinComprobar)
+    }
+
+    @Test("sin cuenta, un dominio que no existe no carga")
+    func sinCuentaDominioInexistente() async {
+        let resolvedor = await resolvedor(conSesionIniciada: false)
+        buzon.sitioInexistente = true
+
+        #expect(await resolvedor.comprobar(url: "https://noexiste.es") == .noCarga)
+    }
+
+    @Test("sin cuenta, una página que responde con error no carga")
+    func sinCuentaError() async {
+        let resolvedor = await resolvedor(conSesionIniciada: false)
+        buzon.respuesta = .json("<html>no está</html>", codigo: 404)
+
+        #expect(await resolvedor.comprobar(url: "https://a.com") == .noCarga)
+    }
+
+    @Test("una página sin título también carga")
+    func sinTitulo() async {
+        let resolvedor = await resolvedor(conSesionIniciada: false)
+        buzon.respuesta = .json("<html><body>hola</body></html>")
+
+        if case .carga = await resolvedor.comprobar(url: "https://a.com") {
+        } else {
+            Issue.record("tendría que cargar")
+        }
+    }
+
+    @Test("con cuenta, si el servidor dice que no pudo descargarla, no carga")
+    func conCuentaNoCarga() async {
+        let resolvedor = await resolvedor(conSesionIniciada: true)
+        buzon.respuesta = .json(#"{"error": "no se pudo obtener la vista previa"}"#, codigo: 502)
+
+        #expect(await resolvedor.comprobar(url: "https://a.com") == .noCarga)
+    }
+
+    @Test("con cuenta, un fallo del propio servidor no dice nada de la página")
+    func conCuentaFalloDelServidor() async {
+        let resolvedor = await resolvedor(conSesionIniciada: true)
+        buzon.respuesta = .json(#"{"error": "algo"}"#, codigo: 500)
+
+        #expect(await resolvedor.comprobar(url: "https://a.com") == .sinComprobar)
+    }
+
+    @Test("con cuenta y sin red no se sabe si carga")
+    func conCuentaSinRed() async {
+        let resolvedor = await resolvedor(conSesionIniciada: true)
+        buzon.fallarLaConexion = true
+
+        #expect(await resolvedor.comprobar(url: "https://a.com") == .sinComprobar)
+    }
 }

@@ -124,11 +124,26 @@ extension Textos {
 
     public static let anadirEnlaceTitulo = "Añadir enlace"
     public static let campoUrl = "URL del enlace"
-    public static let marcadorUrl = "https://…"
+    /// Sin `https://`: no hace falta escribirlo (ver `ANADIR.md`).
+    public static let marcadorUrl = "ejemplo.com"
     public static let comprobando = "Comprobando…"
     public static let actualizar = "Actualizar"
 
-    public static let urlNoValida = "Escribe una dirección que empiece por http:// o https://"
+    public static let urlNoValida = "Escribe una dirección, como ejemplo.com"
+
+    // MARK: Cuando la dirección no carga
+
+    public static let tituloNoCarga = "No se ha podido abrir la página"
+
+    /// Con la dirección tal como se escribió, sin el `https://` que haya
+    /// puesto la app: es la que se reconoce de oído. Se dice por qué puede
+    /// pasar porque hay páginas que abren en el navegador y rechazan las
+    /// comprobaciones automáticas, y para eso está Guardar igualmente.
+    public static func noCarga(_ escrita: String) -> String {
+        "\(escrita) no ha respondido. Puede que la dirección esté mal escrita, o que la página no deje comprobarla."
+    }
+
+    public static let guardarIgualmente = "Guardar igualmente"
 
     /// Se dice en cuanto se detecta, no al guardar: enterarte de que estaba
     /// repetido cuando ya lo has guardado no sirve de nada.

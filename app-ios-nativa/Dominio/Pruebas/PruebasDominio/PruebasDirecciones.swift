@@ -39,4 +39,12 @@ struct PruebasDirecciones {
             }
         }
     }
+
+    @Test("la pregunta cuando no carga dice la dirección como se escribió")
+    func textoNoCarga() {
+        #expect(
+            Textos.noCarga("noexiste.es")
+                == "noexiste.es no ha respondido. Puede que la dirección esté mal escrita, o que la página no deje comprobarla."
+        )
+    }
 }

@@ -22,31 +22,51 @@ public struct ResolverMetadatos: Sendable {
         self.sesionHttp = sesionHttp
     }
 
-    /// Devuelve `nil` si no se pudo averiguar nada. No lanza a propósito:
-    /// guardar el enlace nunca depende de que esto salga bien.
+    /// Título y descripción, o `nil` si no se pudo averiguar nada. Para
+    /// compartir desde otra app, donde no se pregunta si la página carga.
     public func resolver(url: String) async -> MetadatosExtraidos? {
+        await comprobar(url: url).metadatos
+    }
+
+    /// Si la página carga y, de paso, su título y su descripción. No lanza a
+    /// propósito: guardar el enlace nunca depende de esto. Ver «Comprobar que
+    /// carga» en `ANADIR.md`.
+    public func comprobar(url: String) async -> Comprobacion {
         if await sesion.autenticado {
             return await enElServidor(url: url)
         }
         return await enElTelefono(url: url)
     }
 
-    private func enElServidor(url: String) async -> MetadatosExtraidos? {
-        try? await sesion.conReintento { token in
-            try await cliente.metadatos(url: url, tokenAcceso: token).comoMetadatos
+    private func enElServidor(url: String) async -> Comprobacion {
+        do {
+            return .carga(
+                try await sesion.conReintento { token in
+                    try await cliente.metadatos(url: url, tokenAcceso: token).comoMetadatos
+                }
+            )
+        } catch let error as ErrorApi where error.codigo == 400 || error.codigo == 502 {
+            // El servidor sí contestó: la dirección no vale (400) o la página
+            // no cargó (502).
+            return .noCarga
+        } catch {
+            // Sin respuesta del servidor, o un fallo suyo: no dice nada de la
+            // página.
+            return .sinComprobar
         }
     }
 
-    private func enElTelefono(url: String) async -> MetadatosExtraidos? {
+    private func enElTelefono(url: String) async -> Comprobacion {
         // Mismo orden que el servidor: YouTube por su oEmbed, que da título y
         // miniatura más fiables que raspar og:*, y si falla, la página entera.
         if Youtube.esUrlDeYoutube(url), let oembed = await porOEmbedDeYoutube(url: url) {
-            return oembed
+            return .carga(oembed)
         }
-        guard let html = await descargar(url: url) else {
-            return nil
+        switch await descargar(url: url) {
+        case .pagina(let html): return .carga(Metadatos.extraer(de: html))
+        case .noCarga: return .noCarga
+        case .sinRed: return .sinComprobar
         }
-        return Metadatos.extraer(de: html)
     }
 
     private func porOEmbedDeYoutube(url: String) async -> MetadatosExtraidos? {
@@ -63,14 +83,35 @@ public struct ResolverMetadatos: Sendable {
     /// Sin identificarse como nada en particular: algunos sitios responden un
     /// HTML distinto, o un muro, a lo que parece un robot, y aquí interesa
     /// justo lo que vería el navegador.
-    private func descargar(url: String) async -> String? {
-        guard let direccion = URL(string: url),
-            let (datos, respuesta) = try? await sesionHttp.data(from: direccion),
-            let http = respuesta as? HTTPURLResponse,
-            (200...299).contains(http.statusCode)
-        else {
-            return nil
+    private func descargar(url: String) async -> Descarga {
+        guard let direccion = URL(string: url) else {
+            return .noCarga
         }
-        return String(data: datos, encoding: .utf8)
+        do {
+            let (datos, respuesta) = try await sesionHttp.data(from: direccion)
+            guard let http = respuesta as? HTTPURLResponse, (200...299).contains(http.statusCode)
+            else {
+                return .noCarga
+            }
+            return .pagina(String(decoding: datos, as: UTF8.self))
+        } catch let error as URLError where Self.sinRed.contains(error.code) {
+            return .sinRed
+        } catch {
+            return .noCarga
+        }
     }
+
+    private enum Descarga {
+        case pagina(String)
+        case noCarga
+        case sinRed
+    }
+
+    /// Los errores que dicen que es el teléfono el que no tiene conexión, y no
+    /// la página la que falla. A diferencia de Android, aquí el sistema los
+    /// distingue de un dominio que no existe (`cannotFindHost`).
+    private static let sinRed: Set<URLError.Code> = [
+        .notConnectedToInternet, .networkConnectionLost, .dataNotAllowed,
+        .internationalRoamingOff,
+    ]
 }
