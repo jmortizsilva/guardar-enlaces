@@ -151,7 +151,7 @@ fun PantallaAjustes(
         }
         AlertDialog(
             onDismissRequest = {},
-            title = { Text(Textos.tituloEnlacesEnElTelefono) },
+            title = { TituloDeDialogo(Textos.tituloEnlacesEnElTelefono) },
             text = { Text(Textos.preguntaImportar(enlaces.cuantos, enlaces.deOtraCuenta)) },
             confirmButton = {
                 TextButton(onClick = { responder(true) }) { Text(Textos.anadirlos) }

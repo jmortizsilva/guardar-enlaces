@@ -146,7 +146,10 @@ class PruebasPantallaLista {
 
         fila(enlaces[0]).performCustomAction(Textos.eliminar)
 
-        compose.onNodeWithText(Textos.preguntaEliminar("Primero")).assertExists()
+        // El título de un diálogo es una cabecera, como el de una pantalla.
+        compose
+            .onNodeWithText(Textos.preguntaEliminar("Primero"))
+            .assert(SemanticsMatcher.keyIsDefined(SemanticsProperties.Heading))
         compose.onNodeWithText(Textos.consecuenciaEliminar(conCuenta = true)).assertExists()
     }
 

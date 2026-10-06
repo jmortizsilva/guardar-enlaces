@@ -123,6 +123,9 @@ class PruebasPantallaDetalle {
 
         compose.onNodeWithText(Textos.eliminar).performScrollTo().performClick()
         compose.onNodeWithText(Textos.consecuenciaEliminar(conCuenta = true)).assertExists()
+        compose
+            .onNodeWithText(Textos.preguntaEliminar("Las mejores alternativas a Pocket"))
+            .assert(SemanticsMatcher.keyIsDefined(SemanticsProperties.Heading))
         assertEquals(emptyList<String>(), pedidos)
 
         // Dos «Eliminar» en pantalla: el del detalle y el del diálogo, que es el último.

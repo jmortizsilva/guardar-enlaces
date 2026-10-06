@@ -88,8 +88,10 @@ pero eso es una indicación, y quien las tiene desactivadas oye solo
 
 ## El título de un diálogo, como cabecera
 
-El de Renombrar no lo era, y hay que poder saltar a él como al de una
-pantalla. Se marca con `heading()`. Oído el 2026-10-06.
+`AlertDialog` no lo marca, y hay que poder saltar a él como al de una
+pantalla. Se vio en Renombrar el 2026-10-06, y desde entonces todos los
+títulos de diálogo van con `TituloDeDialogo`, que lo marca con `heading()`.
+También cuando el título es la propia pregunta, como al eliminar un enlace.
 
 ## Lo que funcionó a la primera
 

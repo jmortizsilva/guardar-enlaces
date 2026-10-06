@@ -224,7 +224,7 @@ fun PantallaLista(
                 aEliminar = null
                 destino = DestinoDelFoco(elemento.id, anuncio = null)
             },
-            title = { Text(Textos.preguntaEliminar(titulo)) },
+            title = { TituloDeDialogo(Textos.preguntaEliminar(titulo)) },
             text = { Text(Textos.consecuenciaEliminar(conCuenta)) },
             confirmButton = {
                 TextButton(

@@ -38,7 +38,6 @@ import androidx.compose.ui.semantics.CustomAccessibilityAction
 import androidx.compose.ui.semantics.clearAndSetSemantics
 import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.customActions
-import androidx.compose.ui.semantics.heading
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.text.input.KeyboardCapitalization
@@ -151,7 +150,7 @@ fun PantallaGestionEtiquetas(
         }
         AlertDialog(
             onDismissRequest = { cerrar(null) },
-            title = { Text(Textos.renombrar, Modifier.semantics { heading() }) },
+            title = { TituloDeDialogo(Textos.renombrar) },
             text = {
                 OutlinedTextField(
                     state = nombre,

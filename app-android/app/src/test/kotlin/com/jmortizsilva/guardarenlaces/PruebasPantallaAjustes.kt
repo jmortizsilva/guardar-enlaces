@@ -128,6 +128,9 @@ class PruebasPantallaAjustes {
         compose.onNodeWithText(Textos.entrarConGoogle).performClick()
         compose.waitForIdle()
         compose.onNodeWithText(Textos.preguntaImportar(3, deOtraCuenta = false)).assertExists()
+        compose
+            .onNodeWithText(Textos.tituloEnlacesEnElTelefono)
+            .assert(SemanticsMatcher.keyIsDefined(SemanticsProperties.Heading))
         compose.onNodeWithText(Textos.anadirlos).performClick()
         compose.waitForIdle()
 

@@ -131,7 +131,7 @@ fun PantallaDetalle(
     if (confirmandoEliminar) {
         AlertDialog(
             onDismissRequest = { confirmandoEliminar = false },
-            title = { Text(Textos.preguntaEliminar(titulo)) },
+            title = { TituloDeDialogo(Textos.preguntaEliminar(titulo)) },
             text = { Text(Textos.consecuenciaEliminar(conCuenta)) },
             confirmButton = {
                 TextButton(

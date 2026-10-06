@@ -75,6 +75,15 @@ fun CursorAlTituloAlEntrar(soloSi: Boolean = true) {
     }
 }
 
+/**
+ * El título de un diálogo, como encabezado igual que el de una pantalla: hay que poder saltar a él.
+ * `AlertDialog` no lo marca por su cuenta (oído en el teléfono, 2026-10-06).
+ */
+@Composable
+fun TituloDeDialogo(texto: String) {
+    Text(texto, Modifier.semantics { heading() })
+}
+
 const val ETIQUETA_TITULO = "titulo-pantalla"
 
 private const val ESPERA_AL_ENTRAR_MS = 300L
