@@ -79,6 +79,18 @@ Desde Android 13 el sistema dice «Texto copiado» al copiar algo. Con nuestro
 «URL copiada» se oían los dos seguidos. Solo se dice el nuestro en Android 12
 o anterior, que es también lo que recomienda Google.
 
+## Una opción de menú que hace algo necesita rol de botón
+
+`DropdownMenuItem` no lleva rol. TalkBack dice «Toca dos veces para activar»,
+pero eso es una indicación, y quien las tiene desactivadas oye solo
+«Gestionar etiquetas», como si fuera texto. Se le pone `Role.Button`. Oído el
+2026-10-06.
+
+## El título de un diálogo, como cabecera
+
+El de Renombrar no lo era, y hay que poder saltar a él como al de una
+pantalla. Se marca con `heading()`. Oído el 2026-10-06.
+
 ## Lo que funcionó a la primera
 
 - Dictar en el campo de búsqueda con el micrófono del teclado: sin texto
@@ -92,3 +104,6 @@ o anterior, que es también lo que recomienda Google.
   (`toggleable` con `Role.Checkbox`).
 - La búsqueda y el filtro de la lista siguen puestos al volver del detalle.
 - El título de la pantalla se anuncia como encabezado.
+- Gestionar etiquetas: cada fila se lee de una vez con su recuento, Renombrar
+  y Eliminar salen una vez y en ese orden, y el cursor cae donde debe al
+  cerrar cada diálogo y al volver a la lista (2026-10-06).

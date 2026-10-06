@@ -171,6 +171,17 @@ class PruebasPantallaGestionEtiquetas {
     }
 
     @Test
+    fun el_titulo_del_dialogo_de_renombrar_es_una_cabecera() {
+        mostrar()
+
+        fila("ocio", 1).performCustomAction(Textos.renombrar)
+
+        compose
+            .onNode(hasText(Textos.renombrar) and !hasClickAction())
+            .assert(SemanticsMatcher.keyIsDefined(SemanticsProperties.Heading))
+    }
+
+    @Test
     fun crear_vacia_el_campo_y_dice_que_se_ha_anadido() {
         mostrar()
 

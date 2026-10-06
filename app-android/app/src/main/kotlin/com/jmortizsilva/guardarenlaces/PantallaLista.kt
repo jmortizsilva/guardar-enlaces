@@ -45,10 +45,12 @@ import androidx.compose.ui.platform.LocalSoftwareKeyboardController
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.semantics.CustomAccessibilityAction
+import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.semantics.clearAndSetSemantics
 import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.customActions
 import androidx.compose.ui.semantics.paneTitle
+import androidx.compose.ui.semantics.role
 import androidx.compose.ui.semantics.selected
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.input.ImeAction
@@ -301,12 +303,15 @@ private fun FiltroPorEtiqueta(
             }
             // En el mismo menú que en el iPhone, separado de las etiquetas por las que filtrar.
             HorizontalDivider()
+            // Rol de botón: sin él, TalkBack con las indicaciones desactivadas lo lee como texto
+            // suelto, y no hay forma de saber que hace algo (oído en el teléfono, 2026-10-06).
             DropdownMenuItem(
                 text = { Text(Textos.gestionarEtiquetas) },
                 onClick = {
                     abierto = false
                     alGestionar()
                 },
+                modifier = Modifier.semantics { role = Role.Button },
             )
         }
     }

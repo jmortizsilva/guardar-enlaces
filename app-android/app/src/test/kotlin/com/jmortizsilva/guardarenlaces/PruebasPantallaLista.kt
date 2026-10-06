@@ -1,6 +1,7 @@
 package com.jmortizsilva.guardarenlaces
 
 import androidx.compose.runtime.mutableStateListOf
+import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.semantics.SemanticsActions
 import androidx.compose.ui.semantics.SemanticsProperties
 import androidx.compose.ui.semantics.getOrNull
@@ -234,6 +235,32 @@ class PruebasPantallaLista {
         compose.onNodeWithText(Textos.filtroPorEtiqueta("ocio")).assertExists()
         fila(enlaces[0]).assertExists()
         fila(enlaces[1]).assertDoesNotExist()
+    }
+
+    @Test
+    fun gestionar_etiquetas_es_un_boton_y_abre_la_pantalla() {
+        var abierta = false
+        compose.setContent {
+            PantallaLista(
+                elementos = enlaces,
+                etiquetasDisponibles = listOf("ocio"),
+                conCuenta = false,
+                anuncios = anuncios,
+                alAbrir = {},
+                alCopiar = {},
+                alEliminar = {},
+                alGestionarEtiquetas = { abierta = true },
+            )
+        }
+
+        compose.onNodeWithText(Textos.filtroPorEtiqueta(null)).performClick()
+        // Con las indicaciones de TalkBack desactivadas, sin el rol no se sabe que hace algo.
+        compose
+            .onNodeWithText(Textos.gestionarEtiquetas)
+            .assert(SemanticsMatcher.expectValue(SemanticsProperties.Role, Role.Button))
+            .performClick()
+
+        assertEquals(true, abierta)
     }
 
     @Test
