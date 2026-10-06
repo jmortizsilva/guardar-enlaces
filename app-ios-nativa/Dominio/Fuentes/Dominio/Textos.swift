@@ -245,19 +245,29 @@ extension Textos {
     }
 
     /// Se avisa antes, porque esto toca todos los enlaces que la llevan y no
-    /// se puede deshacer.
+    /// se puede deshacer. Una etiqueta creada de antemano puede no llevarla
+    /// ninguno, y entonces no se habla de «0 enlaces».
     public static func preguntaEliminarEtiqueta(_ nombre: String, enlaces: Int) -> String {
-        let cuantos = enlaces == 1 ? "1 enlace" : "\(enlaces) enlaces"
-        return "¿Eliminar la etiqueta «\(nombre)»? Se quitará de \(cuantos) y no se puede deshacer."
+        if enlaces == 0 {
+            return "¿Eliminar la etiqueta «\(nombre)»? No la lleva ningún enlace."
+        }
+        return
+            "¿Eliminar la etiqueta «\(nombre)»? Se quitará de \(enlacesEnTexto(enlaces)) y no se puede deshacer."
     }
 
     public static func etiquetaRenombrada(de vieja: String, a nueva: String, enlaces: Int) -> String
     {
-        "Etiqueta «\(vieja)» renombrada a «\(nueva)» en \(enlaces == 1 ? "1 enlace" : "\(enlaces) enlaces")"
+        let frase = "Etiqueta «\(vieja)» renombrada a «\(nueva)»"
+        return enlaces == 0 ? frase : "\(frase) en \(enlacesEnTexto(enlaces))"
     }
 
     public static func etiquetaEliminada(_ nombre: String, enlaces: Int) -> String {
-        "Etiqueta «\(nombre)» eliminada de \(enlaces == 1 ? "1 enlace" : "\(enlaces) enlaces")"
+        let frase = "Etiqueta «\(nombre)» eliminada"
+        return enlaces == 0 ? frase : "\(frase) de \(enlacesEnTexto(enlaces))"
+    }
+
+    private static func enlacesEnTexto(_ enlaces: Int) -> String {
+        enlaces == 1 ? "1 enlace" : "\(enlaces) enlaces"
     }
 
     public static func etiquetaAnadida(_ nombre: String) -> String {

@@ -12,6 +12,7 @@ import wx
 
 from ..almacen_local import AlmacenLocal
 from ..asentar_cuenta import EnlacesEnElEquipo, asentar_cuenta, identidad_dueno
+from ..presentacion import pregunta_eliminar_etiqueta
 from .campos import ESTILO_SOLO_LECTURA, con_etiqueta
 
 
@@ -185,11 +186,9 @@ def confirmar_guardar_duplicado(titulo: str, padre: wx.Window | None = None) -> 
 def confirmar_eliminar_etiqueta(etiqueta: str, cuantos: int, padre: wx.Window | None = None) -> bool:
     """La pregunta antes de eliminar una etiqueta de TODOS los enlaces que la
     llevan, desde el gestor de etiquetas."""
-    cuenta = "1 enlace" if cuantos == 1 else f"{cuantos} enlaces"
     dialogo = wx.MessageDialog(
         padre,
-        f"¿Eliminar la etiqueta «{etiqueta}»? Se quitará de {cuenta}. "
-        "Esta acción no se puede deshacer.",
+        pregunta_eliminar_etiqueta(etiqueta, cuantos),
         "Eliminar etiqueta",
         wx.OK | wx.CANCEL | wx.CANCEL_DEFAULT | wx.ICON_QUESTION,
     )
