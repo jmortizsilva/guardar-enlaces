@@ -267,6 +267,29 @@ class PruebasPantallaLista {
     }
 
     @Test
+    fun al_llegar_con_un_aviso_lo_dice_cuando_la_lista_ya_esta() {
+        var atendida = false
+        compose.setContent {
+            PantallaLista(
+                elementos = enlaces,
+                etiquetasDisponibles = emptyList(),
+                conCuenta = true,
+                anuncios = anuncios,
+                alAbrir = {},
+                alCopiar = {},
+                alEliminar = {},
+                llegada = Llegada.Aviso(Textos.sesionIniciada),
+                alAtenderLlegada = { atendida = true },
+            )
+        }
+        compose.mainClock.advanceTimeBy(2_000)
+        compose.waitForIdle()
+
+        assertEquals(Textos.sesionIniciada, anuncios.actual.value?.texto)
+        assertEquals(true, atendida)
+    }
+
+    @Test
     fun sin_enlaces_lo_dice() {
         compose.setContent { PantallaLista(emptyList(), emptyList(), false, anuncios, {}, {}, {}) }
 

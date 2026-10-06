@@ -25,11 +25,9 @@ import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.unit.dp
 import com.jmortizsilva.guardarenlaces.ModeloApp.EstadoCuenta
-import com.jmortizsilva.guardarenlaces.dominio.EnlacesEnElTelefono
 import com.jmortizsilva.guardarenlaces.dominio.Login
 import com.jmortizsilva.guardarenlaces.dominio.Proveedor
 import com.jmortizsilva.guardarenlaces.dominio.Textos
-import kotlinx.coroutines.CompletableDeferred
 import kotlinx.coroutines.launch
 
 /**
@@ -52,7 +50,7 @@ fun PantallaAjustes(
     anuncios: Anuncios,
     alVolver: () -> Unit,
     importar: (ByteArray) -> String,
-    entrar: suspend (Proveedor, suspend (EnlacesEnElTelefono) -> Boolean) -> Login.Resultado,
+    entrar: Entrar,
     cerrarSesion: suspend () -> Unit,
 ) {
     val contexto = LocalContext.current
@@ -61,9 +59,9 @@ fun PantallaAjustes(
     // Sobrevive a girar el teléfono: el resultado ya está guardado, y perder el cuadro a mitad de
     // leerlo obligaría a repetir para enterarse.
     var resultado by rememberSaveable { mutableStateOf<String?>(null) }
-    var ocupada by remember { mutableStateOf(false) }
-    var pregunta by remember { mutableStateOf<EnlacesEnElTelefono?>(null) }
-    var respuesta by remember { mutableStateOf<CompletableDeferred<Boolean>?>(null) }
+    val entrada = rememberEntradaConCuenta(entrar)
+    var cerrando by remember { mutableStateOf(false) }
+    val ocupada = entrada.ocupada || cerrando
 
     val elegirFichero =
         rememberLauncherForActivityResult(ActivityResultContracts.OpenDocument()) { uri ->
@@ -79,16 +77,7 @@ fun PantallaAjustes(
         }
 
     fun entrarCon(proveedor: Proveedor) {
-        alcance.launch {
-            ocupada = true
-            val salida =
-                entrar(proveedor) { enlaces ->
-                    val espera = CompletableDeferred<Boolean>()
-                    respuesta = espera
-                    pregunta = enlaces
-                    espera.await()
-                }
-            ocupada = false
+        entrada.entrarCon(proveedor) { salida ->
             when (salida) {
                 // El botón que se pulsó ya no está: el cursor, al texto que dice con qué cuenta
                 // se ha entrado. No se anuncia además, o se oiría lo mismo dos veces.
@@ -118,9 +107,9 @@ fun PantallaAjustes(
                     )
                     Opcion(Textos.cerrarSesion, Textos.pistaCerrarSesion, activa = !ocupada) {
                         alcance.launch {
-                            ocupada = true
+                            cerrando = true
                             cerrarSesion()
-                            ocupada = false
+                            cerrando = false
                             movedor.llevarA(ETIQUETA_CUENTA)
                         }
                     }
@@ -142,31 +131,17 @@ fun PantallaAjustes(
         }
     }
 
-    pregunta?.let { enlaces ->
-        // Sin cancelar: hay que elegir, y las dos respuestas son definitivas.
-        fun responder(importar: Boolean) {
-            pregunta = null
-            respuesta?.complete(importar)
-            respuesta = null
-        }
-        AlertDialog(
-            onDismissRequest = {},
-            title = { TituloDeDialogo(Textos.tituloEnlacesEnElTelefono) },
-            text = { Text(Textos.preguntaImportar(enlaces.cuantos, enlaces.deOtraCuenta)) },
-            confirmButton = {
-                TextButton(onClick = { responder(true) }) { Text(Textos.anadirlos) }
-            },
-            dismissButton = {
-                TextButton(onClick = { responder(false) }) { Text(Textos.borrarlos) }
-            },
-        )
-    }
+    PreguntaEnlacesEnElTelefono(entrada)
 
     resultado?.let { CuadroResultado(it, alAceptar = { resultado = null }) }
 }
 
+/**
+ * Una opción es una sola fila con el nombre y la explicación debajo, que TalkBack lee juntos. La
+ * usan Ajustes y la bienvenida.
+ */
 @Composable
-private fun Opcion(
+fun Opcion(
     nombre: String,
     explicacion: String,
     activa: Boolean = true,

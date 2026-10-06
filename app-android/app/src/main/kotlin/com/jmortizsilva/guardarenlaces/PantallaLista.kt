@@ -123,6 +123,12 @@ fun PantallaLista(
             is Llegada.AFila -> destino = DestinoDelFoco(adonde.id, adonde.anuncio)
             is Llegada.EliminarFila ->
                 visibles.firstOrNull { it.id == adonde.id }?.let(::eliminarConCursor)
+            is Llegada.Aviso -> {
+                // Que la lista termine de aparecer: lo que ya estaba en la línea de avisos al
+                // aparecer no se dice.
+                delay(ESPERA_TRAS_CERRAR_MS)
+                anuncios.importante(adonde.texto)
+            }
             else -> return@LaunchedEffect
         }
         alAtenderLlegada()

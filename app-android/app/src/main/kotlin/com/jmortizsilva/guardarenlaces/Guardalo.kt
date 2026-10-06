@@ -28,5 +28,6 @@ class Contenedor(contexto: Context) {
     val sincronizador = Sincronizador(almacen, cliente, sesion)
     val resolvedor = ResolverMetadatos(cliente, sesion)
     val anuncios = Anuncios()
+    val preferencias = Preferencias(contexto)
     val modelo = ModeloApp(almacen, cliente, sesion, sincronizador, resolvedor, anuncios)
 }

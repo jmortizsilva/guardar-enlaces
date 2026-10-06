@@ -42,6 +42,9 @@ sealed interface Llegada {
 
     /** En el detalle o en añadir, el cursor al botón de etiquetas, y el anuncio si lo hay. */
     data class ABotonEtiquetas(val anuncio: String? = null) : Llegada
+
+    /** Solo decir algo al llegar a la lista, como al entrar con una cuenta desde la bienvenida. */
+    data class Aviso(val texto: String) : Llegada
 }
 
 /**
@@ -82,6 +85,11 @@ class Navegacion {
                     saliente is Pantalla.Etiquetas -> Llegada.AFila(saliente.id)
                     else -> null
                 }
+    }
+
+    /** Sin cambiar de pantalla: para lo que viene de fuera de la pila, como la bienvenida. */
+    fun llegarCon(nueva: Llegada) {
+        llegada = nueva
     }
 
     /** La pantalla que la recibe ya lo ha hecho. */

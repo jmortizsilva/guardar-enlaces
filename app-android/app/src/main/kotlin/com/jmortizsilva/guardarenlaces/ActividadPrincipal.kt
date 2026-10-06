@@ -18,6 +18,7 @@ import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.saveable.rememberSaveableStateHolder
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.platform.LocalContext
@@ -60,6 +61,33 @@ class ActividadPrincipal : ComponentActivity() {
         var borrador by remember { mutableStateOf(BorradorEnlace()) }
         val elementos by modelo.elementos.collectAsState()
         val etiquetas by modelo.etiquetasDisponibles.collectAsState()
+        val preferencias = contenedor.preferencias
+        // Solo al estrenar la app, y nunca con sesión: quien vuelve a entrar no necesita que le
+        // expliquen la app.
+        var enBienvenida by rememberSaveable {
+            mutableStateOf(!modelo.conCuenta && !preferencias.bienvenidaVista)
+        }
+
+        val entrar: Entrar = { proveedor, decidir ->
+            modelo.iniciarSesion(
+                proveedor,
+                pedirCodigo = { url -> iniciador.pedirCodigo(url, proveedor) },
+                decidirImportacion = decidir,
+            )
+        }
+
+        if (enBienvenida) {
+            PantallaBienvenida(
+                anuncios = modelo.anuncios,
+                entrar = entrar,
+                alTerminar = { anuncio ->
+                    preferencias.bienvenidaVista = true
+                    anuncio?.let { navegacion.llegarCon(Llegada.Aviso(it)) }
+                    enBienvenida = false
+                },
+            )
+            return
+        }
 
         BackHandler(enabled = navegacion.puedeVolver) { navegacion.volver() }
 
@@ -144,13 +172,7 @@ class ActividadPrincipal : ComponentActivity() {
                     anuncios = modelo.anuncios,
                     alVolver = { navegacion.volver() },
                     importar = modelo::importar,
-                    entrar = { proveedor, decidir ->
-                        modelo.iniciarSesion(
-                            proveedor,
-                            pedirCodigo = { url -> iniciador.pedirCodigo(url, proveedor) },
-                            decidirImportacion = decidir,
-                        )
-                    },
+                    entrar = entrar,
                     cerrarSesion = modelo::cerrarSesion,
                 )
             }

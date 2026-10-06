@@ -336,7 +336,11 @@ por su lista de textos**, que se revisa antes de escribir la pantalla.
             Oída con TalkBack el 2026-10-06; de ahí salieron el rol de botón
             de la opción del menú y la cabecera del título del diálogo. Al
             volver a la lista, el cursor que pone el sistema está bien.
-      - [ ] Añadir, el resto de Ajustes (guardado silencioso) y bienvenida.
+      - [~] Bienvenida (2026-10-06): sale al estrenar la app sin cuenta, con
+            Google antes que Apple (las dos por el navegador, y el orden de
+            Ajustes) y el gesto de atrás saliendo de la app sin darla por
+            vista. Instalada, **sin oír todavía con TalkBack**.
+      - [ ] Añadir y el resto de Ajustes (guardado silencioso).
 - [ ] **4. Compartir desde otras apps** y guardado silencioso, con el
       interruptor en Ajustes.
 - [ ] **5. Firma de publicación**, el almacén de claves fuera del repositorio
