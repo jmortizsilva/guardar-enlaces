@@ -37,5 +37,47 @@ public enum Enlaces {
             .map(String.init)
     }
 
+    /// La dirección escrita a mano en la pantalla de añadir, con `https://`
+    /// delante si no lo trae. `nil` si lo escrito no es una dirección. Las
+    /// reglas están en `ANADIR.md`, en la raíz del repositorio, y los casos
+    /// en `pruebas-compartidas/direcciones/`, que leen las tres apps.
+    ///
+    /// Solo para lo escrito a mano: lo compartido sigue pasando por
+    /// `direccionDentroDe`, que pide el esquema.
+    public static func completar(_ texto: String) -> DireccionEscrita? {
+        let limpio = texto.trimmingCharacters(in: .whitespacesAndNewlines)
+        let minusculas = limpio.lowercased()
+        for esquema in esquemas where minusculas.hasPrefix(esquema) {
+            return limpio.count > esquema.count
+                ? DireccionEscrita(direccion: limpio, alternativa: nil) : nil
+        }
+        guard pareceUnSitio(limpio) else {
+            return nil
+        }
+        return DireccionEscrita(direccion: "https://\(limpio)", alternativa: "http://\(limpio)")
+    }
+
+    private static func pareceUnSitio(_ texto: String) -> Bool {
+        guard !texto.isEmpty, !texto.contains(where: \.isWhitespace), !texto.contains("://")
+        else {
+            return false
+        }
+        let sitio = texto.prefix { !"/?#".contains($0) }
+        // Un correo con https:// delante abriría el sitio de detrás de la arroba.
+        guard !sitio.contains("@"), let punto = sitio.firstIndex(of: ".") else {
+            return false
+        }
+        return punto > sitio.startIndex && sitio.index(after: punto) < sitio.endIndex
+    }
+
     private static let esquemas = ["https://", "http://"]
+}
+
+/// Lo que sale de completar una dirección escrita a mano.
+public struct DireccionEscrita: Equatable, Sendable {
+    public let direccion: String
+    /// La misma con `http://`, para probarla si la de `https://` no carga.
+    /// Solo cuando el esquema lo ha puesto la app: si lo escribió quien la
+    /// usa, se respeta.
+    public let alternativa: String?
 }
