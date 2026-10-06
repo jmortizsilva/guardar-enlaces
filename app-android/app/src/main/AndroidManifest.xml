@@ -1,5 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
-<manifest xmlns:android="http://schemas.android.com/apk/res/android">
+<manifest xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:tools="http://schemas.android.com/tools">
 
     <!-- Para distinguir, sin cuenta, una pagina que no carga de no tener red (ANADIR.md). Es un
          permiso normal: no se pregunta al instalar. -->
@@ -12,8 +13,10 @@
         android:fullBackupContent="@xml/reglas_copia_antigua"
         android:icon="@mipmap/icono"
         android:label="Guárdalo"
+        android:localeConfig="@xml/idiomas"
         android:supportsRtl="true"
-        android:theme="@android:style/Theme.Material.Light.NoActionBar">
+        android:theme="@android:style/Theme.Material.Light.NoActionBar"
+        tools:targetApi="33">
 
         <!-- singleTask para que la vuelta del inicio de sesion por enlace llegue a esta misma
              actividad (onNewIntent) y no abra otra encima, sin el inicio de sesion en curso. -->

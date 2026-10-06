@@ -342,7 +342,12 @@ por su lista de textos**, que se revisa antes de escribir la pantalla.
             TalkBack el 2026-10-06, entrando con cuenta y con enlaces que ya
             había en el teléfono. Se decide al arrancar: cerrar la sesión no
             la hace salir hasta volver a abrir la app.
-      - [ ] Añadir y el resto de Ajustes (guardado silencioso).
+      - [x] Añadir, sin obligar a escribir `https://` y comprobando que la
+            página carga (`ANADIR.md`). Oída con TalkBack el 2026-10-06: el
+            texto del campo vacío, el aviso de dirección no válida, guardar
+            con solo el dominio, la pregunta cuando no carga con Cancelar y
+            Guardar igualmente, y en modo avión.
+      - [ ] El resto de Ajustes (guardado silencioso), con la fase 4.
 - [ ] **4. Compartir desde otras apps** y guardado silencioso, con el
       interruptor en Ajustes.
 - [ ] **5. Firma de publicación**, el almacén de claves fuera del repositorio

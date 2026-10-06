@@ -1,0 +1,6 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- La app solo existe en español. Declararlo hace que el sistema lo sepa (Ajustes > Idioma de
+     la aplicación), en vez de suponer el del teléfono. -->
+<locale-config xmlns:android="http://schemas.android.com/apk/res/android">
+    <locale android:name="es-ES" />
+</locale-config>
