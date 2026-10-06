@@ -17,10 +17,14 @@ dialogo_anadir ya trata como "no se pudo".
 
 from __future__ import annotations
 
+import socket
 from typing import Callable
 from urllib.parse import urlparse
 
 import requests
+
+from .api_cliente import ErrorApi
+from .direcciones import CARGA, NO_CARGA, SIN_COMPROBAR, Comprobacion
 
 from .metadatos import (
     es_url_youtube,
@@ -109,3 +113,53 @@ def resolver_en_este_equipo(
     if cuerpo is None:
         return {}
     return extraer_metadatos(cuerpo.decode("utf-8", errors="replace"))
+
+
+
+# --- Comprobar que carga (ANADIR.md) --------------------------------------
+
+
+def hay_red(url_servidor: str) -> bool:
+    """Si este equipo llega a nuestro servidor. requests no distingue un
+    dominio que no existe de no tener red: los dos son un fallo al resolver
+    el nombre. Solo se pregunta cuando la pagina ya ha fallado, y a nuestro
+    servidor, para no avisar a nadie de fuera de lo que se esta guardando."""
+    sitio = urlparse(url_servidor)
+    puerto = sitio.port or (443 if sitio.scheme == "https" else 80)
+    try:
+        with socket.create_connection((sitio.hostname or "", puerto), timeout=3):
+            return True
+    except OSError:
+        return False
+
+
+def comprobar_en_este_equipo(
+    url: str,
+    hay_red: Callable[[], bool],
+    descargador: Descargador | None = None,
+) -> Comprobacion:
+    """Sin cuenta: si la pagina carga, y de paso sus metadatos."""
+    bajar = descargador or descargar
+    if urlparse(url).scheme not in ("http", "https"):
+        return Comprobacion(NO_CARGA)
+    if es_url_youtube(url):
+        cuerpo = bajar(url_oembed(url))
+        metadatos = metadatos_desde_oembed(cuerpo) if cuerpo is not None else None
+        if metadatos is not None:
+            return Comprobacion(CARGA, metadatos)
+    cuerpo = bajar(url)
+    if cuerpo is None:
+        return Comprobacion(NO_CARGA if hay_red() else SIN_COMPROBAR)
+    return Comprobacion(CARGA, extraer_metadatos(cuerpo.decode("utf-8", errors="replace")))
+
+
+def comprobacion_del_servidor(pedir: Callable[[], dict]) -> Comprobacion:
+    """Con cuenta lo dice el servidor. `pedir` llama a /metadatos."""
+    try:
+        return Comprobacion(CARGA, pedir())
+    except ErrorApi as error:
+        # El servidor si contesto: la direccion no vale (400) o la pagina no
+        # cargo (502). Sin respuesta, o un fallo suyo, no dice nada de ella.
+        if error.status_code in (400, 502):
+            return Comprobacion(NO_CARGA)
+        return Comprobacion(SIN_COMPROBAR)

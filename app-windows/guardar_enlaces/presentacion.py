@@ -91,6 +91,25 @@ def texto_etiqueta_eliminada(etiqueta: str, cuantos: int) -> str:
     return f"Etiqueta «{etiqueta}» eliminada de {_enlaces(cuantos)}"
 
 
+# --- Anadir: la direccion escrita a mano (ANADIR.md) -----------------------
+
+# Sin https://: no hace falta escribirlo.
+MARCADOR_URL = "ejemplo.com"
+TEXTO_URL_NO_VALIDA = "Escribe una dirección, como ejemplo.com"
+TITULO_NO_CARGA = "No se ha podido abrir la página"
+
+
+def texto_no_carga(escrita: str) -> str:
+    """Con la direccion tal como se escribio, sin el https:// que haya puesto
+    la app: es la que se reconoce de oido. Se dice por que puede pasar porque
+    hay paginas que abren en el navegador y rechazan las comprobaciones
+    automaticas, y para eso esta Guardar igualmente."""
+    return (
+        f"{escrita} no ha respondido. Puede que la dirección esté mal escrita, "
+        "o que la página no deje comprobarla."
+    )
+
+
 def _enlaces(cuantos: int) -> str:
     """Plurales concordados de verdad, nunca «enlace(s)»."""
     return "1 enlace" if cuantos == 1 else f"{cuantos} enlaces"

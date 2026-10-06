@@ -4,6 +4,7 @@ from guardar_enlaces.presentacion import (
     texto_detalle,
     texto_etiqueta_eliminada,
     texto_etiqueta_renombrada,
+    texto_no_carga,
     texto_fila,
     texto_resultado_importacion,
 )
@@ -81,3 +82,10 @@ def test_etiqueta_sin_enlaces_no_habla_de_0_enlaces():
     assert pregunta_eliminar_etiqueta("ocio", 0) == "¿Eliminar la etiqueta «ocio»? No la lleva ningún enlace."
     assert texto_etiqueta_renombrada("ocio", "hobby", 0) == "Etiqueta «ocio» renombrada a «hobby»"
     assert texto_etiqueta_eliminada("ocio", 0) == "Etiqueta «ocio» eliminada"
+
+
+def test_la_pregunta_cuando_no_carga_dice_la_direccion_como_se_escribio():
+    assert texto_no_carga("noexiste.es") == (
+        "noexiste.es no ha respondido. Puede que la dirección esté mal escrita, "
+        "o que la página no deje comprobarla."
+    )

@@ -20,6 +20,7 @@ from guardar_enlaces.modelo import elementos_visibles, nueva_etiqueta_definida, 
 from guardar_enlaces.ui import dialogo_anadir, dialogo_detalle, dialogo_gestion_etiquetas, ventana_principal
 from guardar_enlaces.ui.bandeja import IconoBandeja
 from guardar_enlaces.ui.campos import etiqueta_de, etiqueta_widget_de
+from guardar_enlaces.direcciones import NO_CARGA, Comprobacion, DireccionComprobada
 from guardar_enlaces.ui.dialogo_anadir import DialogoAnadir
 from guardar_enlaces.ui.dialogo_detalle import DialogoDetalle
 from guardar_enlaces.ui.dialogo_gestion_etiquetas import DialogoGestionEtiquetas
@@ -345,7 +346,7 @@ def test_dialogo_anadir_url_invalida_no_llega_a_la_red(app):
         dialogo.campo_url.SetValue("no-es-una-url")
         _pulsar(dialogo.boton_guardar)
 
-        assert dialogo.estado.GetValue() == "Escribe una URL que empiece por http:// o https://"
+        assert dialogo.estado.GetValue() == "Escribe una dirección, como ejemplo.com"
         assert dialogo.elemento_creado is None
         cliente.metadatos.assert_not_called()
     finally:
@@ -370,6 +371,52 @@ def test_dialogo_anadir_un_duplicado_cancelado_no_llega_a_la_red(app, monkeypatc
         assert preguntas == ["Ya guardado"]
         assert dialogo.elemento_creado is None
         cliente.metadatos.assert_not_called()
+    finally:
+        dialogo.Destroy()
+
+
+def test_dialogo_anadir_si_no_carga_y_se_cancela_no_guarda_y_vuelve_al_campo(app, monkeypatch):
+    preguntas = []
+    monkeypatch.setattr(
+        dialogo_anadir,
+        "confirmar_guardar_sin_cargar",
+        lambda escrita, padre: preguntas.append(escrita) or False,
+    )
+    dialogo = DialogoAnadir(None, MagicMock(), MagicMock())
+    dialogo.EndModal = lambda codigo: None
+    try:
+        dialogo.boton_guardar.Disable()
+        dialogo._al_comprobar(
+            "noexiste.es",
+            DireccionComprobada("https://noexiste.es", Comprobacion(NO_CARGA)),
+            (),
+            None,
+        )
+
+        # La pregunta lleva la direccion como se escribio, sin el https://.
+        assert preguntas == ["noexiste.es"]
+        assert dialogo.elemento_creado is None
+        assert dialogo.boton_guardar.IsEnabled()
+    finally:
+        dialogo.Destroy()
+
+
+def test_dialogo_anadir_si_no_carga_y_se_guarda_igualmente_va_con_https_y_sin_titulo(
+    app, monkeypatch
+):
+    monkeypatch.setattr(dialogo_anadir, "confirmar_guardar_sin_cargar", lambda escrita, padre: True)
+    dialogo = DialogoAnadir(None, MagicMock(), MagicMock())
+    dialogo.EndModal = lambda codigo: None
+    try:
+        dialogo._al_comprobar(
+            "noexiste.es",
+            DireccionComprobada("https://noexiste.es", Comprobacion(NO_CARGA)),
+            (),
+            None,
+        )
+
+        assert dialogo.elemento_creado.url == "https://noexiste.es"
+        assert dialogo.elemento_creado.titulo is None
     finally:
         dialogo.Destroy()
 

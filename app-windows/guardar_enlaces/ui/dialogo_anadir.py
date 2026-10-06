@@ -14,13 +14,15 @@ import threading
 
 import wx
 
-from ..api_cliente import ClienteApi, ErrorApi
+from ..api_cliente import ClienteApi
 from ..duplicados import buscar_duplicado
 from ..modelo import Elemento, editar, nuevo_elemento_local
-from ..resolver_metadatos import resolver_en_este_equipo
+from ..direcciones import NO_CARGA, DireccionComprobada, completar, comprobar_direccion
+from ..presentacion import MARCADOR_URL, TEXTO_URL_NO_VALIDA
+from ..resolver_metadatos import comprobacion_del_servidor, comprobar_en_este_equipo, hay_red
 from ..sesion import Sesion
 from .campos import ESTILO_SOLO_LECTURA, con_etiqueta, mostrar_con_etiqueta
-from .preguntas import confirmar_guardar_duplicado
+from .preguntas import confirmar_guardar_duplicado, confirmar_guardar_sin_cargar
 from .selector_etiquetas import SelectorEtiquetas
 
 
@@ -48,7 +50,7 @@ class DialogoAnadir(wx.Dialog):
         sizer = wx.BoxSizer(wx.VERTICAL)
 
         etiqueta_url, self.campo_url = con_etiqueta(self._panel, "&URL:", wx.TextCtrl)
-        self.campo_url.SetHint("https://...")
+        self.campo_url.SetHint(MARCADOR_URL)
         sizer.Add(etiqueta_url, 0, wx.LEFT | wx.RIGHT | wx.TOP, 12)
         sizer.Add(self.campo_url, 0, wx.EXPAND | wx.ALL, 12)
 
@@ -99,12 +101,14 @@ class DialogoAnadir(wx.Dialog):
         self.estado.SetFocus()
 
     def _al_guardar(self, evento: wx.CommandEvent) -> None:
-        url = self.campo_url.GetValue().strip()
-        if not url.startswith(("http://", "https://")):
-            self._decir("Escribe una URL que empiece por http:// o https://")
+        escrito = self.campo_url.GetValue().strip()
+        # Sin https:// tambien vale: si falta, se pone (ANADIR.md).
+        escrita = completar(escrito)
+        if escrita is None:
+            self._decir(TEXTO_URL_NO_VALIDA)
             return
 
-        duplicado = buscar_duplicado(self._guardados, url)
+        duplicado = buscar_duplicado(self._guardados, escrita.direccion)
         if duplicado and not confirmar_guardar_duplicado(
             duplicado.titulo or duplicado.url, self
         ):
@@ -115,27 +119,51 @@ class DialogoAnadir(wx.Dialog):
         self.boton_guardar.Disable()
         self._decir("Guardando…")
 
-        def trabajo() -> None:
-            # La comprobacion es lo de menos: si falla (sin red, sitio caido),
-            # el enlace se guarda igual, solo que sin titulo ni descripcion.
+        def comprobar_una(url: str):
             if self._sesion.autenticado:
-                # Con cuenta los resuelve el servidor, que es quien los guarda
-                # para los dos clientes.
-                try:
-                    metadatos = self._sesion.con_reintento(
+                # Con cuenta lo dice el servidor, que es quien guarda los
+                # metadatos para todos los clientes.
+                return comprobacion_del_servidor(
+                    lambda: self._sesion.con_reintento(
                         lambda token: self._cliente.metadatos(url, token)
                     )
-                except ErrorApi:
-                    metadatos = {}
-            else:
-                # Sin cuenta los resuelve este mismo equipo, como hace el
-                # telefono. Mismas reglas y misma forma de diccionario, para
-                # que el enlace no dependa de quien lo resolvio: ver
-                # metadatos.py.
-                metadatos = resolver_en_este_equipo(url)
-            wx.CallAfter(self._al_completar_guardado, url, metadatos, etiquetas, duplicado)
+                )
+            # Sin cuenta lo comprueba este mismo equipo, como hace el
+            # telefono. Mismas reglas y misma forma de diccionario, para que
+            # el enlace no dependa de quien lo resolvio: ver metadatos.py.
+            return comprobar_en_este_equipo(
+                url, hay_red=lambda: hay_red(self._cliente.url_base)
+            )
+
+        def trabajo() -> None:
+            comprobada = comprobar_direccion(escrita, comprobar_una)
+            wx.CallAfter(self._al_comprobar, escrito, comprobada, etiquetas, duplicado)
 
         threading.Thread(target=trabajo, daemon=True).start()
+
+    def _al_comprobar(
+        self,
+        escrito: str,
+        comprobada: DireccionComprobada,
+        etiquetas: tuple[str, ...],
+        duplicado: Elemento | None,
+    ) -> None:
+        """Si no carga se pregunta antes de guardar; si carga, o no se ha
+        podido saber (sin red), se guarda sin mas."""
+        if self._cerrado:
+            return
+        if comprobada.comprobacion.estado == NO_CARGA:
+            if not confirmar_guardar_sin_cargar(escrito, self):
+                # De vuelta al campo, que es donde esta lo que haya que
+                # corregir. El «Guardando…» ya no es verdad.
+                mostrar_con_etiqueta(self.estado, False)
+                self._panel.Layout()
+                self.boton_guardar.Enable()
+                self.campo_url.SetFocus()
+                return
+        self._al_completar_guardado(
+            comprobada.direccion, comprobada.comprobacion.metadatos, etiquetas, duplicado
+        )
 
     def _al_completar_guardado(
         self,

@@ -12,7 +12,7 @@ import wx
 
 from ..almacen_local import AlmacenLocal
 from ..asentar_cuenta import EnlacesEnElEquipo, asentar_cuenta, identidad_dueno
-from ..presentacion import pregunta_eliminar_etiqueta
+from ..presentacion import TITULO_NO_CARGA, pregunta_eliminar_etiqueta, texto_no_carga
 from .campos import ESTILO_SOLO_LECTURA, con_etiqueta
 
 
@@ -178,6 +178,23 @@ def confirmar_guardar_duplicado(titulo: str, padre: wx.Window | None = None) -> 
         wx.OK | wx.CANCEL | wx.CANCEL_DEFAULT | wx.ICON_QUESTION,
     )
     dialogo.SetOKCancelLabels("&Actualizar", "&Cancelar")
+    respuesta = dialogo.ShowModal()
+    dialogo.Destroy()
+    return respuesta == wx.ID_OK
+
+
+def confirmar_guardar_sin_cargar(escrita: str, padre: wx.Window | None = None) -> bool:
+    """La pregunta al anadir una direccion que no carga (ANADIR.md). No se
+    rechaza sin mas: hay paginas que abren en el navegador y rechazan las
+    comprobaciones automaticas. Cancelar por defecto, que lo normal es que
+    este mal escrita."""
+    dialogo = wx.MessageDialog(
+        padre,
+        texto_no_carga(escrita),
+        TITULO_NO_CARGA,
+        wx.OK | wx.CANCEL | wx.CANCEL_DEFAULT | wx.ICON_QUESTION,
+    )
+    dialogo.SetOKCancelLabels("&Guardar igualmente", "&Cancelar")
     respuesta = dialogo.ShowModal()
     dialogo.Destroy()
     return respuesta == wx.ID_OK
