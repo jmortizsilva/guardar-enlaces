@@ -109,3 +109,6 @@ También cuando el título es la propia pregunta, como al eliminar un enlace.
 - Gestionar etiquetas: cada fila se lee de una vez con su recuento, Renombrar
   y Eliminar salen una vez y en ese orden, y el cursor cae donde debe al
   cerrar cada diálogo y al volver a la lista (2026-10-06).
+- La bienvenida: título como encabezado, cada opción como botón con su
+  explicación en la misma parada, el gesto de atrás saliendo de la app, y el
+  cursor en el título de la lista al terminar (2026-10-06).
