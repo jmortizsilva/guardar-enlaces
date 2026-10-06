@@ -256,16 +256,22 @@ object Textos {
             else -> "$nombre, $enlaces enlaces"
         }
 
-    /** Se avisa antes, porque esto toca todos los enlaces que la llevan y no se puede deshacer. */
+    /**
+     * Se avisa antes, porque esto toca todos los enlaces que la llevan y no se puede deshacer. Una
+     * etiqueta creada de antemano puede no llevarla ninguno, y entonces no se habla de «0 enlaces».
+     */
     fun preguntaEliminarEtiqueta(nombre: String, enlaces: Int) =
-        "¿Eliminar la etiqueta «$nombre»? Se quitará de ${enlacesEnTexto(enlaces)} y no se puede " +
-            "deshacer."
+        if (enlaces == 0) "¿Eliminar la etiqueta «$nombre»? No la lleva ningún enlace."
+        else
+            "¿Eliminar la etiqueta «$nombre»? Se quitará de ${enlacesEnTexto(enlaces)} y no se " +
+                "puede deshacer."
 
     fun etiquetaRenombrada(de: String, a: String, enlaces: Int) =
-        "Etiqueta «$de» renombrada a «$a» en ${enlacesEnTexto(enlaces)}"
+        "Etiqueta «$de» renombrada a «$a»" +
+            if (enlaces == 0) "" else " en ${enlacesEnTexto(enlaces)}"
 
     fun etiquetaEliminada(nombre: String, enlaces: Int) =
-        "Etiqueta «$nombre» eliminada de ${enlacesEnTexto(enlaces)}"
+        "Etiqueta «$nombre» eliminada" + if (enlaces == 0) "" else " de ${enlacesEnTexto(enlaces)}"
 
     fun etiquetaAnadida(nombre: String) = "Etiqueta «$nombre» añadida"
 

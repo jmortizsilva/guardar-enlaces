@@ -17,6 +17,7 @@ import com.jmortizsilva.guardarenlaces.dominio.Textos
 import com.jmortizsilva.guardarenlaces.dominio.relojDelSistema
 import com.jmortizsilva.guardarenlaces.fontaneria.AlmacenLocal
 import com.jmortizsilva.guardarenlaces.fontaneria.ClienteApi
+import com.jmortizsilva.guardarenlaces.fontaneria.CrearEtiqueta
 import com.jmortizsilva.guardarenlaces.fontaneria.ErrorApi
 import com.jmortizsilva.guardarenlaces.fontaneria.GuardarEnlace
 import com.jmortizsilva.guardarenlaces.fontaneria.ResolverMetadatos
@@ -158,6 +159,67 @@ class ModeloApp(
         }
         return Textos.resultadoImportacion(preparado.importados, preparado.yaEstaban)
     }
+
+    /**
+     * Las etiquetas con cuántos enlaces lleva cada una. Incluye las reservadas, que existen aunque
+     * todavía no las lleve ninguno.
+     */
+    fun etiquetasConRecuento(): List<Pair<String, Int>> {
+        val recuento = Biblioteca.recuentoPorEtiqueta(elementos.value)
+        return etiquetasDisponibles.value.map { it to (recuento[it] ?: 0) }
+    }
+
+    /**
+     * Crea una etiqueta que todavía no lleva ningún enlace, para tenerla lista en los tres
+     * clientes. Devuelve lo que hay que decir, o `null` si no había nada que crear (en blanco, o ya
+     * existía).
+     */
+    fun crearEtiqueta(nombre: String): String? {
+        val creada = CrearEtiqueta.crear(nombre, etiquetasDisponibles.value, almacen) ?: return null
+        refrescar()
+        sincronizarEnSilencio()
+        return Textos.etiquetaAnadida(creada.nombre)
+    }
+
+    /**
+     * Cambia el nombre en todos los enlaces que la llevan, y también en la etiqueta reservada si
+     * existía. Las dos cosas, o el nombre viejo reaparecería en otro cliente. Devuelve lo que hay
+     * que decir, o `null` si el nombre nuevo está en blanco o es el mismo.
+     *
+     * Como `eliminar`, no anuncia: quien llama lleva antes el cursor a la fila.
+     */
+    fun renombrarEtiqueta(vieja: String, nueva: String): String? {
+        val limpio = nueva.trim()
+        if (limpio.isEmpty() || limpio == vieja) return null
+        val cambiados = Biblioteca.renombrarEtiqueta(elementos.value, vieja, limpio)
+        val reservada = etiquetaReservada(vieja)
+        // Todo junto: a medias, el nombre viejo seguiría en unos enlaces y en otros no.
+        almacen.enTransaccion {
+            almacen.marcarPendientes(cambiados)
+            reservada?.let { almacen.marcarEtiquetaPendiente(it.renombrada(limpio)) }
+        }
+        refrescar()
+        sincronizarEnSilencio()
+        return Textos.etiquetaRenombrada(vieja, limpio, cambiados.size)
+    }
+
+    /** La quita de todos los enlaces que la llevan. No anuncia, por lo mismo que renombrar. */
+    fun eliminarEtiqueta(nombre: String): String {
+        val cambiados = Biblioteca.quitarEtiqueta(elementos.value, nombre)
+        val reservada = etiquetaReservada(nombre)
+        almacen.enTransaccion {
+            almacen.marcarPendientes(cambiados)
+            reservada?.let { almacen.marcarEtiquetaPendiente(it.marcadaComoBorrada()) }
+        }
+        refrescar()
+        sincronizarEnSilencio()
+        return Textos.etiquetaEliminada(nombre, cambiados.size)
+    }
+
+    private fun etiquetaReservada(nombre: String) =
+        Sincronizacion.etiquetasReservadasVisibles(almacen.cargarEtiquetasDefinidas()).firstOrNull {
+            it.nombre == nombre
+        }
 
     /**
      * La automática: se calla pase lo que pase. El cambio ya está en la cola local y se reintenta

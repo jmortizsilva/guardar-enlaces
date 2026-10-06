@@ -81,6 +81,7 @@ class ActividadPrincipal : ComponentActivity() {
                             navegacion.abrir(Pantalla.Anadir)
                         },
                         alAbrirAjustes = { navegacion.abrir(Pantalla.Ajustes) },
+                        alGestionarEtiquetas = { navegacion.abrir(Pantalla.GestionEtiquetas) },
                         llegada = navegacion.llegada,
                         alAtenderLlegada = navegacion::llegadaAtendida,
                     )
@@ -153,6 +154,15 @@ class ActividadPrincipal : ComponentActivity() {
                     cerrarSesion = modelo::cerrarSesion,
                 )
             }
+            Pantalla.GestionEtiquetas ->
+                PantallaGestionEtiquetas(
+                    etiquetas = remember(elementos, etiquetas) { modelo.etiquetasConRecuento() },
+                    anuncios = modelo.anuncios,
+                    alVolver = { navegacion.volver() },
+                    crear = modelo::crearEtiqueta,
+                    renombrar = modelo::renombrarEtiqueta,
+                    eliminar = modelo::eliminarEtiqueta,
+                )
             Pantalla.EtiquetasDelBorrador ->
                 PantallaEtiquetas(
                     disponibles = etiquetas,

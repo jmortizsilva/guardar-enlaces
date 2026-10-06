@@ -332,8 +332,14 @@ por su lista de textos**, que se revisa antes de escribir la pantalla.
             directo en el texto y se recorre por palabras, y decidir si al
             volver a la lista el cursor debe ir a la rueda dentada (ahora lo
             pone el sistema, como al cancelar Añadir).
-      - [ ] Añadir, gestionar etiquetas, el resto de Ajustes (cuenta y
-            guardado silencioso), bienvenida e inicio de sesión.
+      - [~] Gestionar etiquetas (2026-10-06), desde el menú del filtro como
+            en el iPhone. Escrita y con pruebas en el Mac, **sin instalar ni
+            oír con TalkBack**: no había teléfono conectado. Queda oír que la
+            fila se lee de una vez con su recuento, que Renombrar y Eliminar
+            salen en ese orden, adónde cae el cursor tras cada diálogo, y
+            decidir adónde va al volver a la lista (ahora lo pone el sistema,
+            como al salir de Ajustes).
+      - [ ] Añadir, el resto de Ajustes (guardado silencioso) y bienvenida.
 - [ ] **4. Compartir desde otras apps** y guardado silencioso, con el
       interruptor en Ajustes.
 - [ ] **5. Firma de publicación**, el almacén de claves fuera del repositorio

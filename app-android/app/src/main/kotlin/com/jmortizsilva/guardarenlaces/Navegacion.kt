@@ -23,6 +23,9 @@ sealed interface Pantalla {
      * secciones cuando toque, en el mismo orden que en el iPhone.
      */
     data object Ajustes : Pantalla
+
+    /** Renombrar, eliminar y crear etiquetas de toda la biblioteca. */
+    data object GestionEtiquetas : Pantalla
 }
 
 /**

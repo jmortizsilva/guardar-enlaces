@@ -244,7 +244,7 @@ class PruebasPantallaLista {
     }
 }
 
-private fun androidx.compose.ui.test.SemanticsNodeInteraction.performCustomAction(
+internal fun androidx.compose.ui.test.SemanticsNodeInteraction.performCustomAction(
     etiqueta: String
 ) {
     val accion =

@@ -35,4 +35,17 @@ class PruebasTextosEtiquetas {
         assertEquals("Etiqueta «ocio» eliminada de 4 enlaces", Textos.etiquetaEliminada("ocio", 4))
         assertEquals("Etiqueta «casa» añadida", Textos.etiquetaAnadida("casa"))
     }
+
+    @Test
+    fun `una etiqueta que no lleva ningun enlace no habla de 0 enlaces`() {
+        assertEquals(
+            "¿Eliminar la etiqueta «ocio»? No la lleva ningún enlace.",
+            Textos.preguntaEliminarEtiqueta("ocio", 0),
+        )
+        assertEquals(
+            "Etiqueta «ocio» renombrada a «hobby»",
+            Textos.etiquetaRenombrada("ocio", "hobby", 0),
+        )
+        assertEquals("Etiqueta «ocio» eliminada", Textos.etiquetaEliminada("ocio", 0))
+    }
 }

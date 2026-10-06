@@ -85,6 +85,7 @@ fun PantallaLista(
     alEditarEtiquetas: (Elemento) -> Unit = {},
     alAnadir: () -> Unit = {},
     alAbrirAjustes: () -> Unit = {},
+    alGestionarEtiquetas: () -> Unit = {},
     llegada: Llegada? = null,
     alAtenderLlegada: () -> Unit = {},
 ) {
@@ -175,7 +176,9 @@ fun PantallaLista(
     ) { margen ->
         Column(Modifier.padding(margen).fillMaxSize()) {
             CampoBusqueda(busqueda)
-            FiltroPorEtiqueta(etiqueta, etiquetasDisponibles) { etiqueta = it }
+            FiltroPorEtiqueta(etiqueta, etiquetasDisponibles, alGestionarEtiquetas) {
+                etiqueta = it
+            }
 
             if (visibles.isEmpty()) {
                 Text(
@@ -279,6 +282,7 @@ private fun CampoBusqueda(busqueda: androidx.compose.foundation.text.input.TextF
 private fun FiltroPorEtiqueta(
     elegida: String?,
     disponibles: List<String>,
+    alGestionar: () -> Unit,
     alElegir: (String?) -> Unit,
 ) {
     var abierto by remember { mutableStateOf(false) }
@@ -295,6 +299,15 @@ private fun FiltroPorEtiqueta(
                     modifier = Modifier.semantics { selected = opcion == elegida },
                 )
             }
+            // En el mismo menú que en el iPhone, separado de las etiquetas por las que filtrar.
+            HorizontalDivider()
+            DropdownMenuItem(
+                text = { Text(Textos.gestionarEtiquetas) },
+                onClick = {
+                    abierto = false
+                    alGestionar()
+                },
+            )
         }
     }
 }
