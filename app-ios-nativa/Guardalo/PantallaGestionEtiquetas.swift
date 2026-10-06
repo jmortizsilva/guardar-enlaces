@@ -46,14 +46,6 @@ struct PantallaGestionEtiquetas: View {
                                     renombrando = etiqueta.nombre
                                 }
                             }
-                            // Al revés de como se oyen.
-                            .accessibilityActions {
-                                Button(Textos.eliminar) { eliminando = etiqueta.nombre }
-                                Button(Textos.renombrar) {
-                                    nombreNuevo = etiqueta.nombre
-                                    renombrando = etiqueta.nombre
-                                }
-                            }
                     }
                 }
 

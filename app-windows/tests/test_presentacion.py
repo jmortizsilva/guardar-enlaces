@@ -1,6 +1,9 @@
 from guardar_enlaces.modelo import nuevo_elemento_local
 from guardar_enlaces.presentacion import (
+    pregunta_eliminar_etiqueta,
     texto_detalle,
+    texto_etiqueta_eliminada,
+    texto_etiqueta_renombrada,
     texto_fila,
     texto_resultado_importacion,
 )
@@ -58,3 +61,23 @@ def test_resultado_importacion_cuando_no_entra_nada_dice_por_que():
         == "No hay nada nuevo: el único enlace del fichero ya lo tenías."
     )
     assert texto_resultado_importacion(0, 0) == "Ese fichero no tiene ninguna dirección."
+
+
+# --- Lo que se oye al gestionar etiquetas ---------------------------------
+
+
+def test_gestionar_etiquetas_concuerda_los_plurales():
+    """Antes se decía «en 1 enlaces»."""
+    assert texto_etiqueta_renombrada("ocio", "hobby", 1) == "Etiqueta «ocio» renombrada a «hobby» en 1 enlace"
+    assert texto_etiqueta_renombrada("ocio", "hobby", 3) == "Etiqueta «ocio» renombrada a «hobby» en 3 enlaces"
+    assert texto_etiqueta_eliminada("ocio", 1) == "Etiqueta «ocio» eliminada de 1 enlace"
+    assert pregunta_eliminar_etiqueta("ocio", 2) == (
+        "¿Eliminar la etiqueta «ocio»? Se quitará de 2 enlaces. Esta acción no se puede deshacer."
+    )
+
+
+def test_etiqueta_sin_enlaces_no_habla_de_0_enlaces():
+    """Las creadas de antemano no las lleva ningún enlace todavía."""
+    assert pregunta_eliminar_etiqueta("ocio", 0) == "¿Eliminar la etiqueta «ocio»? No la lleva ningún enlace."
+    assert texto_etiqueta_renombrada("ocio", "hobby", 0) == "Etiqueta «ocio» renombrada a «hobby»"
+    assert texto_etiqueta_eliminada("ocio", 0) == "Etiqueta «ocio» eliminada"

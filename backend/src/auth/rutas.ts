@@ -140,7 +140,7 @@ export async function registrarRutasAuth(app: FastifyInstance): Promise<void> {
     const proveedor = proveedorTexto as Proveedor;
     const { code, state } = datos;
     if (!code || !state) {
-      return reply.code(400).send(paginaHtml('Error', 'Falta el codigo o el estado.'));
+      return reply.code(400).send(paginaHtml('Error', 'Falta el código o el estado.'));
     }
 
     const pendiente = buscarLoginPendiente(state);
@@ -150,7 +150,7 @@ export async function registrarRutasAuth(app: FastifyInstance): Promise<void> {
         .send(
           paginaHtml(
             'Enlace caducado',
-            'Vuelve a intentar el inicio de sesion desde la aplicacion.',
+            'Vuelve a intentar el inicio de sesión desde la aplicación.',
           ),
         );
     }
@@ -186,12 +186,12 @@ export async function registrarRutasAuth(app: FastifyInstance): Promise<void> {
 
     return reply.send(
       codigoCanje
-        ? paginaHtml('Sesion iniciada', 'Ya puedes volver a la aplicacion.')
+        ? paginaHtml('Sesión iniciada', 'Ya puedes volver a la aplicación.')
         : paginaHtml(
-            'No se pudo iniciar sesion',
+            'No se pudo iniciar sesión',
             error === 'sin_email'
-              ? 'Tu proveedor no ha dado ningun correo, y hace falta para crear la cuenta.'
-              : 'Ha fallado el inicio de sesion, vuelve a intentarlo desde la aplicacion.',
+              ? 'Tu proveedor no ha dado ningún correo, y hace falta para crear la cuenta.'
+              : 'Ha fallado el inicio de sesión, vuelve a intentarlo desde la aplicación.',
           ),
     );
   }

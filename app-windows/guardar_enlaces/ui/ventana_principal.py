@@ -41,7 +41,12 @@ from ..modelo import (
     renombrar_etiqueta_definida,
 )
 from ..importar import leer, preparar, texto_de
-from ..presentacion import texto_fila, texto_resultado_importacion
+from ..presentacion import (
+    texto_etiqueta_eliminada,
+    texto_etiqueta_renombrada,
+    texto_fila,
+    texto_resultado_importacion,
+)
 from ..primer_plano import traer_al_frente
 from ..seleccion import fila_tras_refrescar
 from ..sesion import Sesion
@@ -484,7 +489,7 @@ class VentanaPrincipal(wx.Frame):
             self._almacen.marcar_etiqueta_pendiente(renombrar_etiqueta_definida(reservada, nueva))
 
         self._decir_estado(
-            f"Etiqueta «{vieja}» renombrada a «{nueva}» en {len(cambiados)} enlaces",
+            texto_etiqueta_renombrada(vieja, nueva, len(cambiados)),
             tras_cerrar_ventana=True,
         )
         self.sincronizar_en_segundo_plano()
@@ -499,7 +504,7 @@ class VentanaPrincipal(wx.Frame):
             self._almacen.marcar_etiqueta_pendiente(eliminar_etiqueta_definida(reservada))
 
         self._decir_estado(
-            f"Etiqueta «{etiqueta}» eliminada de {len(cambiados)} enlaces", tras_cerrar_ventana=True
+            texto_etiqueta_eliminada(etiqueta, len(cambiados)), tras_cerrar_ventana=True
         )
         self.sincronizar_en_segundo_plano()
 

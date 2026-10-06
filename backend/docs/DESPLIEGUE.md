@@ -29,11 +29,29 @@ el puerto por defecto de Metro, el empaquetador de Expo.
 
 ```bash
 cd ~/guardar-enlaces && git pull
-cd ~/compose/guardar-enlaces && podman-compose down
-podman-compose up -d --build
+cd ~/compose/guardar-enlaces && podman-compose build
+podman-compose down
+podman-compose up -d
 ```
 
-El `down` hace falta: sin él, `up` choca con que el contenedor ya existe.
+**Construir antes de parar.** Antes se hacía `down` y luego `up --build`, y el
+servidor quedaba caído mientras compilaba: el 2026-09-30, al cambiar
+`package-lock.json`, `npm ci` reinstaló todo y tardó dos minutos sin escribir
+nada. Construyendo primero, el `up` ya no compila y el corte es de un par de
+segundos.
+
+El `down` hace falta: sin él, `up` choca con que el contenedor ya existe. Y ya
+**no debería avisar** de «StopSignal SIGTERM failed… resorting to SIGKILL»: desde
+el 2026-09-30 el servidor atiende la señal de parada y cierra ordenado. Si el
+aviso vuelve, es que ha dejado de hacerlo y lo está matando a la fuerza.
+
+Si falta alguna variable de Apple o de Google en el `.env`, el servidor **no
+arranca** y lo dice en `podman logs`. Antes de desplegar algo que añada una, se
+comprueba con este comando, que enseña solo los nombres y nunca los valores:
+
+```bash
+grep -o '^[A-Z_]*=' ~/compose/guardar-enlaces/.env
+```
 
 Comprobar que ha entrado el código nuevo, y no una imagen de caché:
 
@@ -103,11 +121,29 @@ curl -s -i "https://api.jmortiz.es/auth/iniciar?proveedor=google&modo=polling&es
 
 ## Copia de seguridad y consultas a la base de datos
 
-Antes de cualquier cosa que la toque, con las apps cerradas:
+Antes de cualquier cosa que la toque. **Con `cp` no vale**: la base va en modo
+WAL, y lo reciente vive en `enlaces.sqlite-wal` hasta que SQLite lo vuelca. La
+copia que se hizo así el 19 de septiembre, antes de configurar Apple, resultó
+de 4096 bytes y sin ninguna tabla, y no se descubrió hasta el 30: durante once
+días no hubo copia de nada. Se copia con la función de copia de SQLite, que
+incluye el WAL, desde dentro del contenedor:
 
 ```bash
-cp ~/podman-volumes/guardar-enlaces/datos/enlaces.sqlite ~/copia-enlaces.sqlite
+cd ~/guardar-enlaces/backend/herramientas
+podman exec -i guardar-enlaces node < copiar-base.cjs
 ```
+
+Dice cuántos usuarios, enlaces y etiquetas hay en la base y en la copia, y si
+coinciden. **Si no coinciden, la copia no sirve.** Luego se saca de la carpeta
+del contenedor, con la fecha en el nombre:
+
+```bash
+cd ~/podman-volumes/guardar-enlaces/datos
+mv copia.sqlite ~/copia-enlaces-$(date +%F).sqlite
+```
+
+Las líneas van cortas a propósito: al pegar una larga en el terminal se parte
+por la mitad y se ejecuta rota.
 
 Para consultarla no hace falta `sqlite3` en el sistema: el contenedor ya trae
 `better-sqlite3`. Se le pasa un script por la entrada estándar, que además evita
@@ -130,9 +166,35 @@ quedan invisibles para todo el mundo. Es un fallo real que ya se cometió una ve
 
 ## Volver atrás
 
+El código, a una versión anterior:
+
 ```bash
 cd ~/guardar-enlaces
 git log --oneline -5
 git checkout <commit-anterior>
-cd ~/compose/guardar-enlaces && podman-compose down && podman-compose up -d --build
+cd ~/compose/guardar-enlaces
+podman-compose build
+podman-compose down
+podman-compose up -d
 ```
+
+La base de datos, desde una copia hecha con `copiar-base.cjs`. Con el servidor
+parado, y apartando **los tres ficheros** de la base de ahora, no solo
+`enlaces.sqlite`: si se quedan el `-wal` y el `-shm` de la vieja al lado de la
+copia, SQLite puede intentar mezclarlos con ella. Se apartan y no se borran,
+por si hiciera falta mirar qué tenían:
+
+```bash
+cd ~/compose/guardar-enlaces
+podman-compose down
+cd ~/podman-volumes/guardar-enlaces/datos
+mkdir -p ~/base-apartada-$(date +%F)
+mv enlaces.sqlite* ~/base-apartada-$(date +%F)/
+cp ~/copia-enlaces-AAAA-MM-DD.sqlite enlaces.sqlite
+cd ~/compose/guardar-enlaces
+podman-compose up -d
+```
+
+**Esto no se ha probado nunca en el servidor.** Hacer una copia, restaurarla
+en un momento tranquilo y comprobar que las apps siguen viendo sus enlaces es
+la única forma de saber que el día que haga falta va a funcionar.

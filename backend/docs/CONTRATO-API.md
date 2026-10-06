@@ -99,7 +99,8 @@ Query: `estado=<el mismo valor usado en /auth/iniciar>`.
 { "listo": true, "error": "sin_email" }
 ```
 
-`404` si el `estado` es desconocido o ya caducó (vida de ~5 minutos).
+`404` si el `estado` es desconocido o ya caducó (vida de ~15 minutos; eran 5 y no
+bastaban para entrar con Apple usando un lector de pantalla).
 
 ### 4. `POST /auth/canjear`
 
@@ -117,7 +118,8 @@ Query: `estado=<el mismo valor usado en /auth/iniciar>`.
 }
 ```
 
-`400` si el código es inválido, ya se usó, o caducó (un solo uso, ~60s de vida).
+`400` si el código es inválido, ya se usó, o caducó (un solo uso, ~60s de vida
+contados desde que se genera, no desde que se abrió la pestaña).
 
 ### 5. `POST /auth/renovar`
 

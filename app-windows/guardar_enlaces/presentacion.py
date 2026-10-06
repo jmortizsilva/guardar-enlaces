@@ -64,6 +64,33 @@ def texto_resultado_importacion(importados: int, ya_estaban: int) -> str:
     return f"{frase} {ya_estaban} ya los tenías."
 
 
+# --- Gestionar etiquetas ----------------------------------------------------
+
+
+def pregunta_eliminar_etiqueta(etiqueta: str, cuantos: int) -> str:
+    """Se avisa antes porque toca todos los enlaces que la llevan. Una
+    etiqueta creada de antemano puede no llevarla ninguno, y «Se quitará de 0
+    enlaces» no se le dice a nadie."""
+    if cuantos == 0:
+        return f"¿Eliminar la etiqueta «{etiqueta}»? No la lleva ningún enlace."
+    return (
+        f"¿Eliminar la etiqueta «{etiqueta}»? Se quitará de {_enlaces(cuantos)}. "
+        "Esta acción no se puede deshacer."
+    )
+
+
+def texto_etiqueta_renombrada(vieja: str, nueva: str, cuantos: int) -> str:
+    if cuantos == 0:
+        return f"Etiqueta «{vieja}» renombrada a «{nueva}»"
+    return f"Etiqueta «{vieja}» renombrada a «{nueva}» en {_enlaces(cuantos)}"
+
+
+def texto_etiqueta_eliminada(etiqueta: str, cuantos: int) -> str:
+    if cuantos == 0:
+        return f"Etiqueta «{etiqueta}» eliminada"
+    return f"Etiqueta «{etiqueta}» eliminada de {_enlaces(cuantos)}"
+
+
 def _enlaces(cuantos: int) -> str:
     """Plurales concordados de verdad, nunca «enlace(s)»."""
     return "1 enlace" if cuantos == 1 else f"{cuantos} enlaces"

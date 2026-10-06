@@ -37,4 +37,17 @@ struct PruebasTextosEtiquetas {
         )
         #expect(Textos.etiquetaAnadida("casa") == "Etiqueta «casa» añadida")
     }
+
+    @Test("una etiqueta que no lleva ningún enlace no habla de «0 enlaces»")
+    func sinEnlaces() {
+        #expect(
+            Textos.preguntaEliminarEtiqueta("ocio", enlaces: 0)
+                == "¿Eliminar la etiqueta «ocio»? No la lleva ningún enlace."
+        )
+        #expect(
+            Textos.etiquetaRenombrada(de: "ocio", a: "hobby", enlaces: 0)
+                == "Etiqueta «ocio» renombrada a «hobby»"
+        )
+        #expect(Textos.etiquetaEliminada("ocio", enlaces: 0) == "Etiqueta «ocio» eliminada")
+    }
 }

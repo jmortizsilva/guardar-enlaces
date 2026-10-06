@@ -145,6 +145,20 @@ dejaba preparada.
 
 ## Cabos sueltos
 
+- **La sesión, revisada el 2026-09-29.** Al portar el código a Android se
+  vieron tres posibles fallos. Dos eran reales, se reprodujeron con pruebas
+  (`PruebasSesionFallos`) y están arreglados: arrancar sin red cerraba la
+  sesión, y dos peticiones caducadas a la vez la tumbaban. Quedan dos cosas:
+  - **Decidido el 2026-09-30**: el token pasa de
+    `kSecAttrAccessibleWhenUnlocked` a `kSecAttrAccessibleAfterFirstUnlock`.
+    Con el primero, si la pantalla se bloqueaba a mitad de una renovación, el
+    nuevo no se podía guardar y la sesión se perdía. Es lo mismo que se
+    decidió en Android tras medirlo en el teléfono. No se puede probar en el
+    Mac: el llavero de verdad solo existe en el teléfono.
+  - **Sin arreglar, a sabiendas**: la app y la extensión de compartir son dos
+    procesos, y «una renovación a la vez» vale dentro de cada uno. Si se
+    comparte un enlace justo mientras la app renueva, pueden chocar igual.
+
 - **El llavero nunca se prueba solo.** `CredencialesKeychain` no se ejercita
   con `swift test` en el Mac (necesita la autorización de llavero de una app
   firmada), y entrar con Google o con Apple abre una hoja del sistema que una

@@ -1,0 +1,22 @@
+{
+  "_explicacion": "Lo escrito en el campo de añadir y lo que debe salir. direccion nula: no es una dirección. alternativa: la dirección con http:// que se prueba si la de https:// no carga, solo cuando el esquema lo ha puesto la app. Ver ANADIR.md.",
+  "casos": [
+    { "escrito": "ejemplo.com", "direccion": "https://ejemplo.com", "alternativa": "http://ejemplo.com" },
+    { "escrito": "  www.ejemplo.com/articulo?x=1  ", "direccion": "https://www.ejemplo.com/articulo?x=1", "alternativa": "http://www.ejemplo.com/articulo?x=1" },
+    { "escrito": "ejemplo.com:8080/ruta", "direccion": "https://ejemplo.com:8080/ruta", "alternativa": "http://ejemplo.com:8080/ruta" },
+    { "escrito": "señal.es", "direccion": "https://señal.es", "alternativa": "http://señal.es" },
+    { "escrito": "https://ejemplo.com", "direccion": "https://ejemplo.com", "alternativa": null },
+    { "escrito": "http://ejemplo.com", "direccion": "http://ejemplo.com", "alternativa": null },
+    { "escrito": "HTTPS://Ejemplo.com", "direccion": "HTTPS://Ejemplo.com", "alternativa": null },
+    { "escrito": "https://", "direccion": null, "alternativa": null },
+    { "escrito": "", "direccion": null, "alternativa": null },
+    { "escrito": "nota para el lunes", "direccion": null, "alternativa": null },
+    { "escrito": "p.ej. esto", "direccion": null, "alternativa": null },
+    { "escrito": "ejemplo", "direccion": null, "alternativa": null },
+    { "escrito": "ejemplo.", "direccion": null, "alternativa": null },
+    { "escrito": ".com", "direccion": null, "alternativa": null },
+    { "escrito": "pepe@gmail.com", "direccion": null, "alternativa": null },
+    { "escrito": "ftp://ejemplo.com", "direccion": null, "alternativa": null },
+    { "escrito": "ejemplo.com/a b", "direccion": null, "alternativa": null }
+  ]
+}

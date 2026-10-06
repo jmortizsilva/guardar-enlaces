@@ -42,12 +42,21 @@ public struct CredencialesKeychain: AlmacenCredenciales {
 
     public func guardarTokenRefresco(_ token: String) throws {
         let datos = Data(token.utf8)
-        // Solo con el teléfono desbloqueado: compartir un enlace exige
-        // pantalla desbloqueada, así que la extensión llega igual, y el token
-        // no queda accesible con el dispositivo bloqueado.
+        // Legible desde el primer desbloqueo tras encender el teléfono, y no
+        // solo con la pantalla desbloqueada. Con `WhenUnlocked`, si la pantalla
+        // se bloqueaba a mitad de una renovación, el servidor ya había rotado
+        // el token y el nuevo no se podía guardar: en el siguiente arranque
+        // solo quedaba el revocado, y la sesión se perdía. En Android se midió
+        // en el teléfono («Device locked») y allí se quitó la misma
+        // restricción; aquí se decidió igual el 2026-09-30. El token sigue sin
+        // salir del teléfono ni de este grupo de llavero.
+        //
+        // Los que ya estaban guardados con la restricción vieja cambian solos
+        // en la siguiente renovación: `SecItemUpdate` de abajo reescribe el
+        // atributo junto con el valor.
         let atributos: [String: Any] = [
             kSecValueData as String: datos,
-            kSecAttrAccessible as String: kSecAttrAccessibleWhenUnlocked,
+            kSecAttrAccessible as String: kSecAttrAccessibleAfterFirstUnlock,
         ]
 
         let actualizacion = SecItemUpdate(
