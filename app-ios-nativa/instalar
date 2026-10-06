@@ -1,0 +1,36 @@
+#!/bin/bash
+# Compila firmado e instala en el iPhone, sin pasar por las pruebas: es para
+# oír un cambio con VoiceOver cuanto antes. Antes de un commit, siempre
+# ./verificar entero. Cómo está montada la firma: docs/FIRMA-SIN-PANTALLA.md.
+#
+# Solo instala si la compilación sale bien. Una vez se instaló sin mirarlo, y
+# como la firma había fallado, entró en el teléfono la compilación vieja que
+# seguía en la carpeta (2026-10-06).
+set -euo pipefail
+
+cd "$(dirname "$0")"
+
+# El llavero de firma se vuelve a bloquear solo; sin abrirlo, la firma falla
+# con errSecInternalComponent.
+CLAVE=$(cat ~/.appstoreconnect/llavero-firma.txt)
+security unlock-keychain -p "$CLAVE" guardalo-firma.keychain
+security list-keychains -d user -s guardalo-firma.keychain login.keychain-db
+
+xcodebuild -project Guardalo.xcodeproj -scheme Guardalo \
+    -destination 'generic/platform=iOS' \
+    -derivedDataPath .build-dispositivo \
+    -quiet build
+
+# El primer iPhone emparejado y disponible. IPHONE=<identificador> manda.
+IPHONE="${IPHONE:-$(xcrun devicectl list devices 2>/dev/null |
+    awk '/available/ && /physical/ { for (i = 1; i <= NF; i++) if ($i ~ /^[0-9A-F]{8}-/) print $i }' |
+    head -1)}"
+if [ -z "$IPHONE" ]; then
+    echo "No hay ningún iPhone disponible. Esto es lo que se ve:"
+    xcrun devicectl list devices
+    exit 1
+fi
+
+xcrun devicectl device install app --device "$IPHONE" \
+    .build-dispositivo/Build/Products/Debug-iphoneos/Guardalo.app | tail -1
+echo "Instalada en $IPHONE."
