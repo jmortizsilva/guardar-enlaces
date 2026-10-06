@@ -44,6 +44,33 @@ object Enlaces {
      */
     fun paraPegar(copiado: String): String = direccionDentroDe(copiado) ?: copiado.trim()
 
+    /**
+     * La dirección escrita a mano en la pantalla de añadir, con `https://` delante si no lo trae.
+     * `null` si lo escrito no es una dirección. Las reglas están en `ANADIR.md`, en la raíz del
+     * repositorio, y los casos en `pruebas-compartidas/direcciones/`, que leen las tres apps.
+     *
+     * Solo para lo escrito a mano: lo compartido sigue pasando por `direccionDentroDe`, que pide el
+     * esquema.
+     */
+    fun completar(texto: String): DireccionEscrita? {
+        val limpio = texto.trim()
+        val esquema = esquemas.firstOrNull { limpio.startsWith(it, ignoreCase = true) }
+        if (esquema != null) {
+            return if (limpio.length > esquema.length) DireccionEscrita(limpio, null) else null
+        }
+        if (!pareceUnSitio(limpio)) return null
+        return DireccionEscrita("https://$limpio", "http://$limpio")
+    }
+
+    private fun pareceUnSitio(texto: String): Boolean {
+        if (texto.isEmpty() || texto.any { it.isWhitespace() } || "://" in texto) return false
+        val sitio = texto.takeWhile { it !in "/?#" }
+        // Un correo con https:// delante abriría el sitio de detrás de la arroba.
+        if ('@' in sitio) return false
+        val punto = sitio.indexOf('.')
+        return punto > 0 && punto < sitio.length - 1
+    }
+
     private fun partirPorEspacios(texto: String): List<String> {
         val trozos = mutableListOf<String>()
         val actual = StringBuilder()
@@ -59,3 +86,13 @@ object Enlaces {
         return trozos
     }
 }
+
+/** Lo que sale de completar una dirección escrita a mano. */
+data class DireccionEscrita(
+    val direccion: String,
+    /**
+     * La misma con `http://`, para probarla si la de `https://` no carga. Solo cuando el esquema lo
+     * ha puesto la app: si lo escribió quien la usa, se respeta.
+     */
+    val alternativa: String?,
+)
