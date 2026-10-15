@@ -16,6 +16,7 @@ import wx
 from guardar_enlaces.almacen_local import AlmacenLocal
 from guardar_enlaces.api_cliente import ErrorApi
 from guardar_enlaces.asentar_cuenta import EnlacesEnElEquipo
+from guardar_enlaces.direcciones import CARGA, SIN_COMPROBAR, Comprobacion
 from guardar_enlaces.modelo import nuevo_elemento_local
 from guardar_enlaces.ui import dialogo_anadir as modulo_anadir
 from guardar_enlaces.ui import preguntas as modulo_preguntas
@@ -197,7 +198,7 @@ class TestDeDondeSalenLosMetadatos:
     """Con cuenta los resuelve el servidor, que es quien los guarda para los
     dos clientes; sin cuenta, este mismo equipo."""
 
-    def _guardar_una_url(self, monkeypatch, autenticado: bool, resolver_local):
+    def _guardar_una_url(self, monkeypatch, autenticado: bool, comprobar_local):
         # El guardado se va a un hilo y vuelve por wx.CallAfter. Aqui los dos
         # se ejecutan en el sitio, para que la prueba no dependa del reloj.
         class HiloInmediato:
@@ -209,7 +210,7 @@ class TestDeDondeSalenLosMetadatos:
 
         monkeypatch.setattr(modulo_anadir.threading, "Thread", HiloInmediato)
         monkeypatch.setattr(modulo_anadir.wx, "CallAfter", lambda f, *a, **k: f(*a, **k))
-        monkeypatch.setattr(modulo_anadir, "resolver_en_este_equipo", resolver_local)
+        monkeypatch.setattr(modulo_anadir, "comprobar_en_este_equipo", comprobar_local)
 
         cliente = MagicMock()
         sesion = MagicMock()
@@ -229,21 +230,21 @@ class TestDeDondeSalenLosMetadatos:
     def test_sin_cuenta_los_resuelve_este_equipo(self, app, monkeypatch):
         pedidas = []
 
-        def resolver(url):
+        def comprobar(url, hay_red):
             pedidas.append(url)
-            return {"titulo": "Lo leyo este equipo", "tipo": "enlace"}
+            return Comprobacion(CARGA, {"titulo": "Lo leyo este equipo", "tipo": "enlace"})
 
-        cliente, elemento = self._guardar_una_url(monkeypatch, False, resolver)
+        cliente, elemento = self._guardar_una_url(monkeypatch, False, comprobar)
 
         assert pedidas == ["https://ejemplo.com/a"]
         assert elemento is not None and elemento.titulo == "Lo leyo este equipo"
         cliente.metadatos.assert_not_called()
 
     def test_con_cuenta_los_resuelve_el_servidor(self, app, monkeypatch):
-        def resolver(url):
+        def comprobar(url, hay_red):
             raise AssertionError("con cuenta no deberia resolverse aqui")
 
-        cliente, elemento = self._guardar_una_url(monkeypatch, True, resolver)
+        cliente, elemento = self._guardar_una_url(monkeypatch, True, comprobar)
 
         cliente.metadatos.assert_called_once()
         assert elemento is not None and elemento.titulo == "Lo dijo el servidor"
@@ -251,7 +252,10 @@ class TestDeDondeSalenLosMetadatos:
     def test_sin_cuenta_y_sin_red_el_enlace_se_guarda_igual(self, app, monkeypatch):
         """Lo mismo que ya pasaba cuando fallaba el servidor: guardar el
         enlace nunca depende de que se averigue el titulo."""
-        cliente, elemento = self._guardar_una_url(monkeypatch, False, lambda url: {})
+        # Sin red no se pregunta nada: se guarda sin metadatos (ANADIR.md).
+        cliente, elemento = self._guardar_una_url(
+            monkeypatch, False, lambda url, hay_red: Comprobacion(SIN_COMPROBAR)
+        )
 
         assert elemento is not None
         assert elemento.url == "https://ejemplo.com/a"
