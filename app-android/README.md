@@ -38,7 +38,13 @@ sdk.dir=/Users/<usuario>/Library/Android/sdk
 `instalar` usa la depuración inalámbrica si la encuentra. El Mac y el
 teléfono quedaron emparejados el 2026-09-23, y después de eso basta con que
 estén en la misma red y la depuración inalámbrica esté activa en el teléfono:
-adb lo encuentra solo aunque cambie de puerto.
+`instalar` lo encuentra solo aunque cambie de puerto.
+
+No lo busca adb, sino macOS con `dns-sd`: desde el 2026-10-15 el servidor de
+adb se cae en este Mac con su propio descubrimiento por la red (el porqué, en
+`herramientas/telefono.sh`). Para usar adb a mano hay que hacer lo mismo,
+`export ADB_MDNS=0` antes de la primera orden y `adb connect
+<dirección>:<puerto>`; sin eso, el servidor se cae al arrancar.
 
 Si deja de encontrarlo (tras borrar las autorizaciones, o en una red nueva):
 
