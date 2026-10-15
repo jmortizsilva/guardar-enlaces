@@ -324,14 +324,15 @@ por su lista de textos**, que se revisa antes de escribir la pantalla.
       - [x] Ver detalles y editar etiquetas, con la fila ya con sus cuatro
             acciones, y una pila de pantallas propia que devuelve el cursor a
             lo que abrió cada una. Oído con TalkBack el 2026-09-23.
-      - [~] Ajustes, adelantados solo con **importar enlaces** (2026-09-29),
-            porque la importación se pidió para las tres apps. Visto en el
-            teléfono, pero **sin importar nada todavía**: no había cómo pasarle
-            un fichero. Queda por oír con TalkBack que la opción se lee en una
-            sola parada con su explicación, que el cuadro del resultado cae
-            directo en el texto y se recorre por palabras, y decidir si al
-            volver a la lista el cursor debe ir a la rueda dentada (ahora lo
-            pone el sistema, como al cancelar Añadir).
+      - [x] Ajustes, adelantados solo con **importar enlaces** (2026-09-29),
+            porque la importación se pidió para las tres apps. Oída con
+            TalkBack el 2026-10-15, importando los ficheros de ejemplo
+            copiados con `adb push` a Descargas: la opción se lee en una sola
+            parada con su explicación, el selector del sistema enseña
+            Descargas, y el cuadro del resultado cae directo en el texto y se
+            recorre por palabras. Al cerrarlo el cursor vuelve a Importar, y
+            al salir de Ajustes a la rueda dentada, sin hacer nada: no hace
+            falta moverlo a mano.
       - [x] Gestionar etiquetas, desde el menú del filtro como en el iPhone.
             Oída con TalkBack el 2026-10-06; de ahí salieron el rol de botón
             de la opción del menú y la cabecera del título del diálogo. Al
