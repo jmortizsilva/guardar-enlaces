@@ -115,7 +115,7 @@ Además de correr el backend en local, hay una instancia compartida en
 mismo `Dockerfile` de este repo) para que los tres probéis contra los mismos
 datos. El alta es abierta: entrar con Google o Apple crea la cuenta sola.
 
-**Estado comprobado el 2026-09-18**, contra el servidor:
+**Estado comprobado el 2026-10-15**, contra el servidor:
 
 - **Google funciona.** `/auth/iniciar?proveedor=google` redirige con un
   `client_id` real y `redirect_uri=https://api.jmortiz.es/auth/callback/google`.
@@ -124,15 +124,20 @@ datos. El alta es abierta: entrar con Google o Apple crea la cuenta sola.
   `PERMITIR_LOGIN_DEV=false`. Hasta el 2026-09-09 no era así, y este documento
   avisaba de que cualquiera que diera con la URL podía crearse una cuenta con
   el correo que quisiera. Ya no: esa puerta está cerrada.
-- **Apple sigue sin configurar.** `/auth/iniciar?proveedor=apple` redirige con
-  `client_id=x`, así que ese inicio de sesión no puede funcionar. Hace falta
-  antes de publicar en la App Store: Apple exige ofrecer su inicio de sesión a
-  quien ofrezca el de Google.
+- **Apple también está configurado.** `/auth/iniciar?proveedor=apple`
+  redirige con `client_id=com.jmortizsilva.guardarenlaces.web` (el Services
+  ID) y `redirect_uri=https://api.jmortiz.es/auth/callback/apple`. Hasta
+  finales de septiembre redirigía con `client_id=x` y no podía funcionar;
+  desde el 2026-09-30 el servidor no arranca si falta alguna variable de
+  Apple (`backend/docs/DESPLIEGUE.md`). Que la redirección sea buena no
+  demuestra que el inicio de sesión termine bien: eso solo se comprueba
+  entrando de verdad.
 
 Si vuelve a hacer falta comprobarlo, se ve sin tocar nada ni crear cuentas:
 
 ```
 curl -sSI "https://api.jmortiz.es/auth/iniciar?proveedor=google&modo=deeplink&estado=x&esquema=guardarenlaces"
+curl -sSI "https://api.jmortiz.es/auth/iniciar?proveedor=apple&modo=deeplink&estado=x&esquema=guardarenlaces"
 curl -sS -o /dev/null -w "%{http_code}" -X POST -H "Content-Type: application/json" -d "{}" https://api.jmortiz.es/auth/dev-login
 ```
 
