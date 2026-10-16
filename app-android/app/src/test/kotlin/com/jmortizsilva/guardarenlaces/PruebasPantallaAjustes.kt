@@ -1,10 +1,16 @@
 package com.jmortizsilva.guardarenlaces
 
 import androidx.compose.runtime.CompositionLocalProvider
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.semantics.SemanticsProperties
 import androidx.compose.ui.test.SemanticsMatcher
 import androidx.compose.ui.test.assert
+import androidx.compose.ui.test.assertIsOff
+import androidx.compose.ui.test.assertIsOn
+import androidx.compose.ui.test.hasText
 import androidx.compose.ui.test.junit4.v2.createComposeRule
 import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.performClick
@@ -25,6 +31,7 @@ class PruebasPantallaAjustes {
     @get:Rule val compose = createComposeRule()
 
     private val cursor = mutableListOf<String>()
+    private var sinPreguntar by mutableStateOf(false)
 
     private fun mostrar(
         cuenta: EstadoCuenta = EstadoCuenta.SinCuenta,
@@ -42,6 +49,8 @@ class PruebasPantallaAjustes {
                     cuenta = cuenta,
                     anuncios = Anuncios(),
                     alVolver = {},
+                    guardarSinPreguntar = sinPreguntar,
+                    alCambiarGuardarSinPreguntar = { sinPreguntar = it },
                     importar = { "" },
                     entrar = entrar,
                     cerrarSesion = cerrarSesion,
@@ -60,6 +69,19 @@ class PruebasPantallaAjustes {
         // segundo elemento suelto sería una parada más que no dice qué hace.
         compose.onNodeWithText(Textos.importarEnlaces).assert(esBoton)
         compose.onNodeWithText(Textos.pistaImportar, substring = true).assertExists()
+    }
+
+    @Test
+    fun `guardar sin preguntar es un interruptor con su explicacion en la misma parada`() {
+        mostrar()
+
+        val opcion = compose.onNodeWithText(Textos.guardadoSilencioso)
+        opcion.assert(SemanticsMatcher.expectValue(SemanticsProperties.Role, Role.Switch))
+        opcion.assert(hasText(Textos.pistaGuardadoSilencioso))
+        opcion.assertIsOff()
+        opcion.performClick()
+        opcion.assertIsOn()
+        assertTrue(sinPreguntar)
     }
 
     @Test

@@ -349,8 +349,8 @@ por su lista de textos**, que se revisa antes de escribir la pantalla.
             texto del campo vacío, el aviso de dirección no válida, guardar
             con solo el dominio, la pregunta cuando no carga con Cancelar y
             Guardar igualmente, y en modo avión.
-      - [ ] El resto de Ajustes (guardado silencioso), con la fase 4.
-- [ ] **4. Compartir desde otras apps** y guardado silencioso, con el
+      - [x] El resto de Ajustes (guardado silencioso), con la fase 4.
+- [x] **4. Compartir desde otras apps** y guardado silencioso, con el
       interruptor en Ajustes.
       - [x] 4a. La pantalla de compartir, con «Guardar sin preguntar»
             apagado. Oída con TalkBack el 2026-10-16 compartiendo desde
@@ -358,7 +358,14 @@ por su lista de textos**, que se revisa antes de escribir la pantalla.
             parada con su título y el sitio, crear una etiqueta, el `Toast`
             al guardar, Cancelar y el gesto de atrás volviendo a Chrome, un
             texto sin dirección y un enlace que ya estaba.
-      - [ ] 4b. El interruptor «Guardar sin preguntar» en Ajustes.
+      - [x] 4b. El interruptor «Guardar sin preguntar» en Ajustes, entre la
+            cuenta y Importar. Oído con TalkBack el 2026-10-16: el
+            interruptor en una sola parada con su explicación, compartir sin
+            que se abra nada hasta el `Toast`, y al apagarlo vuelve la
+            pantalla de las etiquetas. Para no enseñar nada, la actividad es
+            transparente con un tema propio (`res/values/temas.xml`):
+            `Theme.Translucent` del sistema dejaba negras las barras del
+            sistema.
 - [ ] **5. Firma de publicación**, el almacén de claves fuera del repositorio
       y dónde se guarda su copia.
 - [ ] **6. Repartirla.** Google Play (pruebas internas primero) o el APK

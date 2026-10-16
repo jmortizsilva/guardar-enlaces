@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- El de la app, pero transparente, para la pantalla de compartir. Theme.Translucent, el
+         del sistema, es anterior a Material y no deja pintar las barras del sistema: salían
+         negras sobre el fondo gris de la pantalla. -->
+    <style name="Tema.Transparente" parent="@android:style/Theme.Material.Light.NoActionBar">
+        <item name="android:windowIsTranslucent">true</item>
+        <item name="android:windowBackground">@android:color/transparent</item>
+    </style>
+</resources>

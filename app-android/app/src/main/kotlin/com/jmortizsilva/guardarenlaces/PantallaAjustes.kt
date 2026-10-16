@@ -6,10 +6,12 @@ import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.selection.toggleable
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.ListItem
 import androidx.compose.material3.Scaffold
+import androidx.compose.material3.Switch
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
@@ -40,15 +42,14 @@ private val tiposImportables = arrayOf("text/*", "application/csv", "application
 /** El texto que dice con qué cuenta se está. Adonde va el cursor al entrar y al salir. */
 const val ETIQUETA_CUENTA = "texto-cuenta"
 
-/**
- * Ajustes: la cuenta, e importar enlaces. Falta el guardado silencioso, que irá con el menú de
- * compartir, en el mismo orden que en el iPhone.
- */
+/** Ajustes: la cuenta, guardar sin preguntar e importar enlaces, en el orden del iPhone. */
 @Composable
 fun PantallaAjustes(
     cuenta: EstadoCuenta,
     anuncios: Anuncios,
     alVolver: () -> Unit,
+    guardarSinPreguntar: Boolean,
+    alCambiarGuardarSinPreguntar: (Boolean) -> Unit,
     importar: (ByteArray) -> String,
     entrar: Entrar,
     cerrarSesion: suspend () -> Unit,
@@ -125,6 +126,13 @@ fun PantallaAjustes(
                 }
             }
             HorizontalDivider()
+            OpcionInterruptor(
+                Textos.guardadoSilencioso,
+                Textos.pistaGuardadoSilencioso,
+                encendida = guardarSinPreguntar,
+                alCambiar = alCambiarGuardarSinPreguntar,
+            )
+            HorizontalDivider()
             Opcion(Textos.importarEnlaces, Textos.pistaImportar) {
                 elegirFichero.launch(tiposImportables)
             }
@@ -151,6 +159,26 @@ fun Opcion(
         headlineContent = { Text(nombre) },
         supportingContent = { Text(explicacion) },
         modifier = Modifier.clickable(enabled = activa, role = Role.Button, onClick = alPulsar),
+    )
+}
+
+/**
+ * Una opción que se enciende y se apaga. Como [Opcion], el nombre y la explicación en una sola
+ * parada, y el interruptor dentro de ella: si fuera aparte, sería una parada más sin nombre.
+ */
+@Composable
+fun OpcionInterruptor(
+    nombre: String,
+    explicacion: String,
+    encendida: Boolean,
+    alCambiar: (Boolean) -> Unit,
+) {
+    ListItem(
+        headlineContent = { Text(nombre) },
+        supportingContent = { Text(explicacion) },
+        trailingContent = { Switch(checked = encendida, onCheckedChange = null) },
+        modifier =
+            Modifier.toggleable(value = encendida, role = Role.Switch, onValueChange = alCambiar),
     )
 }
 

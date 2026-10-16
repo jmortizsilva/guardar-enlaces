@@ -18,10 +18,7 @@ sealed interface Pantalla {
     /** Elegir las etiquetas del enlace que se está añadiendo, que todavía no existe. */
     data object EtiquetasDelBorrador : Pantalla
 
-    /**
-     * Por ahora solo con importar enlaces: la cuenta y el guardado silencioso se añadirán como
-     * secciones cuando toque, en el mismo orden que en el iPhone.
-     */
+    /** La cuenta, guardar sin preguntar e importar enlaces. */
     data object Ajustes : Pantalla
 
     /** Renombrar, eliminar y crear etiquetas de toda la biblioteca. */

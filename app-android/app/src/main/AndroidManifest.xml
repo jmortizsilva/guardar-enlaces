@@ -41,12 +41,14 @@
         <!-- Compartir desde otra aplicación. Android no deja pedir solo direcciones: sale al
              compartir cualquier texto, y la actividad dice si no lleva ninguna. Tarea propia
              (taskAffinity vacía) y fuera de recientes, para volver a la aplicación de origen al
-             terminar y no quedarse encima de Guárdalo si estaba abierto. -->
+             terminar y no quedarse encima de Guárdalo si estaba abierto. Transparente para que,
+             con «Guardar sin preguntar», no se vea nada mientras guarda. -->
         <activity
             android:name=".ActividadCompartir"
             android:exported="true"
             android:excludeFromRecents="true"
-            android:taskAffinity="">
+            android:taskAffinity=""
+            android:theme="@style/Tema.Transparente">
             <intent-filter>
                 <action android:name="android.intent.action.SEND" />
                 <category android:name="android.intent.category.DEFAULT" />

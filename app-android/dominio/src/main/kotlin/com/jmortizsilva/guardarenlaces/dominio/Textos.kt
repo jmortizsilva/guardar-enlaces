@@ -340,7 +340,7 @@ object Textos {
 
     const val guardadoSilencioso = "Guardar sin preguntar"
     const val pistaGuardadoSilencioso =
-        "Al compartir un enlace se guarda al momento, sin enseñar esta pantalla"
+        "Al compartir un enlace desde otra aplicación, se guarda sin enseñar nada"
 
     // Importar enlaces de otra aplicación
 

@@ -167,10 +167,16 @@ class ActividadPrincipal : ComponentActivity() {
             }
             Pantalla.Ajustes -> {
                 val cuenta by modelo.cuenta.collectAsState()
+                var sinPreguntar by remember { mutableStateOf(preferencias.guardarSinPreguntar) }
                 PantallaAjustes(
                     cuenta = cuenta,
                     anuncios = modelo.anuncios,
                     alVolver = { navegacion.volver() },
+                    guardarSinPreguntar = sinPreguntar,
+                    alCambiarGuardarSinPreguntar = {
+                        preferencias.guardarSinPreguntar = it
+                        sinPreguntar = it
+                    },
                     importar = modelo::importar,
                     entrar = entrar,
                     cerrarSesion = modelo::cerrarSesion,

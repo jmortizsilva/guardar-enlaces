@@ -30,6 +30,9 @@ import kotlinx.coroutines.withTimeoutOrNull
  * Tiene su propia tarea y no sale en recientes (ver el manifiesto): al guardar o cancelar se vuelve
  * a la aplicación desde la que se compartió, y si Guárdalo estaba abierto no se le queda esta
  * pantalla encima.
+ *
+ * Con «Guardar sin preguntar» no enseña nada: guarda sin etiquetas, avisa y se cierra. Por eso es
+ * transparente (ver el manifiesto), y la pantalla de compartir pone su propio fondo.
  */
 class ActividadCompartir : ComponentActivity() {
     private val contenedor
@@ -42,15 +45,62 @@ class ActividadCompartir : ComponentActivity() {
         // sincronización.
         contenedor.modelo.refrescar()
         val url = direccionCompartida(intent)
+        // Se lee una vez: si cambiara mientras está abierta, no debe pasar de una forma a otra.
+        val sinPreguntar = contenedor.preferencias.guardarSinPreguntar
         setContent {
             Tema {
-                if (url == null) {
-                    PantallaAvisoCompartir(Textos.compartirNoEsEnlace, alCerrar = ::finish)
-                } else {
-                    Compartir(url)
+                when {
+                    url == null ->
+                        PantallaAvisoCompartir(Textos.compartirNoEsEnlace, alCerrar = ::finish)
+                    sinPreguntar -> GuardarSinPreguntar(url)
+                    else -> Compartir(url)
                 }
             }
         }
+    }
+
+    /** Nada en pantalla mientras guarda, salvo si falla: entonces se dice, y se queda abierta. */
+    @Composable
+    private fun GuardarSinPreguntar(url: String) {
+        var fallo by remember { mutableStateOf(false) }
+        LaunchedEffect(url) {
+            val comprobacion =
+                withTimeoutOrNull(ESPERA_COMPROBACION_MS) { contenedor.modelo.comprobar(url) }
+            fallo =
+                !guardarYCerrar(url, emptyList(), (comprobacion as? Comprobacion.Carga)?.metadatos)
+        }
+        if (fallo) PantallaAvisoCompartir(Textos.compartirNoSePudo, alCerrar = ::finish)
+    }
+
+    /**
+     * Guarda, avisa con un Toast, intenta subir y cierra. Devuelve `false` si no se pudo guardar, y
+     * entonces no cierra: cerrar perdería el enlace sin remedio.
+     *
+     * El aviso va antes de subir: el enlace ya está guardado, y lo de la red puede fallar sin que
+     * eso cambie. Con un Toast porque la pantalla se va a cerrar, y lo que se diga en ella se
+     * perdería con ella; TalkBack lo lee (`docs/ACCESIBILIDAD.md`).
+     */
+    private suspend fun guardarYCerrar(
+        url: String,
+        etiquetas: List<String>,
+        metadatos: MetadatosExtraidos?,
+    ): Boolean {
+        val modelo = contenedor.modelo
+        val resultado =
+            try {
+                modelo.guardarSinSubir(url, etiquetas, metadatos)
+            } catch (_: Exception) {
+                return false
+            }
+        Toast.makeText(
+                applicationContext,
+                resultado.anuncio(seComprobo = metadatos != null),
+                Toast.LENGTH_LONG,
+            )
+            .show()
+        modelo.subirAhora(LIMITE_SUBIDA_MS)
+        finish()
+        return true
     }
 
     @Composable
@@ -83,26 +133,10 @@ class ActividadCompartir : ComponentActivity() {
                 if (!comprobacion.isCompleted) anuncios.informativo(Textos.comprobando)
                 val sabido = withTimeoutOrNull(ESPERA_COMPROBACION_MS) { comprobacion.await() }
                 val datos = (sabido as? Comprobacion.Carga)?.metadatos
-                val resultado =
-                    try {
-                        modelo.guardarSinSubir(url, etiquetas, datos)
-                    } catch (_: Exception) {
-                        // Se queda abierta: cerrarla perdería el enlace sin remedio.
-                        anuncios.importante(Textos.compartirNoSePudo)
-                        guardando = false
-                        return@launch
-                    }
-                // Se dice antes de subir: el enlace ya está guardado, y lo de la red puede fallar
-                // sin que eso cambie. Con un Toast porque la pantalla se va a cerrar, y lo que se
-                // diga en ella se perdería con ella. A medir con TalkBack (PLAN.md).
-                Toast.makeText(
-                        applicationContext,
-                        resultado.anuncio(seComprobo = datos != null),
-                        Toast.LENGTH_LONG,
-                    )
-                    .show()
-                modelo.subirAhora(LIMITE_SUBIDA_MS)
-                finish()
+                if (!guardarYCerrar(url, etiquetas, datos)) {
+                    anuncios.importante(Textos.compartirNoSePudo)
+                    guardando = false
+                }
             }
         }
 

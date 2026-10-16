@@ -15,7 +15,13 @@ class Preferencias(contexto: Context) {
         get() = guardadas.getBoolean(CLAVE_BIENVENIDA_VISTA, false)
         set(valor) = guardadas.edit { putBoolean(CLAVE_BIENVENIDA_VISTA, valor) }
 
+    /** Si al compartir un enlace se guarda directamente, sin la pantalla de las etiquetas. */
+    var guardarSinPreguntar: Boolean
+        get() = guardadas.getBoolean(CLAVE_GUARDAR_SIN_PREGUNTAR, false)
+        set(valor) = guardadas.edit { putBoolean(CLAVE_GUARDAR_SIN_PREGUNTAR, valor) }
+
     private companion object {
         const val CLAVE_BIENVENIDA_VISTA = "bienvenidaVista"
+        const val CLAVE_GUARDAR_SIN_PREGUNTAR = "guardarSinPreguntar"
     }
 }
