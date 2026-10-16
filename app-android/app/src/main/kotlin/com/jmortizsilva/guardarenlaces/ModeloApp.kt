@@ -30,6 +30,7 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.withTimeoutOrNull
 
 /**
  * Lo que ven y piden las pantallas: los enlaces, las etiquetas y los cambios sobre ellos.
@@ -132,10 +133,31 @@ class ModeloApp(
         etiquetas: List<String>,
         metadatos: MetadatosExtraidos?,
     ): GuardarEnlace.Resultado =
-        GuardarEnlace.guardar(url, etiquetas, metadatos, almacen).also {
-            refrescar()
-            sincronizarEnSilencio()
+        guardarSinSubir(url, etiquetas, metadatos).also { sincronizarEnSilencio() }
+
+    /** Como `guardarEnlace`, dejándolo en la cola: lo sube quien llama, con `subirAhora`. */
+    fun guardarSinSubir(
+        url: String,
+        etiquetas: List<String>,
+        metadatos: MetadatosExtraidos?,
+    ): GuardarEnlace.Resultado =
+        GuardarEnlace.guardar(url, etiquetas, metadatos, almacen).also { refrescar() }
+
+    /**
+     * Sube lo pendiente y espera, como mucho `limiteMs`. Para compartir desde otra aplicación: al
+     * cerrar esa pantalla Android puede llevarse el proceso, y lo que se suba después en segundo
+     * plano puede no subirse. Si no da tiempo, queda en la cola para la próxima sincronización.
+     */
+    suspend fun subirAhora(limiteMs: Long) {
+        if (!sesion.conCuenta) return
+        ultimaSincronizacion = relojDelSistema()
+        withTimeoutOrNull(limiteMs) {
+            try {
+                sincronizador.sincronizar()
+            } catch (_: ErrorApi) {}
         }
+        refrescar()
+    }
 
     /**
      * Trae los enlaces de un fichero exportado y devuelve lo que hay que contar. El comportamiento

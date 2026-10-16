@@ -328,6 +328,7 @@ object Textos {
      * llega un texto sin dirección hay que decirlo y no quedarse en blanco.
      */
     const val compartirNoEsEnlace = "Esto no es un enlace, y solo se guardan enlaces."
+    const val cerrar = "Cerrar"
     /**
      * Si falla el guardado no se puede ofrecer «reintentar»: la pantalla se cierra y el enlace se
      * va con ella. Lo único útil es decir dónde hacerlo a mano.

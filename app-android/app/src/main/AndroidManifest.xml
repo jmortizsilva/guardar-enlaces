@@ -37,5 +37,21 @@
                 <data android:scheme="guardarenlaces" android:host="auth-callback" />
             </intent-filter>
         </activity>
+
+        <!-- Compartir desde otra aplicación. Android no deja pedir solo direcciones: sale al
+             compartir cualquier texto, y la actividad dice si no lleva ninguna. Tarea propia
+             (taskAffinity vacía) y fuera de recientes, para volver a la aplicación de origen al
+             terminar y no quedarse encima de Guárdalo si estaba abierto. -->
+        <activity
+            android:name=".ActividadCompartir"
+            android:exported="true"
+            android:excludeFromRecents="true"
+            android:taskAffinity="">
+            <intent-filter>
+                <action android:name="android.intent.action.SEND" />
+                <category android:name="android.intent.category.DEFAULT" />
+                <data android:mimeType="text/plain" />
+            </intent-filter>
+        </activity>
     </application>
 </manifest>

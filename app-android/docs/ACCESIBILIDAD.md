@@ -73,6 +73,13 @@ Por ahora no ha hecho falta la API obsoleta.
 
 `Polite` (el `informativo` de iOS) todavía no se ha oído en ningún sitio.
 
+## Al cerrar una pantalla, un `Toast`
+
+La pantalla de compartir se cierra al guardar, y lo que diga su línea de
+avisos se va con ella. El resultado se dice con un `Toast`, que TalkBack lee
+ya de vuelta en la aplicación de origen: «Guardado, *título*». Oído el
+2026-10-16.
+
 ## Android ya avisa al copiar
 
 Desde Android 13 el sistema dice «Texto copiado» al copiar algo. Con nuestro

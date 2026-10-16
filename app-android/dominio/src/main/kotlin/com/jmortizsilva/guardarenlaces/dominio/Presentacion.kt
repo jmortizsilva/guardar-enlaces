@@ -38,7 +38,10 @@ object Presentacion {
         return partes.joinToString(" — ")
     }
 
-    private fun dominio(url: String): String? = PartesDeUrl.leer(url)?.anfitrion?.ifEmpty { null }
+    /**
+     * El sitio de una dirección, que es lo que se lee de ella: la dirección entera no se oye bien.
+     */
+    fun dominio(url: String): String? = PartesDeUrl.leer(url)?.anfitrion?.ifEmpty { null }
 
     /**
      * El mes en letra a propósito: «15/3/2024» el lector de pantalla lo lee número a número, y hay

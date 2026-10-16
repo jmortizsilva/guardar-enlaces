@@ -153,7 +153,8 @@ eso está ya `Enlaces.direccionDentroDe`, que se trae tal cual.
   límite de tres, y se cierra. El acuse se da con un **`Toast`**, que TalkBack
   lee y que es lo que hacen las apps de Android al guardar desde el menú de
   compartir. Un anuncio lanzado desde una actividad que se está cerrando se
-  pierde casi seguro. **A medir en el teléfono.**
+  pierde casi seguro. Medido el 2026-10-16 con la pantalla de compartir, que
+  también avisa con `Toast` al cerrarse: TalkBack lo lee.
 - En Android, cerrar la actividad no mata el proceso en el acto, como pasa
   con la extensión en iOS. Aun así, se sube antes de cerrar y con límite, y
   lo que no dé tiempo queda en la cola: WorkManager daría la subida en segundo
@@ -351,6 +352,13 @@ por su lista de textos**, que se revisa antes de escribir la pantalla.
       - [ ] El resto de Ajustes (guardado silencioso), con la fase 4.
 - [ ] **4. Compartir desde otras apps** y guardado silencioso, con el
       interruptor en Ajustes.
+      - [x] 4a. La pantalla de compartir, con «Guardar sin preguntar»
+            apagado. Oída con TalkBack el 2026-10-16 compartiendo desde
+            Chrome: el cursor en el título al abrir, el enlace en una sola
+            parada con su título y el sitio, crear una etiqueta, el `Toast`
+            al guardar, Cancelar y el gesto de atrás volviendo a Chrome, un
+            texto sin dirección y un enlace que ya estaba.
+      - [ ] 4b. El interruptor «Guardar sin preguntar» en Ajustes.
 - [ ] **5. Firma de publicación**, el almacén de claves fuera del repositorio
       y dónde se guarda su copia.
 - [ ] **6. Repartirla.** Google Play (pruebas internas primero) o el APK
