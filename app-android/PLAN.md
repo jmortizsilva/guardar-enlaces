@@ -173,11 +173,27 @@ adb shell am start -n com.jmortizsilva.guardarenlaces/.ActividadPrincipal
 
 - **La firma de depuración** la genera Gradle sola la primera vez, en
   `~/.android/debug.keystore`. Con eso basta para instalar en el teléfono.
-- **La firma de publicación** es un almacén creado con `keytool` (viene con el
-  JDK), guardado fuera del repositorio con la clave en un fichero aparte, como
-  el llavero de firma de iOS. Gradle lo lee de `~/.gradle/gradle.properties`.
-  Si se pierde, en Google Play no se puede actualizar la app: hay que decidir
-  dónde se guarda la copia antes de publicar nada.
+- **La firma de publicación** es la clave de subida a Google Play, con la
+  firma de apps de Play: la que firma lo que se instala la guarda Google, y
+  si la de subida se pierde, se pide otra. Con el APK repartido por GitHub,
+  perderla obligaría a desinstalar para actualizar, y quien no tiene cuenta
+  perdería sus enlaces; es uno de los motivos para ir por Play.
+  - El almacén está en `~/.android/guardalo-subida.jks` (PKCS12, RSA de 4096
+    bits, 30 años, alias `subida`). Lo crea una sola vez
+    `herramientas/crear-clave-subida.sh`. Huella SHA-256 del certificado:
+    `86:E0:94:E0:75:C4:77:F0:B1:42:AD:AD:7E:80:DA:DF:58:34:61:38:7C:04:DC:2E:F5:B9:9A:65:35:0E:59:F3`.
+  - La contraseña está en el llavero `guardalo-firma`, el de iOS
+    (`app-ios-nativa/docs/FIRMA-SIN-PANTALLA.md`). Por SSH el llavero de
+    inicio de sesión no se puede abrir («User interaction is not allowed»), y
+    el de firma se abre con la contraseña de
+    `~/.appstoreconnect/llavero-firma.txt`: la protección real es la de ese
+    fichero. Se descartó `~/.gradle/gradle.properties` por dejar la
+    contraseña escrita en un fichero más.
+  - `./publicar` la saca del llavero y se la pasa a Gradle como propiedad
+    `claveFirma`, solo mientras compila. Sin ella, la versión de publicación
+    sale sin firmar; `verificar` e `instalar` siguen con la de depuración.
+  - La copia del almacén y de la contraseña está fuera de este Mac, en
+    Bitwarden: la contraseña y el fichero adjunto, en la misma entrada.
 - **El teléfono** se conecta por USB o por depuración inalámbrica
   (`adb pair`, Android 11 o posterior). La inalámbrica encaja mejor con
   trabajar por SSH, porque no hace falta que el teléfono esté enchufado a
@@ -368,8 +384,18 @@ por su lista de textos**, que se revisa antes de escribir la pantalla.
             sistema.
 - [ ] **5. Firma de publicación**, el almacén de claves fuera del repositorio
       y dónde se guarda su copia.
-- [ ] **6. Repartirla.** Google Play (pruebas internas primero) o el APK
-      desde la web, junto al botón de iPhone. Se decide cuando haya app.
+      - [x] La clave de subida y `./publicar`, que firma el paquete para Play
+            y el APK (comprobado con `apksigner` y `jarsigner` el
+            2026-10-16).
+      - [x] La copia fuera de este Mac, en Bitwarden (2026-10-16).
+      - [ ] Instalar en el teléfono el APK firmado.
+- [ ] **6. Repartirla por Google Play**, decidido el 2026-10-16: la clave
+      se puede recuperar, las actualizaciones llegan solas y la verificación
+      de desarrolladores de Google llegará en 2027 también a los APK de fuera
+      de Play. Primero las pruebas internas, que son como TestFlight. Antes de
+      la ficha hacen falta una política de privacidad y poder borrar la
+      cuenta desde la app y desde una web, que Play exige y la App Store
+      también.
 
 Como en iOS, la instalación en el teléfono no espera a la fase 5: desde la
 fase 0 se instala con la firma de depuración, y cada pantalla se oye con

@@ -24,6 +24,22 @@ android {
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
     }
 
+    // La clave de subida a Google Play, fuera del repositorio. Solo se firma
+    // si llega la contraseña, que pasa `publicar` desde el llavero de firma;
+    // sin ella, la versión de publicación sale sin firmar. Ver PLAN.md, fase 5.
+    val claveFirma = providers.gradleProperty("claveFirma").orNull
+    signingConfigs {
+        if (claveFirma != null) {
+            create("subida") {
+                storeFile = file("${System.getProperty("user.home")}/.android/guardalo-subida.jks")
+                storePassword = claveFirma
+                keyAlias = "subida"
+                keyPassword = claveFirma
+            }
+        }
+    }
+    buildTypes { release { signingConfig = signingConfigs.findByName("subida") } }
+
     buildFeatures { compose = true }
 
     testOptions {

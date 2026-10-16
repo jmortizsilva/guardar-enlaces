@@ -1,0 +1,61 @@
+#!/bin/bash
+# Compila la versión de publicación firmada con la clave de subida: el
+# paquete para Google Play (.aab) y un APK para probarlo en el teléfono.
+#
+#     ./publicar              compila y comprueba la firma
+#     ./publicar --instalar   además, instala el APK en el teléfono
+#
+# La clave se crea una vez con herramientas/crear-clave-subida.sh. Su
+# contraseña está en el llavero de firma, que se vuelve a bloquear solo: se
+# abre aquí cada vez, como en app-ios-nativa/publicar.
+set -euo pipefail
+
+cd "$(dirname "$0")"
+export JAVA_HOME="${JAVA_HOME:-/opt/homebrew/opt/openjdk@21}"
+export ANDROID_HOME="${ANDROID_HOME:-$HOME/Library/Android/sdk}"
+
+ALMACEN="$HOME/.android/guardalo-subida.jks"
+if [ ! -e "$ALMACEN" ]; then
+    echo "No está la clave de subida en $ALMACEN." >&2
+    echo "Se crea con herramientas/crear-clave-subida.sh" >&2
+    exit 1
+fi
+
+# Que no se publique nada que no pase las pruebas.
+echo "== Verificando =="
+./verificar >/tmp/guardalo-android-verificar.log 2>&1 || {
+    echo "Las pruebas no pasan. Mira /tmp/guardalo-android-verificar.log" >&2
+    exit 1
+}
+echo "   todo en verde"
+
+security unlock-keychain -p "$(cat ~/.appstoreconnect/llavero-firma.txt)" guardalo-firma.keychain
+# Gradle recibe como propiedad del proyecto lo que empieza por ORG_GRADLE_PROJECT_.
+ORG_GRADLE_PROJECT_claveFirma="$(security find-generic-password -s guardalo-subida-android -w guardalo-firma.keychain)"
+export ORG_GRADLE_PROJECT_claveFirma
+
+echo "== Compilando =="
+./gradlew --quiet :app:bundleRelease :app:assembleRelease
+
+AAB=app/build/outputs/bundle/release/app-release.aab
+APK=app/build/outputs/apk/release/app-release.apk
+APKSIGNER=$(ls -d "$ANDROID_HOME"/build-tools/*/ | sort -V | tail -1)apksigner
+
+echo "== Firma del APK =="
+"$APKSIGNER" verify --print-certs "$APK" | grep -E "SHA-256|DN:"
+
+echo "Para Google Play: $PWD/$AAB"
+echo "Para el teléfono: $PWD/$APK"
+
+if [ "${1:-}" = "--instalar" ]; then
+    # Solo aquí: sin teléfono conectado, telefono.sh termina el script.
+    source herramientas/telefono.sh
+    # Encima de la de depuración no se puede: la firma es otra. Android lo
+    # rechaza con INSTALL_FAILED_UPDATE_INCOMPATIBLE, y desinstalar borra los
+    # datos, así que eso se decide a mano.
+    "$ADB" install -r "$APK" || {
+        echo "No se pudo instalar. Si es por la firma, hay que desinstalar antes la de depuración." >&2
+        exit 1
+    }
+    echo "Instalada en $ANDROID_SERIAL."
+fi

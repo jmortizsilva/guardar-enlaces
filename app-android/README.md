@@ -14,6 +14,7 @@ Se trabaja por línea de comandos, sin Android Studio:
 ./verificar                 # formato, Lint y pruebas. Si esto no pasa, no está terminado
 ./instalar                  # compilar, instalar en el teléfono y abrir la app
 ./probar-en-telefono        # lo que solo existe en el teléfono: Keystore y SQLite del sistema
+./publicar                  # firmar para Google Play; --instalar, además, en el teléfono
 ./gradlew :dominio:test     # solo la lógica pura
 ```
 

@@ -9,7 +9,13 @@ set -euo pipefail
 cd "$(dirname "$0")"
 source herramientas/telefono.sh
 
-./gradlew --quiet :app:installDebug
+# Encima de la versión de publicación (`./publicar --instalar`) no se puede:
+# la firma es otra, y Android lo rechaza. Desinstalar borra los datos de la
+# app en el teléfono, así que no se hace solo.
+./gradlew --quiet :app:installDebug || {
+    echo "No se pudo instalar. Si es por la firma, está puesta la versión de publicación: hay que desinstalarla antes." >&2
+    exit 1
+}
 
 # Una sola orden de arranque, y esperando a que termine (`-W`). Con dos seguidas,
 # la segunda llegaba mientras la primera todavía arrancaba la app, y los
