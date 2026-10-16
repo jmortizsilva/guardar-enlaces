@@ -1,7 +1,7 @@
 # Guárdalo — descripción del proyecto
 
 App para guardar enlaces (artículos, vídeos) accesible con lector de
-pantalla, sincronizada entre iPhone y Windows. Este documento es el punto de
+pantalla, sincronizada entre iPhone, Android y Windows. Este documento es el punto de
 entrada para quien se incorpora al proyecto: qué hay, cómo se organiza y por
 dónde empezar en cada parte.
 
@@ -34,6 +34,7 @@ de vida. Cuando cambies algo en uno, no asumas que el otro se entera.
 | [`backend/`](backend/README.md) | Servidor: auth (Google/Apple, sin contraseñas), metadatos de URLs, sincronización | Node + Fastify + SQLite |
 | [`app-ios-nativa/`](app-ios-nativa/README.md) | Cliente iOS | Swift 6 + SwiftUI (mínimo iOS 18) |
 | [`app-windows/`](app-windows/README.md) | Cliente de escritorio | Python + wxPython |
+| `app-android/`, en la rama [`app-android`](https://github.com/jmortizsilva/guardar-enlaces/tree/app-android/app-android) | Cliente Android, en pruebas | Kotlin + Jetpack Compose (mínimo Android 9) |
 
 El **contrato de API** entre el backend y los dos clientes está en
 [`backend/docs/CONTRATO-API.md`](backend/docs/CONTRATO-API.md) — es la

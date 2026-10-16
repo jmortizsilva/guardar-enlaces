@@ -4,7 +4,7 @@ Ver [`PROYECTO.md`](PROYECTO.md) para la descripción completa del proyecto y
 cómo arrancar cada parte — este README es solo el resumen de estructura.
 
 App para guardar contenidos (enlaces, vídeos) accesible con lector de
-pantalla en iPhone y en Windows, sincronizada entre ambos. Un solo
+pantalla en iPhone, Android y Windows, sincronizada entre los tres. Un solo
 repositorio (para tenerlo centralizado en GitHub), tres proyectos
 independientes por dentro — no comparten código, cada uno con su propio
 gestor de paquetes y su propio ciclo de vida:
@@ -16,6 +16,11 @@ gestor de paquetes y su propio ciclo de vida:
   del API para los dos clientes.
 - `app-windows/` — cliente de escritorio, Python + wxPython.
 - `app-ios-nativa/` — cliente iOS, Swift y SwiftUI.
+- `app-android/` — cliente Android, Kotlin y Jetpack Compose. Mientras se
+  termina vive en la rama
+  [`app-android`](https://github.com/jmortizsilva/guardar-enlaces/tree/app-android/app-android);
+  la versión de pruebas se descarga de la
+  [página de descargas](https://jmortizsilva.github.io/guardar-enlaces/#descargas).
 
 El cliente de iOS fue una app de Expo hasta septiembre de 2026. Por qué se
 reescribió en nativo, qué cambió y qué se descartó por el camino está en

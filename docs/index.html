@@ -4,7 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Guárdalo</title>
-<meta name="description" content="Guarda un enlace en el móvil y lo tienes en el ordenador. Una aplicación para leer más tarde, hecha para funcionar con lector de pantalla en iPhone y en Windows.">
+<meta name="description" content="Guarda un enlace en el móvil y lo tienes en el ordenador. Una aplicación para leer más tarde, hecha para funcionar con lector de pantalla en iPhone, Android y Windows.">
 <meta name="color-scheme" content="light dark">
 
 <meta property="og:title" content="Guárdalo">
@@ -383,7 +383,7 @@ section + section { border-top: 1px solid var(--borde); }
         <h1 id="titulo-portada">Guárdalo</h1>
         <p class="entradilla">Guarda un enlace en el móvil y lo tienes en el ordenador. Y al revés.</p>
         <p>Un artículo que quieres leer con calma, un vídeo que no puedes ver ahora. Lo apuntas donde estés y lo encuentras después en el otro aparato.</p>
-        <p>Está hecha para funcionar con lector de pantalla desde la primera línea de código: VoiceOver en el iPhone, NVDA, JAWS o el Narrador en Windows. No es un repaso del final.</p>
+        <p>Está hecha para funcionar con lector de pantalla desde la primera línea de código: VoiceOver en el iPhone, TalkBack en Android, NVDA, JAWS o el Narrador en Windows. No es un repaso del final.</p>
         <p class="acciones">
           <a class="boton" href="#descargas">Ir a las descargas</a>
         </p>
@@ -396,7 +396,7 @@ section + section { border-top: 1px solid var(--borde); }
       <div class="cinta">
         <h2 id="titulo-que-hace">Qué hace</h2>
         <p class="arranque">Apuntas un enlace y te olvidas de él hasta que lo necesitas.</p>
-        <p>Pegas una dirección en el ordenador, o la mandas desde la hoja de compartir del iPhone sin salir de donde estabas. Lo demás lo pone la aplicación.</p>
+        <p>Pegas una dirección en el ordenador, o la mandas desde el menú de compartir del teléfono sin salir de donde estabas. Lo demás lo pone la aplicación.</p>
       </div>
 
       <dl class="detalles">
@@ -406,7 +406,7 @@ section + section { border-top: 1px solid var(--borde); }
         </div>
         <div>
           <dt>Etiquetas para encontrarlo luego</dt>
-          <dd>Y puedes crear una etiqueta nueva sin salir de la hoja de compartir del iPhone.</dd>
+          <dd>Y puedes crear una etiqueta nueva sin salir del menú de compartir del teléfono.</dd>
         </div>
         <div>
           <dt>Te avisa si ya lo tenías</dt>
@@ -474,6 +474,25 @@ section + section { border-top: 1px solid var(--borde); }
           </ul>
         </article>
 
+        <article class="ficha">
+          <h3>Para Android</h3>
+          <p class="ficha__datos">Versión de pruebas 0.1.0 · APK de unos 24 MB · Android 9 o posterior</p>
+          <p>
+            <a class="boton" href="https://github.com/jmortizsilva/guardar-enlaces/releases/download/android-v0.1.0/Guardalo-Android-0.1.0.apk">
+              Descargar para Android
+            </a>
+          </p>
+          <ul class="ficha__notas">
+            <li><strong>Descárgala desde el teléfono y abre el fichero.</strong> Android te pedirá permiso para que el navegador pueda instalar aplicaciones, y después la confirmación de instalar.</li>
+            <li>Las versiones nuevas todavía no llegan solas: se descarga la nueva y se instala encima, sin perder nada.</li>
+            <li>Es una versión de pruebas. Si algo no funciona como debería, cuéntalo: para eso está.</li>
+          </ul>
+          <p class="aviso">
+            <b>Puede que Play Protect diga que no conoce la aplicación.</b>
+            Es porque todavía no está en Google Play, no porque haya nada raro dentro. Se puede instalar igual.
+          </p>
+        </article>
+
       </div>
     </section>
   </div>
@@ -501,6 +520,12 @@ section + section { border-top: 1px solid var(--borde); }
         <p>La pantalla de detalle pone cada dato en su sitio y se recorre de uno en uno, en vez de soltarte toda la información de golpe como hace la fila de la lista.</p>
         <p>Y para guardar algo que estás viendo en otra aplicación no hace falta abrir Guárdalo: está en la hoja de compartir, donde también puedes ponerle etiquetas. Si activas <strong>«Guardar sin preguntar»</strong> en los ajustes, ni eso: se guarda y sigues a lo tuyo.</p>
       </div>
+
+      <div class="bloque">
+        <h3>En Android</h3>
+        <p>Las mismas pantallas que en el iPhone, en el mismo orden, y pensadas para TalkBack: cada pantalla empieza por su título, y al volver de una el cursor regresa a lo que la abrió.</p>
+        <p>Guárdalo también está en el menú de compartir de las demás aplicaciones, con sus etiquetas y con <strong>«Guardar sin preguntar»</strong>. Al terminar vuelves a la aplicación de la que venías.</p>
+      </div>
     </section>
   </div>
 
@@ -509,7 +534,7 @@ section + section { border-top: 1px solid var(--borde); }
       <div class="cinta">
         <h2 id="titulo-el-codigo">El código</h2>
         <p class="arranque">Está todo a la vista.</p>
-        <p>Las dos aplicaciones y el servidor que las sincroniza están en GitHub, con la documentación de cómo se hizo cada cosa y de lo que se aprendió por el camino.</p>
+        <p>Las tres aplicaciones y el servidor que las sincroniza están en GitHub, con la documentación de cómo se hizo cada cosa y de lo que se aprendió por el camino.</p>
         <p class="acciones">
           <a class="boton boton--calado" href="https://github.com/jmortizsilva/guardar-enlaces">Ver el repositorio</a>
         </p>
@@ -521,7 +546,7 @@ section + section { border-top: 1px solid var(--borde); }
 
 <div class="envoltorio">
   <footer class="pie">
-    <p>Guárdalo — guardar enlaces en el iPhone y en Windows.</p>
+    <p>Guárdalo — guardar enlaces en el iPhone, en Android y en Windows.</p>
     <p><a href="https://github.com/jmortizsilva/guardar-enlaces">Código en GitHub</a></p>
   </footer>
 </div>
