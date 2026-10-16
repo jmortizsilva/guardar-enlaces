@@ -335,7 +335,7 @@ extension Textos {
 
     public static let guardadoSilencioso = "Guardar sin preguntar"
     public static let pistaGuardadoSilencioso =
-        "Al compartir un enlace se guarda al momento, sin enseñar esta pantalla"
+        "Al compartir un enlace desde otra aplicación, se guarda sin enseñar nada"
 }
 
 extension Textos {
